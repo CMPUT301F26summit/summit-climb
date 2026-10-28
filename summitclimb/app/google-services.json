@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "501103284911",
+    "project_id": "summit-climb",
+    "storage_bucket": "summit-climb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:501103284911:android:190906466028f32cb73a5a",
+        "android_client_info": {
+          "package_name": "com.example.summit_climb"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB68e4YGkr_3CWobxhKBe1f7pJpZGQw4LA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
