@@ -1,6 +1,9 @@
 package com.example.summit_climb
+import com.example.summit_climb.data.NotificationRepository
+import com.example.summit_climb.data.FirestoreNotificationRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlin.getValue
 
 class AppContainer {
     private val auth = FirebaseAuth.getInstance()
@@ -15,6 +18,7 @@ class AppContainer {
     // val campsiteRepository: CampsiteRepository = FirestoreCampsiteRepository(firestore)
     // val lotteryRepository: LotteryRepository = FirestoreLotteryRepository(firestore)
     // val reservationRepository: ReservationRepository = FirestoreReservationRepository(firestore)
-    // val notificationRepository: NotificationRepository = FirestoreNotificationRepository(firestore)
-
+    val notificationRepository: NotificationRepository by lazy {
+        FirestoreNotificationRepository(firestore)
+    }
 }

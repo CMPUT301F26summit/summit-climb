@@ -1,11 +1,11 @@
 package com.example.summit_climb.model
 
-// Purpose: the data for one notification.
+// Purpose: the data for one notification, saved in the Firestore "notifications"
 // Types:
-//    - Lottery_win = "You won the lottery!"
-//    - Lottery_loss = "You lost the lottery."
-//    - Reservation_update: "Reservation for {campsite} is confirmed."
-//    - Message: "{Campsite_owner} sent a message."
+//    - LOTTERY_WIN = "You won the lottery!"
+//    - LOTTERY_LOSS = "You lost the lottery."
+//    - RESERVATION_UPDATE: "Reservation for {campsite} is confirmed."
+//    - MESSAGE: "{Campsite_owner} sent a message."
 //  It is saved in the Firestore "notifications" collection.
 //  Known Problems: None yet.
 
