@@ -3,7 +3,6 @@ import com.example.summit_climb.data.NotificationRepository
 import com.example.summit_climb.data.FirestoreNotificationRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlin.getValue
 
 class AppContainer {
     private val auth = FirebaseAuth.getInstance()

@@ -17,7 +17,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val container = AppContainer(applicationContext)
+        val container = AppContainer()
 
         setContent {
             SummitclimbTheme {

@@ -7,9 +7,9 @@ package com.example.summit_climb.model
 //    - RESERVATION_UPDATE: "Reservation for {campsite} is confirmed."
 //    - MESSAGE: "{Campsite_owner} sent a message."
 //  It is saved in the Firestore "notifications" collection.
-//  Known Problems: None yet.
 
-/** The different kinds of notification. Lets Admin filter them by kind. */
+
+/** The different kinds of notification. Lets Admin filter them by kind for later */
 enum class NotificationType {
     LOTTERY_WIN,            // the user won the lottery
     LOTTERY_LOSS,           // the user lost the lottery
