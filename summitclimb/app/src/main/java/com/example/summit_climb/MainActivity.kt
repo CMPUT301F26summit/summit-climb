@@ -1,28 +1,41 @@
 package com.example.summit_climb
 
+import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.mutableStateListOf
-import com.example.summit_climb.model.Notification
-import com.example.summit_climb.data.NotificationRepository
-import com.example.summit_climb.model.NotificationType
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.example.summit_climb.ui.theme.SummitclimbTheme
-import com.google.firebase.firestore.FirebaseFirestore
 
 class MainActivity : ComponentActivity() {
+
+    // the screen a tapped notification wants to open (null = none)
+    private var pendingScreen by mutableStateOf<String?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
         val container = AppContainer()
 
+        pendingScreen = intent?.getStringExtra(SystemNotifier.EXTRA_SCREEN)
+
         setContent {
             SummitclimbTheme {
-                    AppNavigation(container)
+                RequestNotificationPermission()  // temporary: need to test
+                AppNavigation(container)
             }
         }
     }
+
+    // called when a notification is tapped while the app is already open
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        pendingScreen = intent.getStringExtra(SystemNotifier.EXTRA_SCREEN)
+    }
+
 }
