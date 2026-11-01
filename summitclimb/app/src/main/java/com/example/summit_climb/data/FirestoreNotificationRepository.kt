@@ -4,6 +4,8 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import com.example.summit_climb.model.Notification
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
 
 // Purpose: saves and loads notifications using the Firestore "notifications" collection.
 // Known problems:
@@ -28,6 +30,7 @@ class FirestoreNotificationRepository(
     // runs once when the repository is created, starts watching Firestore
     init {
         notificationsRef.addSnapshotListener { snapshot, error ->
+
             // something went wrong: print the error to Logcat and stop
             if (error != null) {
                 Log.e("NotificationRepo", "Listen failed", error)
@@ -35,7 +38,11 @@ class FirestoreNotificationRepository(
             }
             // otherwise replace local copy with the newest data from Firestore
             if (snapshot != null) {
-                val fresh = snapshot.toObjects(Notification::class.java)
+                val fresh = snapshot.documents.mapNotNull { document ->
+                    document.toObject(Notification::class.java)
+                        ?.copy(id = document.id)
+                }
+
                 _notifications.clear()
                 _notifications.addAll(fresh)
             }
@@ -64,4 +71,32 @@ class FirestoreNotificationRepository(
         _notifications
             .filter { it.senderId == senderId }         // only notifications this person sent
             .sortedByDescending { it.timestamp }        // newest at the top
+
+    /** listens for one user's notifications in real time */
+    override fun listenToUser(userId: String, onUpdate: (List<Notification>) -> Unit): () -> Unit {
+        val listener: ListenerRegistration = notificationsRef
+            .whereEqualTo("recipientId", userId)
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, error ->
+
+                if (error != null) {
+                    Log.e("NotificationRepo", "User notification listener failed", error)
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null) {
+                    val userNotifications = snapshot.documents.mapNotNull { document ->
+                        document.toObject(Notification::class.java)
+                            ?.copy(id = document.id)
+                    }
+
+                    onUpdate(userNotifications)
+                }
+            }
+
+        // return a function that stops listening
+        return {
+            listener.remove()
+        }
+    }
 }
