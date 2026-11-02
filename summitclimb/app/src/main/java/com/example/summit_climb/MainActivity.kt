@@ -21,21 +21,11 @@ class MainActivity : ComponentActivity() {
 
         val container = AppContainer()
 
-        pendingScreen = intent?.getStringExtra(SystemNotifier.EXTRA_SCREEN)
-
         setContent {
             SummitclimbTheme {
-                RequestNotificationPermission()  // temporary: need to test
                 AppNavigation(container)
             }
         }
-    }
-
-    // called when a notification is tapped while the app is already open
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        setIntent(intent)
-        pendingScreen = intent.getStringExtra(SystemNotifier.EXTRA_SCREEN)
     }
 
 }

@@ -19,4 +19,13 @@ interface NotificationRepository {
 
     /** notifications sent by one person (a campsite owner), newest first */
     fun sentBy(senderId: String): List<Notification>
+
+    /** listens for notifications belonging to one use
+     *  calls onUpdate whenever the user's notification change
+     *  returns a function that stops the listener
+     */
+    fun listenToUser(
+        userId: String,
+        onUpdate: (List<Notification>) -> Unit
+    ): () -> Unit
 }

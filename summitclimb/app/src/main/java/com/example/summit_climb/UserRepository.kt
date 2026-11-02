@@ -1,4 +1,4 @@
-package com.example.summit_climb
+/** package com.example.summit_climb
 
 import androidx.compose.runtime.mutableStateListOf
 import com.google.firebase.Firebase
@@ -147,3 +147,4 @@ class UserRepository {
         userRef.document(userId).update("accountStatus", status.name)
     }
 }
+ */
