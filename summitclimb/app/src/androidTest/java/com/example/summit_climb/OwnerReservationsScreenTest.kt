@@ -4,10 +4,13 @@ import androidx.compose.ui.test.assertIsDisplayed
 import org.junit.Rule
 import org.junit.Test
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithText
 import com.example.summit_climb.ui.owner.OwnerReservationsScreen
 import com.example.summit_climb.ui.owner.ReservationUiItem
 import androidx.compose.ui.test.performClick
+import org.junit.Assert.assertEquals
 
 class OwnerReservationsScreenTest {
 
@@ -98,5 +101,39 @@ class OwnerReservationsScreenTest {
         composeTestRule.onNodeWithText("Cancelled").performClick()
 
         composeTestRule.onNodeWithText("Noah Patel").assertIsDisplayed()
+    }
+
+    @Test
+    fun rejectReservationConfirmed(){
+
+        var rejectedId: String? = null
+        val sampleReservations = listOf(
+            ReservationUiItem(
+                id = "5",
+                entrantName = "Noah Patel",
+                dates = "October 20–22, 2026",
+                guests = 4,
+                status = "ACTIVE"
+            )
+        )
+        composeTestRule.setContent {
+            OwnerReservationsScreen(
+                reservations = sampleReservations,
+                onReservationClick = {},
+                onRejectClick = {rejectedId = it}
+            )
+        }
+        composeTestRule.onNodeWithText("Reject").performClick()
+        composeTestRule.onNodeWithText("Reject reservation?").assertIsDisplayed()
+        composeTestRule.onNodeWithText(
+            "Are you sure you want to reject Noah Patel's reservation for October 20–22, 2026?"
+        )
+            .assertIsDisplayed()
+
+        composeTestRule.onAllNodesWithText("Reject")
+            .onLast()
+            .performClick()
+        assertEquals("5", rejectedId)
+
     }
 }
