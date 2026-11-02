@@ -68,7 +68,7 @@ fun NotificationsScreen(
     ) {
         // summit climb background image
         Image(
-            painter = painterResource(id = R.drawable.summit_background),
+            painter = painterResource(id = R.drawable.summit_climb_no_text),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
