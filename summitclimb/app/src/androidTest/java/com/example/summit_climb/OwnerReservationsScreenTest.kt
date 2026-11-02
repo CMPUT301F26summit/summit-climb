@@ -11,6 +11,7 @@ import com.example.summit_climb.ui.owner.OwnerReservationsScreen
 import com.example.summit_climb.ui.owner.ReservationUiItem
 import androidx.compose.ui.test.performClick
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 
 class OwnerReservationsScreenTest {
 
@@ -135,5 +136,39 @@ class OwnerReservationsScreenTest {
             .performClick()
         assertEquals("5", rejectedId)
 
+    }
+
+    @Test
+
+    fun rejectReservationCancelled(){
+        var rejectedId: String? = null
+
+        val sampleReservations = listOf(
+            ReservationUiItem(
+                id = "5",
+                entrantName = "Noah Patel",
+                dates = "October 20–22, 2026",
+                guests = 4,
+                status = "ACTIVE"
+            )
+        )
+
+        composeTestRule.setContent {
+            OwnerReservationsScreen(
+                reservations = sampleReservations,
+                onReservationClick = {},
+                onRejectClick = {rejectedId = it}
+            )
+        }
+
+        // Open confirmation dialog
+        composeTestRule.onNodeWithText("Reject").performClick()
+
+        // cancel rejection
+        composeTestRule.onNodeWithText("Cancel").performClick()
+
+        composeTestRule.onNodeWithText("Reject reservation?").assertDoesNotExist()
+
+        assertNull(rejectedId)
     }
 }
