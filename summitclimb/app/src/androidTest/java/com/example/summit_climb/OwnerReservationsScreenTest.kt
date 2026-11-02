@@ -12,6 +12,10 @@ import com.example.summit_climb.ui.owner.ReservationUiItem
 import androidx.compose.ui.test.performClick
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import com.example.summit_climb.controller.OwnerReservationController
+import com.example.summit_climb.data.ReservationRepository
+import com.example.summit_climb.model.Reservation
+import com.example.summit_climb.ui.owner.OwnerReservationsFromFirestore
 
 class OwnerReservationsScreenTest {
 
@@ -170,5 +174,63 @@ class OwnerReservationsScreenTest {
         composeTestRule.onNodeWithText("Reject reservation?").assertDoesNotExist()
 
         assertNull(rejectedId)
+    }
+
+    @Test
+    fun expiredReservationDisplayedAsPast() {
+
+        val fakeRepository = object : ReservationRepository {
+
+            override fun getBookedDates(
+                campsiteId: String,
+                onSuccess: (List<Pair<String, String>>) -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess(emptyList())
+            }
+
+            override fun getReservationsByCampsite(
+                campsiteId: String,
+                onSuccess: (List<Reservation>) -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess(
+                    listOf(
+                        Reservation(
+                            id = "1",
+                            campsiteId = campsiteId,
+                            entrantName = "Test Entrant",
+                            startDate = "2025-06-01",
+                            endDate = "2025-06-03",
+                            guests = 2,
+                            status = "ACTIVE"
+                        )
+                    )
+                )
+            }
+
+            override fun rejectReservation(
+                reservationId: String,
+                onSuccess: () -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess()
+            }
+        }
+
+        val controller = OwnerReservationController(fakeRepository)
+
+        composeTestRule.setContent {
+            OwnerReservationsFromFirestore(
+                campsiteId = "test-campsite",
+                controller = controller,
+                onReservationClick = {}
+            )
+        }
+
+        composeTestRule.onNodeWithText("Past").performClick()
+
+        composeTestRule.onNodeWithText("Test Entrant")
+            .assertIsDisplayed()
     }
 }

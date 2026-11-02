@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.summit_climb.controller.OwnerReservationController
 
 // Temporary UI model until Reservation.kt is available
 data class ReservationUiItem(
@@ -20,6 +21,77 @@ data class ReservationUiItem(
     val status: String
 )
 
+@Composable
+fun OwnerReservationsFromFirestore(
+    campsiteId: String,
+    controller: OwnerReservationController,
+    onReservationClick: (String) -> Unit
+) {
+    var reservations by remember { mutableStateOf(emptyList<ReservationUiItem>()) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var loading by remember { mutableStateOf(true) }
+
+    fun loadReservations() {
+        loading = true
+        error = null
+
+        controller.getReservationsByCampsite(
+            campsiteId = campsiteId,
+            onSuccess = {result ->
+                reservations = result.map { reservation ->
+                    ReservationUiItem(
+                        id = reservation.id,
+                        entrantName = reservation.entrantName,
+                        dates = "${reservation.startDate} - ${reservation.endDate}",
+                        guests = reservation.guests,
+                        status = if (
+                            reservation.status == "ACTIVE" &&
+                            reservation.endDate < java.text.SimpleDateFormat(
+                                "yyyy-MM-dd",
+                                java.util.Locale.US
+                            ).format(java.util.Date())
+                        ){
+                            "COMPLETED"
+                        } else {
+                            reservation.status
+                        }
+                    )
+                }
+                loading = false
+            },
+            onFailure = { exception ->
+                error = exception.message
+                loading = false
+            }
+        )
+    }
+    LaunchedEffect(campsiteId) { loadReservations() }
+
+    Column {
+        if (loading) {
+            Text("Loading reservations...")
+        }
+        else if (error != null) {
+            Text("Error: $error")
+        }
+
+        if (!loading && error == null) {
+            OwnerReservationsScreen(
+                reservations = reservations,
+                onReservationClick = onReservationClick,
+                onRejectClick = { reservationId ->
+                    controller.rejectReservation(
+                        reservationId = reservationId,
+                        onSuccess = { loadReservations() },
+                        onFailure = { exception ->
+                            error = exception.message ?: "Could not reject reservation"
+                        }
+                    )
+                }
+            )
+        }
+    }
+}
 @Composable
 fun OwnerReservationsScreen(
     reservations: List<ReservationUiItem>,

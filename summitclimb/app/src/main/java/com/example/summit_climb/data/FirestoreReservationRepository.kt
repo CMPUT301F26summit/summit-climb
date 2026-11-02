@@ -47,8 +47,9 @@ class FirestoreReservationRepository(
             .addOnSuccessListener { querySnapshot ->
                 try {
                     val reservations = querySnapshot.documents.map { document ->
-                        document.toObject(Reservation::class.java)
+                        val reservation = document.toObject(Reservation::class.java)
                             ?: throw IllegalStateException("Missing reservation data")
+                        reservation.copy(id = document.id)
                     }
                     onSuccess(reservations)
 
