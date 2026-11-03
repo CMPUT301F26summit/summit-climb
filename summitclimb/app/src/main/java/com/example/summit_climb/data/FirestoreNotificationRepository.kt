@@ -61,6 +61,18 @@ class FirestoreNotificationRepository(
         notificationsRef.document(notificationId).update("read", true)
     }
 
+    /** one user's inbox, newest first */
+    override fun forUser(userId: String): List<Notification> =
+        _notifications
+            .filter { it.recipientId == userId }        // only notifications sent to this user
+            .sortedByDescending { it.timestamp }        // newest at the top
+
+    /** notifications sent by one person, newest first */
+    override fun sentBy(senderId: String): List<Notification> =
+        _notifications
+            .filter { it.senderId == senderId }         // only notifications this person sent
+            .sortedByDescending { it.timestamp }        // newest at the top
+
     /** watches only this user's notifications and reports each change as it happens */
     override fun listenToUser(
         userId: String,
