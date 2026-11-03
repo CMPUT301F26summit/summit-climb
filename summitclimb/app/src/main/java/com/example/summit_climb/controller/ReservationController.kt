@@ -30,4 +30,34 @@ class ReservationController(
             return start1 < end2 && start2 < end1
         }
     }
+
+    fun createReservation(
+        campsiteId: String,
+        entrantId: String,
+        entrantName: String,
+        startDate: String,
+        endDate: String,
+        guests: Int,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        repository.createReservation(
+            campsiteId,
+            entrantId,
+            entrantName,
+            startDate,
+            endDate,
+            guests,
+            onSuccess,
+            onFailure
+        )
+    }
+
+    fun cancelReservation(
+        reservationId: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        repository.cancelReservation(reservationId, onSuccess, onFailure)
+    }
 }
