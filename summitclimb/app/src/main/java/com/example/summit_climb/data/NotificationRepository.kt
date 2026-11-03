@@ -26,6 +26,8 @@ interface NotificationRepository {
      */
     fun listenToUser(
         userId: String,
-        onUpdate: (List<Notification>) -> Unit
+        onAdded: (Notification) -> Unit,
+        onModified: (Notification) -> Unit,
+        onRemoved: (Notification) -> Unit
     ): () -> Unit
 }

@@ -1,4 +1,5 @@
 package com.example.summit_climb
+import com.example.summit_climb.controller.NotificationController
 import com.example.summit_climb.data.NotificationRepository
 import com.example.summit_climb.data.FirestoreNotificationRepository
 import com.google.firebase.auth.FirebaseAuth
@@ -19,5 +20,8 @@ class AppContainer {
     // val reservationRepository: ReservationRepository = FirestoreReservationRepository(firestore)
     val notificationRepository: NotificationRepository by lazy {
         FirestoreNotificationRepository(firestore)
+    }
+    val notificationController: NotificationRepository by lazy {
+        NotificationController(notificationRepository) { currUserId }
     }
 }

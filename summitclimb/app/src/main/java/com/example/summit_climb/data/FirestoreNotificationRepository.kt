@@ -3,6 +3,7 @@ package com.example.summit_climb.data
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import com.example.summit_climb.model.Notification
+import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
@@ -72,31 +73,32 @@ class FirestoreNotificationRepository(
             .filter { it.senderId == senderId }         // only notifications this person sent
             .sortedByDescending { it.timestamp }        // newest at the top
 
-    /** listens for one user's notifications in real time */
-    override fun listenToUser(userId: String, onUpdate: (List<Notification>) -> Unit): () -> Unit {
-        val listener: ListenerRegistration = notificationsRef
-            .whereEqualTo("recipientId", userId)
-            .orderBy("timestamp", Query.Direction.DESCENDING)
+    /** watches only this user's notifications and reports each change as it happens */
+    override fun listenToUser(
+        userId: String,
+        onAdded: (Notification) -> Unit,
+        onModified: (Notification) -> Unit,
+        onRemoved: (Notification) -> Unit
+    ): () -> Unit {
+        val registration = notificationsRef
+            .whereEqualTo("recipientId", userId)   // Firestore only sends this user's notifications
             .addSnapshotListener { snapshot, error ->
-
                 if (error != null) {
-                    Log.e("NotificationRepo", "User notification listener failed", error)
+                    Log.e("NotificationRepo", "Listen failed", error)
                     return@addSnapshotListener
                 }
+                if (snapshot == null) return@addSnapshotListener
 
-                if (snapshot != null) {
-                    val userNotifications = snapshot.documents.mapNotNull { document ->
-                        document.toObject(Notification::class.java)
-                            ?.copy(id = document.id)
+                // only the documents that changed, not the whole collection
+                for (change in snapshot.documentChanges) {
+                    val notification = change.document.toObject(Notification::class.java)
+                    when (change.type) {
+                        DocumentChange.Type.ADDED -> onAdded(notification)
+                        DocumentChange.Type.MODIFIED -> onModified(notification)
+                        DocumentChange.Type.REMOVED -> onRemoved(notification)
                     }
-
-                    onUpdate(userNotifications)
                 }
             }
-
-        // return a function that stops listening
-        return {
-            listener.remove()
-        }
+        return { registration.remove() }
     }
 }
