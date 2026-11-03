@@ -43,6 +43,9 @@ import androidx.compose.ui.unit.sp
 import com.example.summit_climb.R
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 
 // Summit Climb colours
 private val BackgroundBlue = Color(0xFFEAF5FA)
@@ -52,20 +55,14 @@ private val White = Color(0xFFFFFFFF)
 private val SecondaryText = Color(0xFF71818A)
 private val Orange = Color(0xFFE99A3D)
 
+/** Shows the logged-in user's notifications. */
 @Composable
 fun NotificationsScreen(
     controller: NotificationController,
     navController: NavController
 ) {
-    DisposableEffect(controller) {
-        onDispose {
-            controller.stopListening()
-        }
-    }
+    Box(modifier = Modifier.fillMaxSize()) {
 
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
         // summit climb background image
         Image(
             painter = painterResource(id = R.drawable.summit_climb_no_text),
@@ -73,85 +70,93 @@ fun NotificationsScreen(
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
-    }
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .padding(horizontal = 20.dp)
-    ) {
 
-        // back button
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(top = 8.dp, bottom = 20.dp)
+        // the whole screen is one list, so everything scrolls together
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding(),
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            IconButton(
-                onClick = {
-                    navController.popBackStack()
+
+            // back button
+            item {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 8.dp)
+                ) {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = DarkTeal
+                        )
+                    }
+                    Text(
+                        text = "Back",
+                        color = DarkTeal,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.clickable { navController.popBackStack() }
+                    )
                 }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Back",
-                    tint = DarkTeal
-                )
             }
 
-            Text(
-                text = "Back",
-                color = DarkTeal,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.clickable {
-                    navController.popBackStack()
+            // heading, unread count, and the temporary test button
+            item {
+                Column {
+                    Text(
+                        text = "Notifications",
+                        style = MaterialTheme.typography.headlineLarge.copy(
+                            fontSize = 42.sp,
+                            fontWeight = FontWeight.ExtraBold
+                        ),
+                        color = DarkTeal
+                    )
+                    Text(
+                        text = "${controller.unreadCount} unread",
+                        color = SecondaryText,
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        modifier = Modifier.padding(top = 6.dp, bottom = 12.dp)
+                    )
+
+                    // TEMPORARY: sends three sample notifications ==> remove before the pull request
+                    Button(
+                        onClick = { controller.sendTestNotifications() },
+                        colors = ButtonDefaults.buttonColors(containerColor = Orange)
+                    ) {
+                        Text("Send test notifications")
+                    }
                 }
-            )
-        }
+            }
 
-        // Screen heading
-        Text(
-            text = "Notifications",
-            style = MaterialTheme.typography.headlineLarge.copy(
-                fontSize = 42.sp,
-                fontWeight = FontWeight.ExtraBold
-            ),
-            color = DarkTeal
-        )
-
-        Text(
-            text = "${controller.unreadCount} unread",
-            color = SecondaryText,
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
-            ),
-            modifier = Modifier.padding(top = 6.dp, bottom = 20.dp)
-        )
-
-        // Notification list
-        if (controller.notifications.isEmpty()) {
-
-            Text(
-                text = "You don't have any notifications yet.",
-                color = DarkTeal,
-                modifier = Modifier.padding(top = 12.dp)
-            )
-
-        } else {
-
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
+            // the notifications
+            if (controller.notifications.isEmpty()) {
+                item {
+                    Text(
+                        text = "You don't have any notifications yet.",
+                        color = DarkTeal,
+                        modifier = Modifier.padding(top = 12.dp)
+                    )
+                }
+            } else {
                 items(
                     items = controller.notifications,
                     key = { it.id }
                 ) { notification ->
-
                     NotificationCard(
                         notification = notification,
                         onClick = {
-                            if (!notification.read) {
-                                controller.markRead(notification.id)
+                            if (!notification.read) controller.markRead(notification.id)
+                            controller.destinationFor(notification)?.let { route ->
+                                // only go if that screen exists yet; otherwise the app would crash
+                                if (navController.graph.findNode(route) != null) {
+                                    navController.navigate(route)
+                                }
                             }
                         }
                     )
@@ -160,6 +165,7 @@ fun NotificationsScreen(
         }
     }
 }
+
 
 @Composable
 private fun NotificationCard(

@@ -21,7 +21,7 @@ class AppContainer {
     val notificationRepository: NotificationRepository by lazy {
         FirestoreNotificationRepository(firestore)
     }
-    val notificationController: NotificationRepository by lazy {
+    val notificationController: NotificationController by lazy {
         NotificationController(notificationRepository) { currUserId }
     }
 }

@@ -8,13 +8,13 @@ import com.example.summit_climb.data.NotificationRepository
 import com.example.summit_climb.model.Notification
 import com.example.summit_climb.model.NotificationType
 
-// Purpose: gives the notification screens to the current user's notifications,
-// the undread count, and a way to mark one as read. keeps the current user's notification
-// up to date while the app is open, tells the screens which one just arrived, and which
-// screen a tapped notification opens.
+// Purpose: keeps the current user's notifications up to date while the app is open,
+//   counts the unread ones, tells the screens which one just arrived (for the in-app
+//   pop-up), marks one as read, and works out which screen a tapped notification opens.
 // Known problems:
 //          - it does not show notifications in the phone's notification bar yet
 //          (planned for the final checkpoint).
+//          - it does not check whether the user turned notifications off
 
 class NotificationController(
     private val repository: NotificationRepository,
@@ -28,10 +28,6 @@ class NotificationController(
     val unreadCount: Int
         get() = notifications.count { !it.read }
 
-    // the notification that just arrived while the app was open (null if none to show)
-    var newest by mutableStateOf<Notification?>(null)
-        private set
-
     // stops the Firestore listener
     private var removeListener: (() -> Unit)? = null
 
@@ -43,7 +39,6 @@ class NotificationController(
         val id = currentUserId() ?: return
         removeListener?.invoke()                 // never run two listeners at once
         notifications.clear()                    // the listener adds them back from Firestore
-        newest = null
         listeningSince = System.currentTimeMillis()
         removeListener = repository.listenToUser(
             userId = id,
@@ -62,7 +57,6 @@ class NotificationController(
         removeListener?.invoke()
         removeListener = null
         notifications.clear()
-        newest = null
     }
 
     // adds one notification in the right spot so the list stays newest first
@@ -70,19 +64,9 @@ class NotificationController(
         if (notifications.any { it.id == notification.id }) return   // never add twice
         val index = notifications.indexOfFirst { it.timestamp < notification.timestamp }
         if (index == -1) notifications.add(notification) else notifications.add(index, notification)
-
-        // a new unread one that arrived while the app is open gets the pop-up
-        if (!notification.read && notification.timestamp > listeningSince) {
-            newest = notification
-        }
     }
 
-    /** hides the pop-up */
-    fun dismissBanner() {
-        newest = null
-    }
-
-    // marks a function as read
+    // marks one notification as read
     fun markRead(notificationId: String) {
         repository.markRead(notificationId)
     }
@@ -90,8 +74,8 @@ class NotificationController(
     /** the route of the screen this notification opens, or null to stay where we are */
     fun destinationFor(notification: Notification): String? = when (notification.type) {
         NotificationType.LOTTERY_WIN,
-        NotificationType.LOTTERY_LOSS -> "myLotteries"
-        NotificationType.RESERVATION_UPDATE -> "myReservations"
+        NotificationType.LOTTERY_LOSS -> "entrantLotteries"
+        NotificationType.RESERVATION_UPDATE -> null   // set once a My Reservations route exists
         NotificationType.MESSAGE -> null
     }
 
