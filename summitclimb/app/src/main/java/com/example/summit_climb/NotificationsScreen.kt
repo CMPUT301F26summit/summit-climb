@@ -174,7 +174,7 @@ private fun NotificationCard(
 ) {
     val header = when (notification.type) {
         NotificationType.LOTTERY_WIN -> "You won the lottery!"
-        NotificationType.LOTTERY_LOSS -> "You lost the lottery."
+        NotificationType.LOTTERY_LOSS -> "Lottery Not Selected"
         NotificationType.RESERVATION_UPDATE -> "Reservation Notice"
         NotificationType.MESSAGE -> "New Message"
 
