@@ -1,5 +1,7 @@
 package com.example.summit_climb.model
 
+// Purpose: the data for one notification, saved in the Firestore "notifications."
+
 /**
  * One notification sent to one user.
  *
@@ -29,16 +31,16 @@ data class Notification(
     val read: Boolean = false
 )
 
-// Purpose: the different kinds of notifications, saved in the Firestore "notifications"
-// Types:
-//    - LOTTERY_WIN = "You won the lottery!"
-//    - LOTTERY_LOSS = "You lost the lottery."
-//    - RESERVATION_UPDATE: "Reservation for {campsite} is confirmed."
-//    - MESSAGE: "{Campsite_owner} sent a message."
-//  It is saved in the Firestore "notifications" collection.
 
 
-/** The different kinds of notification. Lets Admin filter them by kind for later */
+/** The different kinds of notification. Lets Admin filter them by kind for later
+ * // Types:
+ * //    - LOTTERY_WIN = "You won the lottery!"
+ * //    - LOTTERY_LOSS = "You lost the lottery."
+ * //    - RESERVATION_UPDATE: "Reservation for {campsite} is confirmed."
+ * //    - MESSAGE: "{Campsite_owner} sent a message."
+ * //  It is saved in the Firestore "notifications" collection.
+ * */
 enum class NotificationType {
     LOTTERY_WIN,            // the user won the lottery
     LOTTERY_LOSS,           // the user lost the lottery
