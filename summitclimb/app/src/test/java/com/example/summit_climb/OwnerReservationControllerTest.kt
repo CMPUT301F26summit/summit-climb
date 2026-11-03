@@ -53,6 +53,14 @@ class OwnerReservationControllerTest {
             ) {
                 onSuccess()
             }
+
+            override fun cancelReservation(
+                reservationId: String,
+                onSuccess: () -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess()
+            }
         }
 
         val controller = OwnerReservationController(fakeRepository)
@@ -108,6 +116,14 @@ class OwnerReservationControllerTest {
             ) {
                 onSuccess()
             }
+
+            override fun cancelReservation(
+                reservationId: String,
+                onSuccess: () -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess()
+            }
         }
 
         val controller = OwnerReservationController(fakeRepository)
@@ -120,5 +136,6 @@ class OwnerReservationControllerTest {
 
         assertTrue(failureCalled)
     }
+
 
 }
