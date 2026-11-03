@@ -40,6 +40,19 @@ class OwnerReservationControllerTest {
             ) {
                 onSuccess()
             }
+
+            override fun createReservation(
+                campsiteId: String,
+                entrantId: String,
+                entrantName: String,
+                startDate: String,
+                endDate: String,
+                guests: Int,
+                onSuccess: () -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess()
+            }
         }
 
         val controller = OwnerReservationController(fakeRepository)
@@ -82,6 +95,19 @@ class OwnerReservationControllerTest {
             ) {
                 onSuccess()
             }
+
+            override fun createReservation(
+                campsiteId: String,
+                entrantId: String,
+                entrantName: String,
+                startDate: String,
+                endDate: String,
+                guests: Int,
+                onSuccess: () -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess()
+            }
         }
 
         val controller = OwnerReservationController(fakeRepository)
@@ -94,4 +120,5 @@ class OwnerReservationControllerTest {
 
         assertTrue(failureCalled)
     }
+
 }

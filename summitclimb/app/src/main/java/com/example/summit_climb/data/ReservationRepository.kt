@@ -22,5 +22,20 @@ interface ReservationRepository {
         onFailure: (Exception) -> Unit
     )
 
+    fun createReservation(
+        campsiteId: String,
+        entrantId: String,
+        entrantName: String,
+        startDate: String,
+        endDate: String,
+        guests: Int,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    )
 
+    fun cancelReservation(
+        reservationId: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    )
 }
