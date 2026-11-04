@@ -56,4 +56,6 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
     implementation("androidx.navigation:navigation-compose:2.10.2")
     implementation("com.google.firebase:firebase-auth")
+    implementation(libs.zxing.core)
+    implementation(libs.play.services.code.scanner)
 }
