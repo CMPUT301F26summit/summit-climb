@@ -1,5 +1,6 @@
 package com.example.summit_climb
 
+import com.example.summit_climb.controller.ProfileController
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box

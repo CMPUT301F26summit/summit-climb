@@ -1,5 +1,6 @@
-package com.example.summit_climb
-
+package com.example.summit_climb.controller
+import com.example.summit_climb.User
+import com.example.summit_climb.UserRepository
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.compose.runtime.getValue
@@ -8,7 +9,7 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 
 class ProfileController(
-    private val userRepo: UserRepository = UserRepository() ,
+    private val repository: UserRepository = UserRepository() ,
 ) : ViewModel() {
 
     var currentUser by mutableStateOf<User?>(null)
@@ -35,7 +36,7 @@ class ProfileController(
 
     fun loadProfile() {
         val uid = Firebase.auth.currentUser?.uid ?: return
-        userRepo.getUser(uid) { details ->
+        repository.getUser(uid) { details ->
             currentUser = details
             fillDetails(details)
         }
@@ -53,7 +54,7 @@ class ProfileController(
         user.name = name
         user.email = email
         user.phoneNumber = phone
-        userRepo.saveProfile(user)
+        repository.saveProfile(user)
     }
 
     fun deleteProfile() {
@@ -62,7 +63,7 @@ class ProfileController(
 
         firebaseAccount.delete()
             .addOnSuccessListener {
-                userRepo.deleteUser(user)
+                repository.deleteUser(user)
                 currentUser = null
                 deleteStatus = true
             }
@@ -72,7 +73,7 @@ class ProfileController(
         val user = currentUser ?: return
         notificationsStatus = on
         user.notificationsOptedOut = !on
-        userRepo.updateNotificationOpt(user.userId, !on)
+        repository.updateNotificationOpt(user.userId, !on)
     }
 
 }
