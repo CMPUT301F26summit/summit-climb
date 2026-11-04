@@ -24,4 +24,6 @@ class AppContainer {
     val notificationController: NotificationController by lazy {
         NotificationController(notificationRepository) { currUserId }
     }
+
+
 }
