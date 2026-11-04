@@ -17,7 +17,7 @@ class ImageService(
 ) {
 
     /**
-     * uploads an image picked from the phone into a folder (e.g. "campsites", "profiles")
+     * uploads an image picked from the phone into a folder and also
      * calls onDone with the image's download URL, or null if the upload failed
      */
     fun upload(imageUri: Uri, folder: String, onDone: (String?) -> Unit) {
@@ -32,8 +32,8 @@ class ImageService(
                         onDone(null)
                     }
             }
-            .addOnFailureListener { e ->
-                Log.e("ImageService", "Upload failed", e)
+            .addOnFailureListener {
+                e -> Log.e("ImageService", "Upload failed", e)
                 onDone(null)
             }
     }
@@ -46,7 +46,7 @@ class ImageService(
             return
         }
         storage.getReferenceFromUrl(imageUrl).delete()
-            .addOnSuccessListener { onDone(true) }
+            .addOnSuccessListener {onDone(true)}
             .addOnFailureListener {
                 e -> Log.e("ImageService", "Delete failed", e)
                 onDone(false)
