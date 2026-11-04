@@ -14,11 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,30 +28,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ButtonDefaults.shape
-import androidx.compose.material3.CheckboxDefaults.colors
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.navigation.compose.rememberNavController
-
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
-fun ProfileActivity(
+fun ProfileScreen(
     navController: NavController,
-    name: String,
-    email: String,
-    phone: String
+    controller: ProfileController = viewModel()
 ) {
-    var nameInput by remember(name) { mutableStateOf(name) }
-    var emailInput by remember(email) { mutableStateOf(email) }
-    var phoneInput by remember(phone) { mutableStateOf(phone) }
-    var notificationStatus by remember { mutableStateOf(true) }
-
 
     Column(
         modifier = Modifier
@@ -96,7 +79,7 @@ fun ProfileActivity(
             Spacer(Modifier.height(10.dp))
 
             Text(
-                text = name,
+                text = controller.currentUser?.name.orEmpty(),
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Bold,
                 fontSize = 22.sp,
@@ -139,31 +122,31 @@ fun ProfileActivity(
                 )
 
                 OutlinedTextField(
-                    value = nameInput,
-                    onValueChange = { nameInput = it },
+                    value = controller.name,
+                    onValueChange = { controller.name = it },
                     label = { Text("Name") },
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 OutlinedTextField(
-                    value = emailInput,
-                    onValueChange = { emailInput = it },
+                    value = controller.email,
+                    onValueChange = { controller.email = it },
                     label = { Text("Email") },
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 OutlinedTextField(
-                    value = phoneInput,
-                    onValueChange = { phoneInput = it },
+                    value = controller.phone,
+                    onValueChange = { controller.phone = it },
                     label = { Text("Phone Number") },
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Button(
-                    onClick = { /* save profile function */ },
+                    onClick = { controller.saveProfile() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(46.dp),
@@ -205,14 +188,14 @@ fun ProfileActivity(
                         )
                     }
                     Switch(
-                        checked = notificationStatus,
-                        onCheckedChange = { notificationStatus = it }
+                        checked = controller.notificationsStatus,
+                        onCheckedChange = { controller.setNotifications(it) }
                     )
                 }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { /* show policy */ }
+                        .clickable { navController.navigate("policies") }
                         .height(56.dp)
                         .padding(horizontal = 20.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -230,7 +213,7 @@ fun ProfileActivity(
         Spacer(Modifier.height(20.dp))
 
         Button(
-            onClick = { /* delete account */ },
+            onClick = { controller.deleteProfile() },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
