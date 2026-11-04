@@ -16,8 +16,41 @@ import com.example.summit_climb.controller.OwnerReservationController
 import com.example.summit_climb.data.ReservationRepository
 import com.example.summit_climb.model.Reservation
 import com.example.summit_climb.ui.owner.OwnerReservationsFromFirestore
+import com.example.summit_climb.data.NotificationRepository
+import com.example.summit_climb.model.Notification
 
 class OwnerReservationsScreenTest {
+
+    private class FakeNotificationRepository : NotificationRepository {
+
+        override val notifications: List<Notification> = emptyList()
+
+        val sentNotifications = mutableListOf<Notification>()
+
+        override fun send(notification: Notification) {
+            sentNotifications.add(notification)
+        }
+
+        override fun markRead(notificationId: String) {
+        }
+
+        override fun forUser(userId: String): List<Notification> {
+            return sentNotifications.filter { it.recipientId == userId }
+        }
+
+        override fun sentBy(senderId: String): List<Notification> {
+            return sentNotifications.filter { it.senderId == senderId }
+        }
+
+        override fun listenToUser(
+            userId: String,
+            onAdded: (Notification) -> Unit,
+            onModified: (Notification) -> Unit,
+            onRemoved: (Notification) -> Unit
+        ): () -> Unit {
+            return {}
+        }
+    }
 
     @get:Rule
     val composeTestRule = createComposeRule()
@@ -125,7 +158,7 @@ class OwnerReservationsScreenTest {
             OwnerReservationsScreen(
                 reservations = sampleReservations,
                 onReservationClick = {},
-                onRejectClick = {rejectedId = it}
+                onRejectClick = {reservation -> rejectedId = reservation.id}
             )
         }
         composeTestRule.onNodeWithText("Reject").performClick()
@@ -161,7 +194,7 @@ class OwnerReservationsScreenTest {
             OwnerReservationsScreen(
                 reservations = sampleReservations,
                 onReservationClick = {},
-                onRejectClick = {rejectedId = it}
+                onRejectClick = {reservation-> rejectedId = reservation.id}
             )
         }
 
@@ -229,9 +262,17 @@ class OwnerReservationsScreenTest {
             {
                 onSuccess()
             }
+
+            override fun cancelReservation(
+                reservationId: String,
+                onSuccess: () -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess()
+            }
         }
 
-        val controller = OwnerReservationController(fakeRepository)
+        val controller = OwnerReservationController(fakeRepository, FakeNotificationRepository())
 
         composeTestRule.setContent {
             OwnerReservationsFromFirestore(

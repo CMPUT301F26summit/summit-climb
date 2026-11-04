@@ -18,7 +18,9 @@ data class ReservationUiItem(
     val entrantName: String,
     val dates: String,
     val guests: Int,
-    val status: String
+    val status: String,
+    val entrantId: String = "",
+    val campsiteId: String = ""
 )
 
 @Composable
@@ -44,6 +46,9 @@ fun OwnerReservationsFromFirestore(
                         entrantName = reservation.entrantName,
                         dates = "${reservation.startDate} - ${reservation.endDate}",
                         guests = reservation.guests,
+                        entrantId = reservation.entrantId,
+                        campsiteId = reservation.campsiteId,
+
                         status = if (
                             reservation.status == "ACTIVE" &&
                             reservation.endDate < java.text.SimpleDateFormat(
@@ -79,9 +84,12 @@ fun OwnerReservationsFromFirestore(
             OwnerReservationsScreen(
                 reservations = reservations,
                 onReservationClick = onReservationClick,
-                onRejectClick = { reservationId ->
+                onRejectClick = { reservation ->
                     controller.rejectReservation(
-                        reservationId = reservationId,
+                        reservationId = reservation.id,
+                        entrantId = reservation.entrantId,
+                        campsiteId = reservation.campsiteId,
+
                         onSuccess = { loadReservations() },
                         onFailure = { exception ->
                             error = exception.message ?: "Could not reject reservation"
@@ -96,7 +104,7 @@ fun OwnerReservationsFromFirestore(
 fun OwnerReservationsScreen(
     reservations: List<ReservationUiItem>,
     onReservationClick: (String) -> Unit,
-    onRejectClick: (String) -> Unit
+    onRejectClick: (ReservationUiItem) -> Unit
 ) {
     val tabs = listOf("Active", "Past", "Cancelled")
 
@@ -196,7 +204,7 @@ fun OwnerReservationsScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        onRejectClick(reservation.id)
+                        onRejectClick(reservation)
                         reservationToReject = null
                     }
                 ) {
