@@ -19,7 +19,6 @@ enum class ListingStatus{
  * The filter an entrant sets on the campsite list screen.
  * Leave a field empty (or [guests] at 0) to not filter by it.
  * Dates use the format `yyyy-MM-dd`, for example `2026-11-03`.
- *
  * Example: campsites in Jasper for 4 people from Nov 3 to Nov 5, 2026:
  * val filter = CampsiteFilter(
  *     location = "Jasper",
@@ -96,6 +95,13 @@ data class Campsite(
     var listingStatus: ListingStatus = ListingStatus.PENDING,
     var adminNotes: String = ""
 ) {
+    /**
+     * Checks whether the campsite's location contains the given text.
+     * Not case sensitive, so `"jasper"` matches `"Jasper, AB"`.
+     *
+     * @param searchLocation:  location text to look for. Empty matches every campsite.
+     * @return `true` if [location] contains [searchLocation] or [searchLocation] is empty.
+     */
     fun locationMatch(searchLocation: String): Boolean{
         val trimSearch = searchLocation.trim()
         if (trimSearch.isEmpty()){
@@ -104,6 +110,18 @@ data class Campsite(
         return location.contains(trimSearch, ignoreCase = true)
     }
 
+    /**
+     * Checks whether this campsite matches a filter of location, date range and number of guests.
+     * Every part of the filter must match. Empty parts of the filter always match.
+     * Example:
+     * val campsite = Campsite(location = "Jasper, AB", maxOccupancy = 6,
+     *     availableDates = listOf("2026-11-03", "2026-11-04"))
+     * campsite.matchesFilter(CampsiteFilter(location = "jasper", guests = 4))  // true
+     * campsite.matchesFilter(CampsiteFilter(guests = 8))                       // false, too many guests
+     *
+     * @param filter: location, dates and number of guests to check.
+     * @return `true` if the location, dates and guests all match.
+     */
     fun filterMatch(filter: CampsiteFilter): Boolean{
         val locationMatched = locationMatch(filter.location)
         val available = availableBetween(filter.startDate, filter.endDate)
@@ -111,6 +129,18 @@ data class Campsite(
         return locationMatched && available && guestsFit
     }
 
+    /**
+     * Checks whether every date from [startDate] to [endDate] is free.
+     * Both dates are included. A date is free when it is in [availableDates]
+     * and not in [bookedDates].
+     * Example: with `startDate = "2026-11-03"` and `endDate = "2026-11-05"`,
+     * the dates Nov 3, 4 and 5 must all be free.
+     *
+     * @param startDate: first date, as `yyyy-MM-dd`. Empty matches every campsite.
+     * @param endDate: last date, as `yyyy-MM-dd`. Empty means only [startDate] is checked.
+     * @return `true` if every date in the range is free, or [startDate] is empty.
+     * `false` if a date is not in `yyyy-MM-dd` format or [endDate] is before [startDate].
+     */
     fun availableBetween( startDate: String, endDate: String): Boolean{
         if (startDate.isBlank()){
             return true
@@ -128,12 +158,22 @@ data class Campsite(
         return true
     }
 
+    /**
+     * Checks whether one date is open for booking and not already booked.
+     * @param date: date to check, as `yyyy-MM-dd`.
+     * @return `true` if [date] is in [availableDates] and not in [bookedDates].
+     */
     fun isDateFree(date: String): Boolean{
         val isAvailable = availableDates.contains(date)
         val isBooked = bookedDates.contains(date)
         return isAvailable && !isBooked
     }
 
+    /**
+     * Checks whether the campsite can hold the given number of guests.
+     * @param guests: number of people staying. 0 or less matches every campsite.
+     * @return `true` if [guests] is at most [maxOccupancy], or [guests] is 0 or less.
+     */
     fun fitsGuest(guests:Int): Boolean{
         if (guests <= 0){
             return true
@@ -141,6 +181,14 @@ data class Campsite(
         return guests <= maxOccupancy
     }
 
+    /**
+     * Checks whether the campsite's name, description or tags contain a search keyword.
+     * Not case sensitive, so `"LAKE"` matches the tag `"lake"`.
+     *
+     * @param keyword: word to search for. Empty matches every campsite.
+     * @return `true` if [name], [description] or one of the [tags] contains [keyword],
+     * or [keyword] is empty.
+     */
     fun keywordMatch(keyword: String): Boolean{
         val trimKeyword = keyword.trim()
         if (trimKeyword.isEmpty()){
@@ -152,6 +200,13 @@ data class Campsite(
         return matchesName || matchesDescription || matchesTag
     }
 
+    /**
+     * Saves an entrant's rating and recalculates [avgRating].
+     * Each entrant has one rating, so second rating from the same entrant replaces the first.
+     *
+     * @param entrantId: [User.userId] of the entrant rating the campsite.
+     * @param stars: rating, from 1 to 5.
+     */
     fun setRating(entrantId: String, stars: Int){
         val updatedRatings = ratings.toMutableMap()
         updatedRatings[entrantId] = stars
@@ -164,6 +219,10 @@ data class Campsite(
     }
 }
 
+/**
+ * Lists every date from [startDate] to [endDate], both included.
+ * @return the dates, or an empty list if a date isn't correctly formatted or [endDate] is before [startDate].
+ */
 private fun listDatesBetween(startDate: String, endDate: String): List<String>{
     val dateformat = "yyyy-MM-dd"
     val formatter = SimpleDateFormat(dateformat, Locale.CANADA)
@@ -185,6 +244,10 @@ private fun listDatesBetween(startDate: String, endDate: String): List<String>{
     return dates
 }
 
+/**
+ * Reads a `yyyy-MM-dd` date.
+ * @return the date, or `null` if [text] is not a valid date.
+ */
 private fun parseDateOrNull(formatter: SimpleDateFormat, text: String): Date?{
     return try{
         formatter.parse(text.trim())

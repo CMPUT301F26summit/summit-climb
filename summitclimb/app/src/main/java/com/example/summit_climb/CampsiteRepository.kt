@@ -1,6 +1,5 @@
 package com.example.summit_climb
 
-import android.media.Rating
 import androidx.compose.runtime.mutableStateListOf
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
@@ -71,13 +70,12 @@ class CampsiteRepository {
      *
      * @param rating: rating to save.
      */
-    // Uncomment when Rating has been implemented
-    //fun saveRating(rating: Rating){
-        //val campsite = getCampsite(rating.campsiteId) ?: return
-        //val updatedCampsite = campsite.copy()
-        //updatedCampsite.setRating(rating.entrantId, rating.stars)
-        //campRef.document(updatedCampsite.id).set(updatedCampsite)
-    //}
+    fun saveRating(rating: Rating){
+        val campsite = getCampsite(rating.campsiteId) ?: return
+        val updatedCampsite = campsite.copy()
+        updatedCampsite.setRating(rating.entrantId, rating.stars)
+        campRef.document(updatedCampsite.id).set(updatedCampsite)
+    }
 
     /**
      * Gets all campsites, searched by keyword and filtered by listing status. Admins use.
