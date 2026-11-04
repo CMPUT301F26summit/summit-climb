@@ -7,6 +7,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.summit_climb.ui.owner.OwnerReservationsScreen
+import com.example.summit_climb.ui.owner.WaitlistScreen
 
 
 @Composable
@@ -71,8 +73,8 @@ fun AppNavigation(container: AppContainer) {
             //composable("ownerEditCamp") { ownerEditCamp(navController) }
             //composable("ownerRegister") { ownerRegister(navController) }
             //composable("ownerListLottery"){ ownerListLottery(navController) }
-            //composable("ownerWaitlist"){ ownerWaitlist(navController) }
-            //composable("ownerActiveReserve"){ ownerActiveReserve(navController) }
+            composable("ownerWaitlist"){ WaitlistScreen() }
+            composable("ownerActiveReserve"){ OwnerReservationsScreen() }
             //composable("ownerPastReserve"){ ownerPastReserve(navController) }
             //composable("ownerCancelledReserve"){ ownerCancelledReserve(navController) }
             ////composable("ownerReserveDetails"){ ownerReserveDetails(navController) }
