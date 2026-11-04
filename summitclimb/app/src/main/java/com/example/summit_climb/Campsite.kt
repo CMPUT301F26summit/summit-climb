@@ -156,7 +156,11 @@ data class Campsite(
         val updatedRatings = ratings.toMutableMap()
         updatedRatings[entrantId] = stars
         ratings = updatedRatings
-        avgRating = ratings.values.average()
+        avgRating =
+            if (ratings.isEmpty())
+                0.0
+            else
+                ratings.values.average()
     }
 }
 
