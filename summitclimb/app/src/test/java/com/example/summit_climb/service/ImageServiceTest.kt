@@ -47,8 +47,6 @@ class ImageServiceTest {
         service = ImageService(storage)
     }
 
-    // ---------- helpers that make fake Firebase tasks ----------
-
     // a fake upload that immediately succeeds or fails
     @Suppress("UNCHECKED_CAST")
     private fun fakeUpload(succeeds: Boolean): UploadTask {
@@ -98,45 +96,45 @@ class ImageServiceTest {
 
     @Test
     fun uploadSuccessGivesBackDownloadUrl() {
-        whenever(imageRef.putFile(imageUri)).thenReturn(fakeUpload(succeeds = true))
-        whenever(imageRef.downloadUrl).thenReturn(fakeUrlTask(succeeds = true))
+        val upload = fakeUpload(succeeds = true)
+        val urlTask = fakeUrlTask(succeeds = true)
+        whenever(imageRef.putFile(imageUri)).thenReturn(upload)
+        whenever(imageRef.downloadUrl).thenReturn(urlTask)
 
         var result: String? = "not called"
-        service.upload(imageUri, "campsites") {
-            result = it
-        }
+        service.upload(imageUri, "campsites") { result = it }
 
         assertEquals(fakeUrl, result)
     }
 
     @Test
     fun uploadFailureGivesNull() {
-        whenever(imageRef.putFile(imageUri)).thenReturn(fakeUpload(succeeds = false))
+        val upload = fakeUpload(succeeds = false)
+        whenever(imageRef.putFile(imageUri)).thenReturn(upload)
 
         var result: String? = "not called"
-        service.upload(imageUri, "campsites") {
-            result = it
-        }
+        service.upload(imageUri, "campsites") { result = it }
 
         assertNull(result)
     }
 
     @Test
     fun uploadWorksButUrlFailsGivesNull() {
-        whenever(imageRef.putFile(imageUri)).thenReturn(fakeUpload(succeeds = true))
-        whenever(imageRef.downloadUrl).thenReturn(fakeUrlTask(succeeds = false))
+        val upload = fakeUpload(succeeds = true)
+        val urlTask = fakeUrlTask(succeeds = false)
+        whenever(imageRef.putFile(imageUri)).thenReturn(upload)
+        whenever(imageRef.downloadUrl).thenReturn(urlTask)
 
         var result: String? = "not called"
-        service.upload(imageUri, "campsites") {
-            result = it
-        }
+        service.upload(imageUri, "campsites") { result = it }
 
         assertNull(result)
     }
 
     @Test
     fun uploadSavesInGivenFolderAsJpg() {
-        whenever(imageRef.putFile(imageUri)).thenReturn(fakeUpload(succeeds = false))
+        val upload = fakeUpload(succeeds = false)
+        whenever(imageRef.putFile(imageUri)).thenReturn(upload)
 
         service.upload(imageUri, "campsites") {}
 
@@ -148,7 +146,8 @@ class ImageServiceTest {
 
     @Test
     fun twoUploadsGetDifferentFileNames() {
-        whenever(imageRef.putFile(imageUri)).thenReturn(fakeUpload(succeeds = false))
+        val upload = fakeUpload(succeeds = false)
+        whenever(imageRef.putFile(imageUri)).thenReturn(upload)
 
         service.upload(imageUri, "profiles") {}
         service.upload(imageUri, "profiles") {}
@@ -161,9 +160,7 @@ class ImageServiceTest {
     @Test
     fun deleteBlankUrlDoesNothingAndReportsTrue() {
         var result: Boolean? = null
-        service.delete("") {
-            result = it
-        }
+        service.delete("") { result = it }
 
         assertEquals(true, result)
         verify(storage, never()).getReferenceFromUrl(any())
@@ -171,26 +168,24 @@ class ImageServiceTest {
 
     @Test
     fun deleteSuccessGivesTrue() {
+        val deleteTask = fakeDeleteTask(succeeds = true)
         whenever(storage.getReferenceFromUrl(fakeUrl)).thenReturn(imageRef)
-        whenever(imageRef.delete()).thenReturn(fakeDeleteTask(succeeds = true))
+        whenever(imageRef.delete()).thenReturn(deleteTask)
 
         var result: Boolean? = null
-        service.delete(fakeUrl) {
-            result = it
-        }
+        service.delete(fakeUrl) { result = it }
 
         assertEquals(true, result)
     }
 
     @Test
     fun deleteFailureGivesFalse() {
+        val deleteTask = fakeDeleteTask(succeeds = false)
         whenever(storage.getReferenceFromUrl(fakeUrl)).thenReturn(imageRef)
-        whenever(imageRef.delete()).thenReturn(fakeDeleteTask(succeeds = false))
+        whenever(imageRef.delete()).thenReturn(deleteTask)
 
         var result: Boolean? = null
-        service.delete(fakeUrl) {
-            result = it
-        }
+        service.delete(fakeUrl) { result = it }
 
         assertEquals(false, result)
     }
