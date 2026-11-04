@@ -52,6 +52,7 @@ fun HomeScreen(navController: NavController, container: AppContainer){
                     auth.signInAnonymously()
                         .addOnSuccessListener {
                             userId = container.currUserId
+                            container.notificationController.startListening()
                             loginMessage = "Login successful"
                             navController.navigate("entrantCampsiteList")
                         }
