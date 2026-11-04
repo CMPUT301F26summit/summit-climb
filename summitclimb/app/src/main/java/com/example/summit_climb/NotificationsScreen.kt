@@ -123,14 +123,6 @@ fun NotificationsScreen(
                         ),
                         modifier = Modifier.padding(top = 6.dp, bottom = 12.dp)
                     )
-
-                    // TEMPORARY: sends three sample notifications ==> remove before the pull request
-                    Button(
-                        onClick = { controller.sendTestNotifications() },
-                        colors = ButtonDefaults.buttonColors(containerColor = Orange)
-                    ) {
-                        Text("Send test notifications")
-                    }
                 }
             }
 
