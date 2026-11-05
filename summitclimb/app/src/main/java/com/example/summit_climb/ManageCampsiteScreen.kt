@@ -10,11 +10,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -25,12 +27,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 
@@ -42,17 +44,23 @@ import androidx.navigation.compose.rememberNavController
 //     shows "Coming soon".
 
 // Summit Climb colours
-private val BackgroundBlue = Color(0xFFEAF5FA)
-private val DarkTeal = Color(0xFF245563)
-private val Orange = Color(0xFFE3963E)
-private val Green = Color(0xFF3B8F5A)
-private val White = Color(0xFFFFFFFF)
-private val SecondaryText = Color(0xFF71818A)
+private val black = Color.Black
+private val charcoal = Color(0xFF36454F)
+
+private val lightGreen = Color(0xFF96B38E)
+private val lightRed = Color(0xFFFF7F7F)
+private val lightOrange = Color(0xFFFFA759)
+
+private val lightBlue = Color(0xFFA6C8EB)
+private val greyBlue = Color(0xFFC9DEF3)
+
+private val white = Color.White
 
 /** The owner's menu for one campsite. */
 @Composable
 fun ManageCampsiteScreen(
     navController: NavController,
+    campsiteId: String,
     campsiteName: String,
     location: String,
     lotteryStatus: String,
@@ -71,38 +79,57 @@ fun ManageCampsiteScreen(
         }
     }
 
-    // green for an open lottery, orange for an upcoming one, grey otherwise
+    // Colour depends on the lottery status
     val statusColor = when (lotteryStatus) {
-        "Open" -> Green
-        "Upcoming" -> Orange
-        else -> SecondaryText
+        "Open", "Lottery Open" -> lightGreen
+        "Drawn", "Winners Drawn" -> lightOrange
+        "Closed", "Lottery Closed" -> lightRed
+        else -> charcoal
+    }
+
+    fun openWaitlist() {
+        if (navController.graph.findNode("ownerWaitlist/{campsiteId}") != null) {
+            navController.navigate("ownerWaitlist/$campsiteId")
+        } else {
+            Toast.makeText(context, "Coming soon", Toast.LENGTH_SHORT).show()
+        }
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundBlue)
+            .background(white)
             .statusBarsPadding()
             .navigationBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-
         // back button
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = { navController.popBackStack() }) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Back",
-                    tint = DarkTeal
-                )
-            }
+        val backButton = {
+            navController.popBackStack()
+            Unit
+        }
+
+        Row(
+            modifier = Modifier
+                .clickable(onClick = backButton)
+                .padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back Button",
+                modifier = Modifier.size(20.dp),
+                tint = charcoal
+            )
+
             Text(
                 text = "Back",
-                color = DarkTeal,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.clickable { navController.popBackStack() }
+                color = charcoal,
+                fontSize = 15.sp,
+                lineHeight = 22.sp,
+                modifier = Modifier.padding(horizontal = 8.dp)
             )
         }
 
@@ -114,17 +141,17 @@ fun ManageCampsiteScreen(
                     fontSize = 42.sp,
                     fontWeight = FontWeight.ExtraBold
                 ),
-                color = DarkTeal
+                color = black
             )
             Text(
                 text = "$campsiteName · $location",
-                color = SecondaryText,
+                color = charcoal,
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(top = 4.dp)
             )
             Text(
                 text = lotteryStatus,
-                color = White,
+                color = white,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
@@ -139,7 +166,7 @@ fun ManageCampsiteScreen(
             open("ownerActiveReserve")
         }
         MenuCard("Waitlist", "Entrants in your lottery", "$entrantCount") {
-            open("ownerWaitlist")
+            openWaitlist()
         }
         MenuCard("Sent notifications", "Messages sent to entrants", "$sentCount") {
             open("ownerSentNotifications")
@@ -163,7 +190,7 @@ private fun MenuCard(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
+        colors = CardDefaults.cardColors(containerColor = greyBlue),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
@@ -173,13 +200,13 @@ private fun MenuCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
-                    color = DarkTeal,
+                    color = black,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = subtitle,
-                    color = SecondaryText,
+                    color = charcoal,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(top = 4.dp)
                 )
@@ -187,12 +214,12 @@ private fun MenuCard(
             if (count != null) {
                 Text(
                     text = count,
-                    color = DarkTeal,
+                    color = black,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(end = 12.dp)
                 )
             }
-            Text(text = "›", color = Orange, fontSize = 28.sp)
+            Text(text = "›", color = charcoal, fontSize = 28.sp)
         }
     }
 }
@@ -202,6 +229,7 @@ private fun MenuCard(
 private fun ManageCampsitePreview() {
     ManageCampsiteScreen(
         navController = rememberNavController(),
+        campsiteId = "preview-campsite-id",
         campsiteName = "Mt. Green Camp",
         location = "Banff, AB",
         lotteryStatus = "No Lottery",

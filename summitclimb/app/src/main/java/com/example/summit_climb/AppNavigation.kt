@@ -7,6 +7,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.summit_climb.model.LotteryStatus
 
 
 @Composable
@@ -30,7 +31,8 @@ fun AppNavigation(container: AppContainer) {
             // Entrant screens (uncomment when ready to use)
 
             composable("entrantCampsiteList") {
-                EntrantCampsiteList(navController, container.notificationController) }
+                EntrantCampsiteList(navController, container.notificationController)
+            }
 
             // Notifications screen
             composable("entrantNotifications") {
@@ -57,21 +59,100 @@ fun AppNavigation(container: AppContainer) {
             //composable("ownerCampsites") { ownerCampsites(navController) }
             //composable("ownerCampDetails") { ownerCampDetails(navController) }
             composable("ownerManageCamp") {
-                // placeholders values until the owner controllers exist
-                ManageCampsiteScreen(
-                    navController = navController,
-                    campsiteName = "Mt.Green Camp",
-                    location = "Banff, AB",
-                    lotteryStatus = "No Lottery",
-                    activeReservations = 3,
-                    entrantCount = 12,
-                    sentCount = 29
-                )
+
+                // Get the currently signed-in owner's ID
+                val ownerId = container.currUserId
+
+                // Find the owner's campsite
+                val campsite = if (ownerId != null) {
+                    container.campsiteRepository.campsite.firstOrNull {
+                        it.ownerId == ownerId
+                    }
+                } else {
+                    null
+                }
+
+                // Find the lottery associated with the campsite
+                val lottery = campsite?.let { camp ->
+
+                    camp.activeLotteryId?.let { lotteryId ->
+                        container.lotteryRepository.get(lotteryId)
+                    } ?: container.lotteryRepository.forCampsite(camp.id).firstOrNull()
+
+                }
+
+                // Display the campsite information
+                if (campsite != null) {
+
+                    val status = when (lottery?.status) {
+                        LotteryStatus.OPEN -> "Open"
+                        LotteryStatus.DRAWN -> "Drawn"
+                        LotteryStatus.CLOSED -> "Closed"
+                        null -> "No Lottery"
+                    }
+
+                    ManageCampsiteScreen(
+                        navController = navController,
+                        campsiteId = campsite.id,
+                        campsiteName = campsite.name,
+                        location = campsite.location,
+                        lotteryStatus = status,
+                        activeReservations = 0,         // placeholder for now
+                        entrantCount = lottery?.entrantCount ?: 0,
+                        sentCount = 0           // placeholder for now
+                    )
+
+                } else {
+                    Text("No campsite found for this account.")
+                }
             }
             //composable("ownerEditCamp") { ownerEditCamp(navController) }
             //composable("ownerRegister") { ownerRegister(navController) }
             //composable("ownerListLottery"){ ownerListLottery(navController) }
-            //composable("ownerWaitlist"){ ownerWaitlist(navController) }
+            composable("ownerWaitlist/{campsiteId}") { backStackEntry ->
+                val campsiteId = backStackEntry.arguments
+                    ?.getString("campsiteId")
+
+                val campsite = campsiteId?.let {
+                    container.campsiteRepository.getCampsite(it)
+                }
+
+                val lottery = campsiteId?.let {
+                    container.lotteryRepository.forCampsite(it).firstOrNull()
+                }
+                if (campsite != null && lottery != null) {
+
+                    val status = when (lottery.status) {
+                        LotteryStatus.OPEN -> "Lottery Open"
+                        LotteryStatus.DRAWN -> "Winners Drawn"
+                        LotteryStatus.CLOSED -> "Lottery Closed"
+                    }
+
+                    val drawDate = if (lottery.registrationEnd > 0L) {
+                        java.text.SimpleDateFormat(
+                            "MMM dd",
+                            java.util.Locale.getDefault()
+                        ).format(java.util.Date(lottery.registrationEnd))
+                    } else {
+                        "Not scheduled"
+                    }
+
+                    WaitlistScreen(
+                        campsiteName = campsite.name,
+                        entrants = emptyList(),    // to be connected later
+                        lotteryStatus = status,
+                        entrantCount = lottery.entrantCount,
+                        winnersDrawnDate = drawDate,
+                        maxEntrants = lottery.waitlistCap,
+                        onBack = { navController.popBackStack() },
+                        onNotifyEntrants = {
+                            // to be connected later
+                        }
+                    )
+                } else {
+                    Text("Loading campsite lottery information....")
+                }
+            }
             //composable("ownerActiveReserve"){ ownerActiveReserve(navController) }
             //composable("ownerPastReserve"){ ownerPastReserve(navController) }
             //composable("ownerCancelledReserve"){ ownerCancelledReserve(navController) }
