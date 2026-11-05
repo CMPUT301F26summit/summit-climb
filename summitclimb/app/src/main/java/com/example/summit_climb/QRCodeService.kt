@@ -11,19 +11,36 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 
+/**
+ * Handles the creation of unique QR codes for each campsite
+ * Allows users to scan QR Code to access campsite details
+ */
 class QRCodeService {
-    val prefix = "summitclimb://campsite/"
+    private val linkPrefix = "summitclimb://campsite/"
 
+    /**
+     * Creates the text that is used to build campsite's unique QR code
+     * Ensures that scanned text belongs to a campsite from the app
+     *
+     * @param campsiteID: ID of the campsite
+     * @return the app's prefix with the unique ID attached
+     */
     fun campsiteQRText(campsiteID: String): String {
-        return prefix + campsiteID
+        return linkPrefix + campsiteID
     }
 
+    /**
+     * Obtains the campsite ID from the text of a scanned QR code
+     *
+     * @param text: the text read from the QR code
+     * @return the campsite ID, or null if the text or id is invalid
+     */
     fun campsiteIDFromQRText(text: String): String? {
-        if (!text.startsWith(prefix)) {
+        if (!text.startsWith(linkPrefix)) {
             return null
         }
 
-        val id =  text.removePrefix(prefix).trim()
+        val id = text.removePrefix(linkPrefix).trim()
 
         if (id.isEmpty()) {
             return null
@@ -32,6 +49,17 @@ class QRCodeService {
         return id
     }
 
+    /**
+     * This function contains lines that were created by Nishikanto Sarkar in Medium at
+     * https://medium.com/@nishikanto.abm/generating-custom-qr-codes-in-android-with-kotlin-a-technical-guide-a0adb06757d4
+     */
+
+    /**
+     * Generates a unique QR Code
+     * @param campsite: the campsite that will be linked to the code
+     * @param size: width and height of the QR code in pixels (default = 512)
+     * @return a bitmap, or null if the id or bitmap is not valid
+     */
     fun generateQRCode(campsite: Campsite, size: Int = 512): Bitmap? {
         if (campsite.id.isBlank()) {
             return null
@@ -61,11 +89,24 @@ class QRCodeService {
         return bitmap
     }
 
-    // https://developers.google.com/ml-kit/vision/barcode-scanning/code-scanner
+
+    /**
+     * This function contains lines that were created by Google Developers
+     * at https://developers.google.com/ml-kit/vision/barcode-scanning/code-scanner
+     */
+
+    /**
+     * Opens the Google Scanner so users can scan a QR Code
+     * @param context: screen the scanner opens from
+     * @param onScan: determines outcome if scanner successfully scans
+     * @param onError: provides error message if scan fails
+     * @param onCancel: determines outcome if scanner is closed before finishing
+     */
     fun scanCampsite(
         context: Context,
         onScan: (String) -> Unit,
-        onError: (String) -> Unit
+        onError: (String) -> Unit,
+        onCancel: () -> Unit = {}
     ) {
         val options = GmsBarcodeScannerOptions.Builder()
             .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
@@ -75,18 +116,13 @@ class QRCodeService {
 
         scanner.startScan()
             .addOnSuccessListener { barcode ->
-                val id = campsiteIDFromQRText(barcode.rawValue.orEmpty())
-                if (id != null) {
-                    onScan(id)
-                } else {
-                    onError("There was an error with the campsite code. Please try again")
-                }
-
+                onScan(barcode.rawValue.orEmpty())
             }
-
+            .addOnCanceledListener {
+                onCancel()
+            }
             .addOnFailureListener {
                 onError("There was an error with the scan. Please try again")
-
             }
     }
 }
