@@ -1,5 +1,7 @@
 package com.example.summit_climb
 
+import com.example.summit_climb.model.Lottery
+
 /**
  * A entrant's place on one lottery's waitlist.
  * Stored by LotteryRepository in the `entries` subcollection of the lottery,
