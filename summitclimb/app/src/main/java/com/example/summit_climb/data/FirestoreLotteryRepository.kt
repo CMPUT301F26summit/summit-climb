@@ -6,6 +6,9 @@ import com.example.summit_climb.model.Lottery
 import com.example.summit_climb.model.LotteryStatus
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import com.example.summit_climb.model.WaitlistEntry
+import com.example.summit_climb.model.WaitlistResult
+import com.google.firebase.firestore.FirebaseFirestoreException
 
 /**
  * Purpose: saves and loads lotteries using the Firestore "lotteries" collection.
@@ -16,7 +19,9 @@ import com.google.firebase.firestore.SetOptions
  */
 
 //Firestore version of LotteryRepository.
-class FirestoreLotteryRepository(db: FirebaseFirestore) : LotteryRepository{
+class FirestoreLotteryRepository(
+    private val db: FirebaseFirestore
+) : LotteryRepository {
 
     private val lotteriesRef = db.collection("lotteries")
 
@@ -48,13 +53,15 @@ class FirestoreLotteryRepository(db: FirebaseFirestore) : LotteryRepository{
         }
     }
 
-    // creates a new lottery. Firestore makes the ID
+    // ---------- lotteries ----------
+
+    /** creates a new lottery. Firestore makes the ID */
     override fun add(lottery: Lottery) {
         val doc = lotteriesRef.document()
         doc.set(lottery.copy(id = doc.id))
     }
 
-    // saves only the fields an owner can edit
+    /** saves only the fields an owner can edit */
     override fun update(lottery: Lottery) {
         lotteriesRef.document(lottery.id).set(
             lottery,
@@ -70,20 +77,127 @@ class FirestoreLotteryRepository(db: FirebaseFirestore) : LotteryRepository{
         )
     }
 
-    // one lottery by its ID
+    /** one lottery by its ID */
     override fun get(lotteryId: String): Lottery? =
         _lotteries.find { it.id == lotteryId }
 
-    // lotteries created by this owner
+    /** lotteries created by this owner */
     override fun forOwner(ownerId: String): List<Lottery> =
         _lotteries.filter { it.ownerId == ownerId }
 
-    // lotteries that include this campsite
+    /** lotteries that include this campsite */
     override fun forCampsite(campsiteId: String): List<Lottery> =
         _lotteries.filter { campsiteId in it.campsiteIds }
 
-    // changes the lottery's stage
+    //changes the lottery's stage
     override fun setStatus(lotteryId: String, status: LotteryStatus) {
         lotteriesRef.document(lotteryId).update("status", status)
     }
+
+    // ---------- EVERYTHING under this is UNTESTED ----------
+
+    //where one lottery's entries live: lotteries/{lotteryId}/entries */
+    private fun entriesRef(lotteryId: String) =
+        lotteriesRef.document(lotteryId).collection("entries")
+
+    //joins in a transaction so two people can't take the last spot at the same time */
+    override fun join(
+        lotteryId: String,
+        entrantId: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        val lotteryDoc = lotteriesRef.document(lotteryId)
+        val entryDoc = entriesRef(lotteryId).document(entrantId)
+
+        db.runTransaction { transaction ->
+            //read everything first (Firestore requires reads before writes)
+            val lottery = transaction.get(lotteryDoc).toObject(Lottery::class.java)
+                ?: throw stop("Lottery not found")
+            val alreadyJoined = transaction.get(entryDoc).exists()
+
+            //check the rules
+            if (alreadyJoined) return@runTransaction
+            if (!lottery.isRegistrationOpen()) throw stop("Registration is closed")
+            val cap = lottery.waitlistCap
+            if (cap != null && lottery.entrantCount >= cap) throw stop("Waitlist is full")
+
+            // add the entry and count it
+            transaction.set(entryDoc, WaitlistEntry(lotteryId, entrantId, System.currentTimeMillis()))
+            transaction.update(lotteryDoc, "entrantCount", lottery.entrantCount + 1)
+        }
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e ->
+                Log.e("LotteryRepo", "Join failed", e)
+                onFailure(e)
+            }
+    }
+
+    //leaves in a transaction so entrantCount always matches the real number of entries
+    override fun leave(
+        lotteryId: String,
+        entrantId: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        val lotteryDoc = lotteriesRef.document(lotteryId)
+        val entryDoc = entriesRef(lotteryId).document(entrantId)
+
+        db.runTransaction { transaction ->
+            val lottery = transaction.get(lotteryDoc).toObject(Lottery::class.java)
+                ?: throw stop("Lottery not found")
+            val joined = transaction.get(entryDoc).exists()
+
+            if (!joined) throw stop("Not on this waitlist")
+            if (!lottery.isRegistrationOpen()) throw stop("Registration is closed")
+
+            transaction.delete(entryDoc)
+            transaction.update(lotteryDoc, "entrantCount", maxOf(0, lottery.entrantCount - 1))
+        }
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e ->
+                Log.e("LotteryRepo", "Leave failed", e)
+                onFailure(e)
+            }
+    }
+
+    // live waitlist for one lottery; call the returned function to stop listening
+    override fun listenToEntries(
+        lotteryId: String,
+        onUpdate: (List<WaitlistEntry>) -> Unit
+    ): () -> Unit {
+        val registration = entriesRef(lotteryId).addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                Log.e("LotteryRepo", "Entries listen failed", error)
+                return@addSnapshotListener
+            }
+            if (snapshot != null) {
+                onUpdate(snapshot.documents.mapNotNull { it.toObject(WaitlistEntry::class.java) })
+            }
+        }
+        return { registration.remove() }
+    }
+
+    // all of one entrant's entries, across every lottery
+    override fun entriesFor(entrantId: String, onResult: (List<WaitlistEntry>) -> Unit) {
+        db.collectionGroup("entries")
+            .whereEqualTo("entrantId", entrantId)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                onResult(snapshot.documents.mapNotNull { it.toObject(WaitlistEntry::class.java) })
+            }
+            .addOnFailureListener { e ->
+                Log.e("LotteryRepo", "Couldn't load entrant's entries", e)
+                onResult(emptyList())
+            }
+    }
+
+    // marks one entry WON, LOST, DECLINED or RESERVED
+    override fun setResult(lotteryId: String, entrantId: String, result: WaitlistResult) {
+        entriesRef(lotteryId).document(entrantId).update("result", result)
+    }
+
+    // makes the error a transaction throws to cancel itself; its message reaches onFailure
+    private fun stop(reason: String) =
+        FirebaseFirestoreException(reason, FirebaseFirestoreException.Code.ABORTED)
 }
