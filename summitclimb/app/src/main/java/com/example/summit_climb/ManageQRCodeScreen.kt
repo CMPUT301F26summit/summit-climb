@@ -32,8 +32,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.navigation.compose.rememberNavController
 
 // Summit Climb colors
 private val black = Color.Black
@@ -197,14 +195,4 @@ fun ManageQRCodeScreen (
             }
         }
     }
-}
-
-@Preview(showBackground = true, widthDp = 390, heightDp = 844)
-@Composable
-fun ManageQRCodeScreenPreview() {
-    ManageQRCodeScreen(
-        navController = rememberNavController(),
-        campsiteName = "Mt. Green Camp",
-        campsiteID = "MGC-4821"
-    )
 }
