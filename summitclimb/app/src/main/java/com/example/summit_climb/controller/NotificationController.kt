@@ -75,29 +75,8 @@ class NotificationController(
     fun destinationFor(notification: Notification): String? = when (notification.type) {
         NotificationType.LOTTERY_WIN,
         NotificationType.LOTTERY_LOSS -> "entrantLotteries"
+
         NotificationType.RESERVATION_UPDATE -> null   // set once a My Reservations route exists
         NotificationType.MESSAGE -> null
-    }
-
-    /** Sends sample notifications to the logged-in user for testing ==> remove later */
-    fun sendTestNotifications() {
-        val id = currentUserId() ?: return
-        listOf(
-            Notification(
-                senderId = "system", recipientId = id,
-                type = NotificationType.LOTTERY_WIN,
-                text = "Congratulations! You've been selected for Cedar Valley. Please choose your reservation dates."
-            ),
-            Notification(
-                senderId = "system", recipientId = id,
-                type = NotificationType.LOTTERY_LOSS,
-                text = "Unfortunately, you weren't selected for Lakeside Camp this time."
-            ),
-            Notification(
-                senderId = "system", recipientId = id,
-                type = NotificationType.RESERVATION_UPDATE,
-                text = "Your reservation for Summit Camp has been confirmed."
-            )
-        ).forEach { repository.send(it) }
     }
 }
