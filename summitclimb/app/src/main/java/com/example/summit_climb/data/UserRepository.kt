@@ -1,15 +1,15 @@
-/** package com.example.summit_climb
+package com.example.summit_climb.data
 
 import androidx.compose.runtime.mutableStateListOf
+import com.example.summit_climb.model.AccountStatus
+import com.example.summit_climb.model.User
 import com.google.firebase.Firebase
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
-
 
 /**
  * Handles the Firestore operations for user profiles.
  * Firestore stores users in a `users` collection.
- * Each document's ID is the user's device based User.userId. 
+ * Each document's ID is the user's device based User.userId.
  * A snapshot listener keeps users up to date for the admin screens.
  *
  * Example:
@@ -77,7 +77,7 @@ class UserRepository {
      * @param user: user with the changes.
      */
     fun saveProfile(
-        user:User
+        user: User
     ){
         userRef.document(user.userId).set(user)
     }
@@ -85,7 +85,7 @@ class UserRepository {
     /**
      * Saves the user's notification opt out setting.
      * @param userId: user to update.
-     * @param optedOut: `true` to stop notifications, `false` to receive them.
+     * @param optOut: `true` to stop notifications, `false` to receive them.
      */
     fun updateNotificationOpt(
         userId:String,
@@ -116,7 +116,7 @@ class UserRepository {
 
     /**
      * Gets all users, searched by name, email and filtered by account status. For admins.
-     * Example: `searchUsers("alex", AccountStatus.ACTIVE)` 
+     * Example: `searchUsers("alex", AccountStatus.ACTIVE)`
      * returns active users whose name or email contains "alex".
      *
      * @param searchText: text the name or email must contain. Not case sensitive.
@@ -147,4 +147,3 @@ class UserRepository {
         userRef.document(userId).update("accountStatus", status.name)
     }
 }
- */
