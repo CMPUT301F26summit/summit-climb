@@ -43,6 +43,7 @@ android {
 }
 
 dependencies {
+    implementation("com.google.firebase:firebase-storage")
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
@@ -56,6 +57,8 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
     implementation(libs.firebase.messaging)
     implementation("androidx.navigation:navigation-compose:2.10.2")
+    testImplementation("org.mockito:mockito-core:5.14.2")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
     testImplementation(libs.junit)
     testImplementation("org.mockito:mockito-core:5.14.2")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
