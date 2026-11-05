@@ -1,6 +1,4 @@
-package com.example.summit_climb
-
-import com.example.summit_climb.model.Lottery
+package com.example.summit_climb.model
 
 /**
  * A entrant's place on one lottery's waitlist.
