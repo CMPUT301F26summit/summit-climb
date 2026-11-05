@@ -34,6 +34,12 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+        unitTests.all {
+            it.jvmArgs("-Dnet.bytebuddy.experimental=true")
+        }
+    }
 }
 
 dependencies {
@@ -51,6 +57,8 @@ dependencies {
     implementation(libs.firebase.messaging)
     implementation("androidx.navigation:navigation-compose:2.10.2")
     testImplementation(libs.junit)
+    testImplementation("org.mockito:mockito-core:5.14.2")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
