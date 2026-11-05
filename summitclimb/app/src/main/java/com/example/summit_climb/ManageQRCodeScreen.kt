@@ -1,6 +1,5 @@
 package com.example.summit_climb
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -18,7 +17,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -30,14 +28,30 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
 
+// Summit Climb colors
+private val black = Color.Black
+private val charcoal = Color(0xFF36454F)
+private val lightBlue = Color(0xFFA6C8EB)
+private val lightGrey = Color(0xFFDADAD8)
+private val greyBlue = Color(0xFFC9DEF3)
+private val white = Color.White
 
+// Displays the unique campsite QR code for a campsite owner
 @Composable
 fun ManageQRCodeScreen (
     navController: NavController,
     campsiteName: String,
     campsiteID: String
 ) {
+
+    // Obtains a generated QR code for the current campsite
     val qrService = remember { QRCodeService() }
     val qrCode = remember(campsiteID) {
         qrService.generateQRCode(Campsite(id = campsiteID, name = campsiteName))
@@ -46,29 +60,44 @@ fun ManageQRCodeScreen (
     Column(
         modifier = Modifier
         .fillMaxSize()
-        .background(Color(0xFFFAF3EB))
+        .background(white)
         .padding(horizontal = 20.dp, vertical = 16.dp)
     ) {
-        Row () {
-            TextButton(
-                onClick = { navController.popBackStack() }
-            ) {
-                Text(
-                    text = "←  Back",
-                    fontSize = 18.sp,
-                    color = Color.Black
-                )
-            }
+        // Back Button
+        val backButton =  {navController.popBackStack(); Unit }
+        Row(
+            Modifier
+                .clickable(onClick = backButton)
+                .padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ){
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back Button",
+                modifier = Modifier.size(20.dp),
+                tint = charcoal
+            )
+
+            Text(
+                text = "Back",
+                color = charcoal,
+                fontSize = 15.sp,
+                lineHeight = 22.sp,
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+
+            )
         }
 
         Spacer(Modifier.height(8.dp))
 
+        // QR Code Description
         Text(
             text = "QR Code",
             fontFamily = FontFamily.Serif,
             fontWeight = FontWeight.Bold,
             fontSize = 32.sp,
-            color = Color.Black
+            color = black
         )
 
         Spacer(Modifier.height(8.dp))
@@ -76,13 +105,15 @@ fun ManageQRCodeScreen (
         Text(
             text = "Guests can scan this to open your campsite",
             fontSize = 14.sp,
-            color = Color.Gray
+            color = charcoal
         )
+
         Spacer(Modifier.height(16.dp))
 
+        // Displays the QR code
         Card(
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(containerColor = greyBlue),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(
@@ -99,7 +130,7 @@ fun ManageQRCodeScreen (
                 } else {
                     Text(
                         text = "Sorry, the QR Code for this campsite is not available yet",
-                        color = Color.DarkGray
+                        color = charcoal
                     )
                 }
 
@@ -110,14 +141,14 @@ fun ManageQRCodeScreen (
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
-                    color = Color.Black
+                    color = black
                 )
 
                 Spacer(Modifier.height(16.dp))
 
                 Text(
                     text = "Campsite ID: $campsiteID",
-                    color = Color.LightGray,
+                    color = charcoal,
                     fontSize = 13.sp
                 )
             }
@@ -129,41 +160,51 @@ fun ManageQRCodeScreen (
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Save Button
             Button(
                 onClick = { /* WIP: save image function */ },
                 modifier = Modifier.weight(1f)
                     .height(56.dp),
                 shape = RoundedCornerShape(28.dp),
-                border = BorderStroke(1.dp, Color.LightGray),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF96c6c6)
+                    containerColor = lightGrey
                 )
             ) {
                 Text(
                     text = "Save",
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 18.sp,
-                    color = Color.Black
+                    color = charcoal
                 )
             }
 
+            // Share button
             Button(
                 onClick = { /* WIP: share image function */ },
                 modifier = Modifier.weight(1f)
                     .height(56.dp),
                 shape = RoundedCornerShape(28.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF2f7d6d)
+                    containerColor = charcoal
                 )
             ) {
                 Text(
                     text = "Share",
                     fontWeight = FontWeight.SemiBold,
-                    fontSize = 20.sp,
-                    color = Color.White
+                    fontSize = 18.sp,
+                    color = white
                 )
             }
         }
     }
+}
 
+@Preview(showBackground = true, widthDp = 390, heightDp = 844)
+@Composable
+fun ManageQRCodeScreenPreview() {
+    ManageQRCodeScreen(
+        navController = rememberNavController(),
+        campsiteName = "Mt. Green Camp",
+        campsiteID = "MGC-4821"
+    )
 }
