@@ -1,149 +1,160 @@
 package com.example.summit_climb.data
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import com.example.summit_climb.model.AccountStatus
 import com.example.summit_climb.model.User
+import com.example.summit_climb.service.ImageService
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 
 /**
- * Handles the Firestore operations for user profiles.
- * Firestore stores users in a `users` collection.
- * Each document's ID is the user's device based User.userId.
- * A snapshot listener keeps users up to date for the admin screens.
- *
- * Example:
- * ```
- * val deviceId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
- * userRepository.getOrCreateUser(deviceId) { user ->
- *     println("Hello ${user.name}")
- * }
- * ```
- *
- * @param lotteryRepository: used to remove a user's waitlist entries when the user is deleted.
- * @constructor Connects to the `users` collection and starts listening for changes.
+ * Handles Firestore operations for user profiles.
+ * User documents are stored in the "users" collection.
  */
 class UserRepository {
-    private  val db = Firebase.firestore
+
+    private val db = Firebase.firestore
     private val userRef = db.collection("users")
     private val imageService = ImageService()
-    private val _users = mutableStateListOf<User>()
 
-    // Every user in Firestore. Updates automatically. Used by the admin screens.
+    private val _users = mutableStateListOf<User>()
     val users: List<User> = _users
 
-    init{
+    init {
         userRef.addSnapshotListener { snapshot, error ->
-            if (error != null){
+            if (error != null) {
+                Log.e("UserRepository", "Failed to load users", error)
                 return@addSnapshotListener
             }
+
             _users.clear()
 
             snapshot?.documents?.forEach { document ->
-                val user = document.toObject(User::class.java)
-                if (user != null) {
+                document.toObject(User::class.java)?.let { user ->
                     _users.add(user)
                 }
             }
         }
     }
 
-    /**
-     * Gets the user for this device or creates a new one on first launch.
-     * A new user only has User.userId set and the default UserRole.ENTRANT role.
-     * @param deviceId:  device based ID
-     * @param onResult: called with the existing or newly created user.
-     */
+    /** Gets an existing user or creates a new one. */
     fun getUser(
         deviceId: String,
         onResult: (User) -> Unit
-    ){
-        userRef.document(deviceId).get().addOnSuccessListener { document ->
-            val exist = document.toObject(User::class.java)
-            if (exist != null){
-                // User already exists
-                onResult(exist)
+    ) {
+        userRef.document(deviceId)
+            .get()
+            .addOnSuccessListener { document ->
+                val user = document.toObject(User::class.java)
+
+                if (user != null) {
+                    onResult(user)
+                } else {
+                    val newUser = User(userId = deviceId)
+
+                    userRef.document(deviceId)
+                        .set(newUser)
+                        .addOnSuccessListener {
+                            onResult(newUser)
+                        }
+                        .addOnFailureListener { error ->
+                            Log.e("UserRepository", "Failed to create user", error)
+                        }
+                }
             }
-            else{
-                val newUser = User(userId = deviceId)
-                userRef.document(deviceId).set(newUser)
-                onResult(newUser)
+            .addOnFailureListener { error ->
+                Log.e("UserRepository", "Failed to get user", error)
             }
-        }
     }
 
-    /**
-     * Saves profile changes by replacing the stored profile with user
-     * @param user: user with the changes.
-     */
-    fun saveProfile(
-        user: User
-    ){
-        userRef.document(user.userId).set(user)
+    /** Saves changes to a user's profile. */
+    fun saveProfile(user: User) {
+        userRef.document(user.userId)
+            .set(user)
+            .addOnFailureListener { error ->
+                Log.e("UserRepository", "Failed to save profile", error)
+            }
     }
 
-    /**
-     * Saves the user's notification opt out setting.
-     * @param userId: user to update.
-     * @param optOut: `true` to stop notifications, `false` to receive them.
-     */
+    /** Updates the user's notification preference. */
     fun updateNotificationOpt(
-        userId:String,
+        userId: String,
         optOut: Boolean
-    ){
-        userRef.document(userId).update("notificationsOptedOut", optOut)
-    }
-
-    /**
-     * Deletes the user along with their waitlist entries and profile image.
-     * Entrants use this to delete their own profile. Admin can use it to delete a user.
-     * @param user: user to be deleted.
-     */
-    fun deleteUser(
-        user: User
-    ){
-        lotteryRepository.getUserEntries(user.userId){ entries ->
-            entries.forEach{ entry ->
-                lotteryRepository.removeWaitlistEntry(entry)
+    ) {
+        userRef.document(userId)
+            .update("notificationsOptedOut", optOut)
+            .addOnFailureListener { error ->
+                Log.e("UserRepository", "Failed to update notifications", error)
             }
-        }
-
-        if (user.profileImageUrl.isNotBlank()){
-            imageService.deleteImage(user.profileImageUrl)
-        }
-        userRef.document(user.userId).delete()
     }
 
     /**
-     * Gets all users, searched by name, email and filtered by account status. For admins.
-     * Example: `searchUsers("alex", AccountStatus.ACTIVE)`
-     * returns active users whose name or email contains "alex".
-     *
-     * @param searchText: text the name or email must contain. Not case sensitive.
-     * @param status: account status to keep or `null` to keep every status.
-     * @return the matching users.
+     * Deletes the user's waitlist entries and user document.
+     * Requests profile image deletion after Firestore cleanup succeeds.
      */
+    fun deleteUser(user: User) {
+        db.collectionGroup("entries")
+            .whereEqualTo("entrantId", user.userId)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                if (snapshot.size() >= 500) {
+                    Log.e("UserRepository", "Too many waitlist entries to delete in one batch")
+                    return@addOnSuccessListener
+                }
+
+                val batch = db.batch()
+
+                snapshot.documents.forEach { document ->
+                    batch.delete(document.reference)
+                }
+
+                batch.delete(userRef.document(user.userId))
+
+                batch.commit()
+                    .addOnSuccessListener {
+                        if (user.profileImageUrl.isNotBlank()) {
+                            imageService.delete(user.profileImageUrl) { success ->
+                                if (!success) {
+                                    Log.e("UserRepository", "Failed to delete profile image")
+                                }
+                            }
+                        }
+                    }
+                    .addOnFailureListener { error ->
+                        Log.e("UserRepository", "Failed to delete user", error)
+                    }
+            }
+            .addOnFailureListener { error ->
+                Log.e("UserRepository", "Failed to load waitlist entries", error)
+            }
+    }
+
+    /** Searches users by name, email, and account status. */
     fun searchUsers(
-        searchText:String,
+        searchText: String,
         status: AccountStatus?
-    ):List<User> {
+    ): List<User> {
+        val query = searchText.trim()
+
         return _users.filter { user ->
-            val nameMatch = user.name.contains(searchText.trim(), ignoreCase = true)
-            val emailMatch = user.email.contains(searchText.trim(), ignoreCase = true)
+            val nameMatch = user.name.contains(query, ignoreCase = true)
+            val emailMatch = user.email.contains(query, ignoreCase = true)
             val statusMatch = status == null || user.accountStatus == status
+
             (nameMatch || emailMatch) && statusMatch
         }
     }
 
-    /**
-     * Changes a user's account status, for example to deactivate them. For admins.
-     * @param userId: the user to update.
-     * @param status: the new account status.
-     */
+    /** Updates a user's account status. */
     fun updateStatus(
         userId: String,
         status: AccountStatus
-    ){
-        userRef.document(userId).update("accountStatus", status.name)
+    ) {
+        userRef.document(userId)
+            .update("accountStatus", status.name)
+            .addOnFailureListener { error ->
+                Log.e("UserRepository", "Failed to update account status", error)
+            }
     }
 }

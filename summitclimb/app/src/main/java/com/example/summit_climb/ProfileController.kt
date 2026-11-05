@@ -6,6 +6,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import com.example.summit_climb.model.User
+import com.example.summit_climb.data.UserRepository
+
 
 class ProfileController(
     private val userRepo: UserRepository = UserRepository() ,
