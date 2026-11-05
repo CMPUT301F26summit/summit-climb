@@ -35,7 +35,7 @@ class WaitlistEntry(
      * @return `true` if the lottery's registration is open at now.
      */
     fun removable(lottery: Lottery, now: Long = System.currentTimeMillis()): Boolean{
-        return lottery.isRegisterationOpen(now)
+        return lottery.isRegistrationOpen(now)
     }
 
     /**
