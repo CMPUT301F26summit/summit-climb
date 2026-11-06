@@ -50,7 +50,7 @@ class QRCodeService {
     }
 
     /**
-     * This function contains lines that were created by Nishikanto Sarkar in Medium at
+     * The following function contains lines that were created by Nishikanto Sarkar in Medium at
      * https://medium.com/@nishikanto.abm/generating-custom-qr-codes-in-android-with-kotlin-a-technical-guide-a0adb06757d4
      */
 
@@ -58,14 +58,14 @@ class QRCodeService {
      * Generates a unique QR Code
      * @param campsite: the campsite that will be linked to the code
      * @param size: width and height of the QR code in pixels (default = 512)
-     * @return a bitmap, or null if the id or bitmap is not valid
+     * @return a bitmap, or null if the id, size, or bitmap is not valid
      */
-    fun generateQRCode(campsite: Campsite, size: Int = 512): Bitmap? {
-        if (campsite.id.isBlank()) {
+    fun generateQRCode(campsiteID: String, size: Int = 512): Bitmap? {
+        if (campsiteID.isBlank() || size <= 0) {
             return null
         }
 
-        val text = campsiteQRText(campsite.id)
+        val text = campsiteQRText(campsiteID)
         val hints = mapOf(
             EncodeHintType.ERROR_CORRECTION to ErrorCorrectionLevel.M,
             EncodeHintType.MARGIN to 1

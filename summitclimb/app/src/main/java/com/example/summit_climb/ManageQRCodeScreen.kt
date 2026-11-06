@@ -52,7 +52,7 @@ fun ManageQRCodeScreen (
     // Obtains a generated QR code for the current campsite
     val qrService = remember { QRCodeService() }
     val qrCode = remember(campsiteID) {
-        qrService.generateQRCode(Campsite(id = campsiteID, name = campsiteName))
+        qrService.generateQRCode(campsiteID)
     }
 
     Column(
@@ -196,3 +196,5 @@ fun ManageQRCodeScreen (
         }
     }
 }
+
+
