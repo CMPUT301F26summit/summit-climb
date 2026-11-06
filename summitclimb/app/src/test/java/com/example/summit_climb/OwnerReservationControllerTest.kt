@@ -1,12 +1,10 @@
 package com.example.summit_climb
 
 import com.example.summit_climb.controller.OwnerReservationController
-import com.example.summit_climb.data.ReservationRepository
 import com.example.summit_climb.model.Reservation
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.Assert.assertTrue
-import com.example.summit_climb.data.NotificationRepository
 import com.example.summit_climb.model.Notification
 import java.lang.Exception
 

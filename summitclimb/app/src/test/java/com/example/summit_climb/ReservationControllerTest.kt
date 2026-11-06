@@ -4,7 +4,6 @@ import org.junit.Test
 import org.junit.Assert.assertTrue
 import com.example.summit_climb.controller.ReservationController
 import org.junit.Assert.assertFalse
-import com.example.summit_climb.data.ReservationRepository
 import com.example.summit_climb.model.Reservation
 import java.lang.Exception
 import org.junit.Assert.assertEquals
