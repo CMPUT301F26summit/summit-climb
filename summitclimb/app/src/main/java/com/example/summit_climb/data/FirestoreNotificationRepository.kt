@@ -1,3 +1,4 @@
+
 package com.example.summit_climb.data
 
 import android.util.Log
@@ -6,19 +7,18 @@ import com.example.summit_climb.model.Notification
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 
-
 /**
- * Handles saving, retrieving, and listening for notifications
- * using the Firestore "notifications" collection
+ * Firestore implementation of [NotificationRepository].
+ *
+ * Stores notifications in the Firestore "notifications" collection
+ * and listens for changes to notification data.
+ *
+ * Notifications can be retrieved by recipient or sender.
  *
  * Known Issues:
- *  - The initial snapshot listener downloads the entire notifications collection
- *  - The initial snapshot listener is not removed
- *  - User notification preferences are not checked yet.
- */
-
-/**
- * Implements NotificationRepository using Firebase Firestore.
+ * - The initial snapshot listener loads all notifications into the local list.
+ * - The initial snapshot listener is not removed automatically.
+ * - User notification preferences are not checked yet.
  *
  * @param db Firestore database used to access notification documents.
  */
@@ -26,15 +26,26 @@ class FirestoreNotificationRepository(
     db: FirebaseFirestore
 ) : NotificationRepository {
 
+    /** Reference to the notifications collection in Firestore. */
     private val notificationsRef = db.collection("notifications")
 
-    // local copy of the notifications
+    /** Local observable list containing the notifications retrieved from Firestore. */
     private val _notifications = mutableStateListOf<Notification>()
 
+    /**
+     * Provides access to the locally stored notifications.
+     *
+     * @return A list of notifications currently loaded from Firestore.
+     */
     override val notifications: List<Notification>
         get() = _notifications
 
-    // runs once when the repository is created, starts watching Firestore
+    /**
+     * Starts listening for changes to the notifications collection
+     * when the repository is created.
+     *
+     * Updates the local notification list whenever Firestore changes.
+     */
     init {
         notificationsRef.addSnapshotListener { snapshot, error ->
 
@@ -43,6 +54,7 @@ class FirestoreNotificationRepository(
                 Log.e("NotificationRepo", "Listen failed", error)
                 return@addSnapshotListener
             }
+
             // otherwise replace local copy with the newest data from Firestore
             if (snapshot != null) {
                 val fresh = snapshot.documents.mapNotNull { document ->
@@ -57,11 +69,11 @@ class FirestoreNotificationRepository(
     }
 
     /**
-     * Saves a new notification to Firestore.
+     * Saves a new notification to the Firestore notifications collection.
      *
      * Firestore generates a unique document ID for the notification.
      *
-     * @param notification Notification data to save.
+     * @param notification The notification to save.
      */
     override fun send(notification: Notification) {
         val doc = notificationsRef.document()
@@ -69,50 +81,47 @@ class FirestoreNotificationRepository(
     }
 
     /**
-     * Marks the specified notification as read in Firestore.
+     * Marks a notification as read in Firestore.
      *
-     * @param notificationId ID of the notification to update.
+     * @param notificationId The ID of the notification to update.
      */
     override fun markRead(notificationId: String) {
         notificationsRef.document(notificationId).update("read", true)
     }
 
     /**
-     * Retrieves notifications sent to a specific user, newest first.
+     * Retrieves notifications addressed to a specific user, newest first.
      *
-     * @param userId of the notification recipient.
-     * @return List of notifications belonging to one user.
+     * @param userId The ID of the recipient.
+     * @return A list of notifications addressed to the specified user.
      */
     override fun forUser(userId: String): List<Notification> =
         _notifications
-            .filter { it.recipientId == userId }        // only notifications sent to this user
-            .sortedByDescending { it.timestamp }        // newest at the top
-
+            .filter { it.recipientId == userId }
+            .sortedByDescending { it.timestamp }
 
     /**
-     *
      * Retrieves notifications sent by a specific user, newest first.
      *
-     * @param senderId ID of the notification sender.
-     * @return List of notifications sent by the user.
+     * @param senderId The ID of the sender.
+     * @return A list of notifications sent by the specified user.
      */
     override fun sentBy(senderId: String): List<Notification> =
         _notifications
-            .filter { it.senderId == senderId }         // only notifications this person sent
-            .sortedByDescending { it.timestamp }        // newest at the top
+            .filter { it.senderId == senderId }
+            .sortedByDescending { it.timestamp }
 
     /**
+     * Listens for real-time changes to a specific user's notifications.
      *
-     * Listens for notification changes belonging to a specific user/
+     * Reports newly added, modified, and removed notifications through
+     * the corresponding callbacks.
      *
-     * Calls the appropriate callback when a notification is added,
-     * modified, or removed.
-     *
-     * @param userId ID of the notification recipient
-     * @param onAdded Callback for newly added notifications
-     * @param onModified Callback for modified notifications
-     * @param onRemoved Callback for removed notifications
-     * @return A function that removes the Firestore listener when called
+     * @param userId The ID of the user whose notifications are monitored.
+     * @param onAdded Callback invoked when a notification is added.
+     * @param onModified Callback invoked when a notification is modified.
+     * @param onRemoved Callback invoked when a notification is removed.
+     * @return A function that removes the Firestore listener when invoked.
      */
     override fun listenToUser(
         userId: String,
@@ -121,7 +130,7 @@ class FirestoreNotificationRepository(
         onRemoved: (Notification) -> Unit
     ): () -> Unit {
         val registration = notificationsRef
-            .whereEqualTo("recipientId", userId)   // Firestore only sends this user's notifications
+            .whereEqualTo("recipientId", userId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     Log.e("NotificationRepo", "Listen failed", error)
