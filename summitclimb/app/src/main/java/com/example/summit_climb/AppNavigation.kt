@@ -193,7 +193,7 @@ fun AppNavigation(container: AppContainer) {
 
                 if (campsite != null) {
                     val controller = remember {
-                        OwnerReservationController(container.reservationRepository)
+                        OwnerReservationController(container.reservationRe)
                     }
 
                     OwnerReservationsFromFirestore(
