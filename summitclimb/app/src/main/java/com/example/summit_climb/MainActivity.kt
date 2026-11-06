@@ -11,12 +11,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val container = AppContainer()
-
         setContent {
             SummitclimbTheme {
-                    AppNavigation(container)
-                }
+                // screens get added back here as features are merged into dev
             }
         }
     }
+}
