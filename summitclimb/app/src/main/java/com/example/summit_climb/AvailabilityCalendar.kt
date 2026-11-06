@@ -29,11 +29,26 @@ import androidx.compose.foundation.clickable
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 
+private val charcoal = Color(0xFF36454F)
+private val darkGreen = Color(0xFF06402B)
+private val lightGreen = Color(0xFF96B38E)
+private val lightBlue = Color(0xFFA6C8EB)
+
+/**
+ * Availability calendar
+ *
+ * Shows a  calendar where the campsite's booked dates are marked.
+ * Pressing a date selects it, and the selection is held by [onDateSelected].
+ *
+ * @param bookedDates dates that have a reservation
+ * @param selectedDate the date currently selected, or null if none is selected
+ * @param onDateSelected called with the date the owner presses
+ */
 @Composable
 fun AvailabilityCalendar(
     bookedDates: Set<LocalDate>,
-    selectedDate: LocalDate? = null,
-    onDateSelected: (LocalDate) -> Unit = {}
+    selectedDate: LocalDate?,
+    onDateSelected: (LocalDate?) -> Unit = {}
     ){
 
     var month by remember { mutableStateOf(YearMonth.now()) }
@@ -44,7 +59,7 @@ fun AvailabilityCalendar(
         modifier = Modifier
             .padding(12.dp)
             .background(
-                Color(0xFFD3D3D3),
+                lightBlue,
                 RoundedCornerShape(16.dp))
             .padding(12.dp)
     ){
@@ -65,7 +80,7 @@ fun AvailabilityCalendar(
                 Modifier
                     .size(8.dp)
                     .background(
-                        Color(0xFF96B38E),
+                        lightGreen,
                         RoundedCornerShape(50))
             )
 
@@ -140,18 +155,22 @@ fun AvailabilityCalendar(
                                 .padding(2.dp)
                                 .background(
                                     if (selected)
-                                        Color(0xFF06402B)
+                                        darkGreen
 
                                     else if (booked)
-                                        Color(0xFF96B38E)
+                                        lightGreen
 
                                     else
                                         Color.Transparent,
                                     RoundedCornerShape(8.dp)
                                 )
-                                .clickable(enabled = !booked)
-                                {
-                                    onDateSelected(date)
+                                .clickable(enabled = !booked) {
+                                    onDateSelected(
+                                        if (selected)
+                                            null
+                                        else
+                                            date
+                                    )
                                 },
 
                             contentAlignment = Alignment.Center
@@ -164,10 +183,10 @@ fun AvailabilityCalendar(
                                     Color.White
 
                                 else if (booked)
-                                    Color(0xFF4A4A4A)
+                                    Color.White
 
                                 else
-                                    Color(0xFF4A4A4A)
+                                    charcoal
                             )
                         }
                     }
