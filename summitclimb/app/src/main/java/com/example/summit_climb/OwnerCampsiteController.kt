@@ -1,4 +1,4 @@
-/*
+
 package com.example.summit_climb
 
 import com.example.summit_climb.service.ImageService
@@ -10,11 +10,22 @@ import com.example.summit_climb.data.CampsiteRepository
 import com.example.summit_climb.model.Campsite
 import com.example.summit_climb.service.QRCodeService
 
+/**
+ * Handles the registation, validation, and editing of campsites
+ * Changes the promo image, lists all the campsites belonging to an owner and provides QR codes
+ */
 class OwnerCampsiteController(private val campsiteRepository: CampsiteRepository) {
     private val currentCamp = Firebase.firestore.collection("campsites")
     private val qrService = QRCodeService()
     private val imageService = ImageService()
 
+
+    /**
+     * Checks that a campsite's details are valid.
+     *
+     * @param campsite: campsite to check
+     * @return a message about the error or null if the campsite is valid
+     */
     fun validate(campsite: Campsite): String? {
         if (campsite.name.isBlank()) {
             return "Name is required"
@@ -37,6 +48,15 @@ class OwnerCampsiteController(private val campsiteRepository: CampsiteRepository
         return null
     }
 
+    /**
+     * Saves a new campsite for the owner
+     *
+     * @param ownerId: ID of the owner registering the campsite
+     * @param campsite: details the owner entered
+     * @param imageUri: the chosen promo image
+     * @param onSuccess: decides outcome upon success
+     * @param onFailure: gives message upon failure
+     */
     fun registerCampsite(
         ownerId: String,
         campsite: Campsite,
@@ -77,6 +97,14 @@ class OwnerCampsiteController(private val campsiteRepository: CampsiteRepository
             .addOnFailureListener { onFailure(Exception("Unable to save the campsite")) }
     }
 
+    /**
+     * Updates campsite details for a campsite owner
+     *
+     * @param ownerId: ID of the owner making the changes
+     * @param editCampsite: campsite with the details to change
+     * @param onSuccess: decides outcome when the changes were saved
+     * @param onFailure: provides a message if something failed
+     */
     fun editCampsite(
         ownerId: String,
         editCampsite: Campsite,
@@ -119,6 +147,15 @@ class OwnerCampsiteController(private val campsiteRepository: CampsiteRepository
             .addOnFailureListener { onFailure(Exception("Unable to save changes to campsite")) }
     }
 
+    /**
+     * Replaces a campsite's promo image and deletes the old one.
+     *
+     * @param ownerId: ID of the owner making the change
+     * @param campsiteId: campsite whose image changes
+     * @param imageUri: the  image
+     * @param onSuccess: decides outcome when new image is saved
+     * @param onFailure: provides a message if something failed
+     */
     fun changePromoImage(
         ownerId: String,
         campsiteId: String,
@@ -133,16 +170,30 @@ class OwnerCampsiteController(private val campsiteRepository: CampsiteRepository
         }
 
         if (storedCampsite.ownerId != ownerId) {
-            onFailure(Exception("Only the owner of this campsite can make changes"))            return
+            onFailure(Exception("Only the owner of this campsite can make changes"))
+            return
         }
 
         addImage(campsiteId, imageUri, storedCampsite.promoImageUrl, onSuccess, onFailure)
     }
 
+    /**
+     * Lists the campsites that belong to an owner.
+     *
+     * @param ownerId: ID of the owner
+     * @return the owner's campsites
+     */
     fun listCampsites(ownerId: String): List<Campsite> {
         return campsiteRepository.searchCampsites("", null).filter { it.ownerId == ownerId }
     }
 
+    /**
+     * Generates the QR code for one of the owner's campsites.
+     *
+     * @param ownerId: ID of campsite owner
+     * @param campsiteId: campsite the code points to
+     * @return the QR code image or null
+     */
     fun getQRCode(ownerId: String, campsiteId: String): Bitmap? {
         val storedCampsite = campsiteRepository.getCampsite(campsiteId) ?: return null
         if (storedCampsite.ownerId != ownerId) {
@@ -151,6 +202,7 @@ class OwnerCampsiteController(private val campsiteRepository: CampsiteRepository
         return qrService.generateQRCode(storedCampsite)
     }
 
+    // Helper function for changePromoImage
     private fun addImage(
         campsiteId: String,
         imageUri: Uri,
@@ -175,4 +227,4 @@ class OwnerCampsiteController(private val campsiteRepository: CampsiteRepository
         }
     }
 }
-*/
+
