@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.summit_climb"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
@@ -52,8 +52,21 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
-    implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
+
+    androidTestImplementation("androidx.navigation:navigation-testing:2.8.5")
+
+    // firebase
+    implementation(platform("com.google.firebase:firebase-bom:35.1.0"))
     implementation("com.google.firebase:firebase-firestore")
-    implementation("androidx.navigation:navigation-compose:2.10.2")
     implementation("com.google.firebase:firebase-auth")
+
+    // navigation
+    implementation("androidx.navigation:navigation-compose:2.10.2")
+
+    // icons
+    implementation("androidx.compose.material:material-icons-core")
+    implementation("androidx.compose.material:material-icons-extended")
+
+    // imaging
+    implementation("io.coil-kt.coil3:coil-compose:3.6.3")
 }
