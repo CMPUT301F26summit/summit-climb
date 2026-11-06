@@ -1,5 +1,8 @@
 package com.example.summit_climb
-
+/*
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import com.example.summit_climb.controller.ProfileController
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -32,14 +35,27 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 
+// Displays the User Profile to allow user to view and edit their personal information
 @Composable
 fun ProfileScreen(
     navController: NavController,
     controller: ProfileController = viewModel()
 ) {
+    /**
+     * The following code for profile photo selection contains lines
+     * from Chase at https://medium.com/@jpmtech/jetpack-compose-display-a-photo-picker-6bcb9b357a3a
+     */
+    val photoSelector =
+        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            if (uri != null) {
+                controller.updateProfilePhoto(uri)
+            }
+        }
 
     Column(
         modifier = Modifier
@@ -75,7 +91,16 @@ fun ProfileScreen(
                     .clip(CircleShape)
                     .background(Color(0xFF627F5C)),
                 contentAlignment = Alignment.Center
-            ) {}
+            ) {
+                if (controller.photoUrl.isNotBlank()) {
+                    AsyncImage(
+                        model = controller.photoUrl,
+                        contentDescription = "Profile Photo",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
 
             Spacer(Modifier.height(10.dp))
 
@@ -95,10 +120,20 @@ fun ProfileScreen(
                 color = Color(0xFF627F5C),
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
-                    .clickable { /* open photo selector */ }
+                    .clickable(enabled = !controller.uploadPhoto) {
+                        photoSelector.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    }
                     .padding(vertical = 4.dp)
             )
-
+            controller.photoMessage?.let {
+                Text(
+                    text = it,
+                    fontSize = 12.sp,
+                    color = Color(0xFFB96666)
+                )
+            }
         }
 
         Spacer(Modifier.height(20.dp))
@@ -234,3 +269,4 @@ fun ProfileScreen(
         Spacer(Modifier.height(16.dp))
     }
 }
+ */

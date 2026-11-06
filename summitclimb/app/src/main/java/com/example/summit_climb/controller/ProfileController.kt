@@ -1,3 +1,4 @@
+/*
 package com.example.summit_climb.controller
 import com.example.summit_climb.User
 import com.example.summit_climb.UserRepository
@@ -7,6 +8,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import android.net.Uri
+import com.example.summit_climb.service.ImageService
 
 class ProfileController(
     private val repository: UserRepository = UserRepository() ,
@@ -18,10 +21,15 @@ class ProfileController(
     var name by mutableStateOf("")
     var email by mutableStateOf("")
     var phone by mutableStateOf("")
+
+    private val imageService = ImageService()
+
+    var photoUrl by mutableStateOf("")
+    var uploadPhoto by mutableStateOf(false)
+    var photoMessage by mutableStateOf<String?>(null)
+
     var notificationsStatus by mutableStateOf(true)
-        private set
     var deleteStatus by mutableStateOf(false)
-        private set
 
     init {
         loadProfile()
@@ -31,6 +39,7 @@ class ProfileController(
         name = user.name
         email = user.email
         phone = user.phoneNumber
+        photoUrl = user.profileImageUrl
         notificationsStatus = !user.notificationsOptedOut
     }
 
@@ -44,13 +53,6 @@ class ProfileController(
 
     fun saveProfile() {
         val user = currentUser ?: return
-
-        val tempUser = User(
-            name = name,
-            email = email,
-            phoneNumber = phone
-        )
-
         user.name = name
         user.email = email
         user.phoneNumber = phone
@@ -76,5 +78,22 @@ class ProfileController(
         repository.updateNotificationOpt(user.userId, !on)
     }
 
+    fun updateProfilePhoto(uri: Uri) {
+        val user = currentUser ?: return
+        val oldUrl = user.profileImageUrl
+        uploadPhoto = true
+        imageService.upload(uri, "profilePicture/${user.userId}") { url ->
+            uploadPhoto = false
+            if (url == null) {
+                photoMessage = "Unable to upload photo"
+            } else {
+                user.profileImageUrl = url
+                repository.saveProfile(user)
+                photoUrl = url
+                imageService.delete(oldUrl)
+            }
+        }
+    }
 }
+ */
 
