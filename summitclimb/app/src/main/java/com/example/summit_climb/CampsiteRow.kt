@@ -66,7 +66,7 @@ fun CampsiteRow(
         LotteryStatus.OPEN -> lightGreen
         LotteryStatus.DRAWN -> lightOrange
         LotteryStatus.CLOSED -> lightRed
-        null -> Color(0xFFDADAD8)
+        null -> beige
     }
 
     val lotteryTextColor =
