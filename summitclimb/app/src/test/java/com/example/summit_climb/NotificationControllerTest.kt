@@ -29,6 +29,14 @@ class NotificationControllerTest {
 
         override fun markRead(notificationId: String) {
             markedReadId = notificationId
+
+            val index = notifications.indexOfFirst { it.id == notificationId }
+
+            if (index >= 0) {
+                val updated = notifications[index].copy(read = true)
+                notifications[index] = updated
+                onModified?.invoke(updated)
+            }
         }
 
         override fun forUser(userId: String): List<Notification> {
@@ -56,6 +64,7 @@ class NotificationControllerTest {
         }
 
         fun addNotification(notification: Notification) {
+            notifications.add(notification)
             onAdded?.invoke(notification)
         }
 
@@ -140,6 +149,65 @@ class NotificationControllerTest {
         repository.removeNotification(notification)
 
         assertEquals(0, controller.notifications.size)
+    }
+
+    @Test
+    fun notificationsAreAddedNewestFirst() {
+        val repository = FakeRepository()
+        val controller = NotificationController(repository) { "user123" }
+
+        controller.startListening()
+
+        repository.addNotification(
+            Notification(id = "old", timestamp = 100L)
+        )
+        repository.addNotification(
+            Notification(id = "new", timestamp = 200L)
+        )
+
+        assertEquals(
+            listOf("new", "old"),
+            controller.notifications.map { it.id }
+        )
+    }
+
+    @Test
+    fun markingNotificationAsReadUpdatesUnreadCount() {
+        val repository = FakeRepository()
+        val controller = NotificationController(repository) { "user123" }
+
+        controller.startListening()
+
+        repository.addNotification(
+            Notification(id = "notification1", read = false)
+        )
+
+        assertEquals(1, controller.unreadCount)
+
+        controller.markRead("notification1")
+
+        assertEquals(0, controller.unreadCount)
+    }
+
+    @Test
+    fun modifiedNotificationUpdatesInbox() {
+        val repository = FakeRepository()
+        val controller = NotificationController(repository) { "user123" }
+
+        controller.startListening()
+
+        repository.addNotification(
+            Notification(id = "notification1", text = "Original message")
+        )
+
+        repository.modifyNotification(
+            Notification(id = "notification1", text = "Updated message")
+        )
+
+        assertEquals(
+            "Updated message",
+            controller.notifications.first().text
+        )
     }
 
     @Test
