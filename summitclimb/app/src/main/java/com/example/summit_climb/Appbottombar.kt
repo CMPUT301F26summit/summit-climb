@@ -108,7 +108,7 @@ fun AppBottomBarContent(
 ) {
     val itemColors = NavigationBarItemDefaults.colors(
         selectedIconColor = selectedBlue,
-        unselectedIconColor = black,
+        unselectedIconColor = Color.Black,
         indicatorColor = Color.Transparent   // no grey pill behind the selected icon
     )
 

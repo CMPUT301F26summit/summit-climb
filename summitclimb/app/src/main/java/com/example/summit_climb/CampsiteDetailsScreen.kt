@@ -18,10 +18,22 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.annotation.DrawableRes
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.outlined.StarBorder
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.filled.LocalParking
+import androidx.compose.material.icons.filled.Wc
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.Hiking
+import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.filled.TableRestaurant
+import androidx.compose.material.icons.filled.WaterDrop
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,13 +49,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.example.summit_climb.model.Lottery
 import com.example.summit_climb.model.LotteryStatus
 import java.text.SimpleDateFormat
@@ -120,30 +131,22 @@ fun CampsiteDetailsScreen(
     )
 }
 
-// ---- Colours from info_doc_summit-climb-2026 (same as OwnerCampsiteDetails) ----
-val charcoal = Color(0xFF36454F)
-val lightGreen = Color(0xFF96B38E)
-val lightRed = Color(0xFFFF7F7F)
-val lightOrange = Color(0xFFFFA759)
-val greyBlue = Color(0xFFC9DEF3)
-val lightBlue = Color(0xFFA6C8EB)
-val noLotteryGrey = Color(0xFFDADAD8)
 
 /**
  * One amenity and its icon.
  * @property name: must match the text stored in [Campsite.amenities], for example "Parking".
  * @property iconRes: the amenity's icon in res/drawable.
  */
-data class AmenityIcon(val name: String, @DrawableRes val iconRes: Int)
+data class AmenityIcon(val name: String, val iconRes: ImageVector)
 
 /** Every amenity an owner can pick (same names as OwnerCampsiteDetails), with its icon. */
 val amenityDrawables = listOf(
-    AmenityIcon("Parking", R.drawable.ic_amenity_parking),
-    AmenityIcon("Washrooms", R.drawable.ic_amenity_washrooms),
-    AmenityIcon("Fire", R.drawable.ic_amenity_fire),
-    AmenityIcon("Trails", R.drawable.ic_amenity_trails),
-    AmenityIcon("Picnic tables", R.drawable.ic_amenity_picnic_tables),
-    AmenityIcon("Water Tap", R.drawable.ic_amenity_water_tap)
+    AmenityIcon("Parking",Icons.Default.LocalParking),
+    AmenityIcon("Washrooms", Icons.Default.Wc),
+    AmenityIcon("Fire", Icons.Default.LocalFireDepartment),
+    AmenityIcon("Trails", Icons.Default.Hiking),
+    AmenityIcon("Picnic tables", Icons.Default.TableRestaurant),
+    AmenityIcon("Water Tap", Icons.Default.WaterDrop)
 )
 
 /**
@@ -251,7 +254,7 @@ fun BackRow(onBackClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            painter = painterResource(R.drawable.ic_arrow_back),
+            Icons.AutoMirrored.Filled.ArrowBack,
             contentDescription = CampsiteDetailsText.BACK,
             modifier = Modifier.size(20.dp),
             tint = charcoal
@@ -285,9 +288,9 @@ fun CampsiteHeader(campsite: Campsite, lottery: Lottery?) {
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_location),
-                    contentDescription = null,
-                    modifier = Modifier.size(15.dp),
+                    Icons.Default.LocationOn,
+                    contentDescription = CampsiteDetailsText.BACK,
+                    modifier = Modifier.size(20.dp),
                     tint = charcoal
                 )
                 Text(campsite.location, color = charcoal, fontSize = 12.sp)
@@ -309,10 +312,9 @@ fun CampsiteHeader(campsite: Campsite, lottery: Lottery?) {
         ) {
             LotteryBadge(status = lottery?.status)
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_star_outline),
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp)
+                Icon(Icons.Default.StarBorder,
+                    null,
+                    Modifier.size(14.dp)
                 )
                 Text(
                     text = " " + formatCampsiteRating(campsite),
@@ -397,7 +399,7 @@ fun AmenitiesRow(campsite: Campsite) {
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         for (amenity in offeredAmenities) {
-            AmenityTile(amenity)
+            AmenityBorder(amenity)
         }
     }
 }
@@ -407,7 +409,7 @@ fun AmenitiesRow(campsite: Campsite) {
  * @param amenity: the amenity to show; its name is read aloud by screen readers.
  */
 @Composable
-fun AmenityTile(amenity: AmenityIcon) {
+fun AmenityBorder(amenity: AmenityIcon) {
     Box(
         modifier = Modifier
             .size(50.dp)
@@ -416,7 +418,7 @@ fun AmenityTile(amenity: AmenityIcon) {
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            painter = painterResource(amenity.iconRes),
+            imageVector = amenity.iconRes,
             contentDescription = amenity.name,
             modifier = Modifier.size(26.dp),
             tint = charcoal
@@ -515,8 +517,7 @@ fun StarRatingRow(onRateClick: (Int) -> Unit) {
     Row {
         for (stars in 1..5) {
             val isFilled = stars <= chosenStars
-            val starIcon = if (isFilled) R.drawable.ic_star_filled else R.drawable.ic_star_outline
-
+            val starIcon = if (isFilled) Icons.Filled.Star else Icons.Outlined.StarBorder
             IconButton(
                 onClick = {
                     chosenStars = stars
@@ -525,7 +526,7 @@ fun StarRatingRow(onRateClick: (Int) -> Unit) {
                 modifier = Modifier.testTag(CampsiteDetailsTags.star(stars))
             ) {
                 Icon(
-                    painter = painterResource(starIcon),
+                    imageVector = starIcon,
                     contentDescription = "$stars star",
                     tint = charcoal
                 )

@@ -33,6 +33,16 @@ object Routes {
     /** The user's notifications (opened from the bell on the campsite list).*/
     const val NOTIFICATIONS = "entrantNotifs"
 
+    const val OWNER_CAMPSITE_DETAILS = "ownerCampsiteDetails/{$CAMPSITE_ID_ARG}"
+
+    const val OWNER_EDIT_CAMPSITE = "ownerEditCampsite/{$CAMPSITE_ID_ARG}"
+
+    const val OWNER_REGISTER_CAMPSITE = "ownerRegisterCamp/{$CAMPSITE_ID_ARG}"
+
+    const val OWNER_MANAGE_CAMPSITE = "ownerManageCamp/{$CAMPSITE_ID_ARG}"
+
+    const val OWNER_LIST_LOTTERY = "ownerListLottery/{$CAMPSITE_ID_ARG}"
+
     /**
      * Builds the route that opens one campsite's details.
      * @param campsiteId: ID of the campsite to show.

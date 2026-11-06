@@ -32,12 +32,16 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import java.util.Locale
+
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Search
 
 /**
  * The entrant's campsite list screen (Home).
@@ -90,7 +94,6 @@ fun CampsiteListScreen(
     )
 }
 
-val black = Color.Black // for titles and icons
 
 /**
  * The layout of [CampsiteListScreen].
@@ -189,7 +192,7 @@ fun CampsiteListHeader(onNotificationsClick: () -> Unit) {
         Text(
             text = CampsiteListText.TITLE,
             style = MaterialTheme.typography.headlineSmall,
-            color = black,
+            color = Color.Black,
             modifier = Modifier.weight(1f)
         )
         IconButton(
@@ -197,9 +200,9 @@ fun CampsiteListHeader(onNotificationsClick: () -> Unit) {
             modifier = Modifier.testTag(CampsiteListTags.NOTIFICATIONS_BUTTON)
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_notifications),
+                imageVector = Icons.Default.Notifications,
                 contentDescription = CampsiteListText.NOTIFICATIONS,
-                tint = black,
+                tint = Color.Black,
                 modifier = Modifier.size(28.dp)
             )
         }
@@ -233,7 +236,7 @@ fun SearchRow(
             placeholder = { Text(CampsiteListText.SEARCH_HINT, color = charcoal) },
             leadingIcon = {
                 Icon(
-                    painter = painterResource(R.drawable.ic_search),
+                    imageVector = Icons.Default.Search,
                     contentDescription = null,
                     tint = charcoal
                 )
@@ -256,9 +259,9 @@ fun SearchRow(
             modifier = Modifier.testTag(CampsiteListTags.SCAN_BUTTON)
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_qr_scan),
+                imageVector = Icons.Default.QrCodeScanner,
                 contentDescription = CampsiteListText.SCAN_QR,
-                tint = black,
+                tint = Color.Black,
                 modifier = Modifier.size(28.dp)
             )
         }
@@ -320,7 +323,7 @@ fun FilterFields(
         )
         Button(
             onClick = onSearchClick,
-            colors = ButtonDefaults.buttonColors(containerColor = lightBlue, contentColor = black),
+            colors = ButtonDefaults.buttonColors(containerColor = lightBlue, contentColor = Color.Black),
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag(CampsiteListTags.SEARCH_BUTTON)
