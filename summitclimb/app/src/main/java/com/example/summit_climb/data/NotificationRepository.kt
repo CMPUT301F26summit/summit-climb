@@ -2,27 +2,35 @@ package com.example.summit_climb.data
 
 import com.example.summit_climb.model.Notification
 
-/** Everything the app can do with notifications. */
+/** Defines the operations available for managing notifications. */
 interface NotificationRepository {
 
-    /** all notifications, updates by itself when Firestore changes */
+    /** Returns all notifications and updates when Firestore changes */
     val notifications: List<Notification>
 
-    /** sends a notification by storing it in Firestore */
+    /** Saves a new notification to Firestore */
     fun send(notification: Notification)
 
-    /** marks a notification as read */
+    /** Marks a notification as read */
     fun markRead(notificationId: String)
 
-    /** one user's inbox, newest first */
+    /** Returns a user's notifications, newest first. */
     fun forUser(userId: String): List<Notification>
 
-    /** notifications sent by one person (a campsite owner), newest first */
+    /** Returns notifications sent be a specific user, newest first */
     fun sentBy(senderId: String): List<Notification>
 
-    /** listens for notifications belonging to one use
-     *  calls onUpdate whenever the user's notification change
-     *  returns a function that stops the listener
+    /**
+     * Listens for changes to a specific user's notifications.
+     *
+     * Calls the appropriate callback when a notification is added,
+     * modified, or removed
+     *
+     * @param userId ID of the notification recipient
+     * @param onAdded Callback for newly added notifications
+     * @param onModified Callback for modified notifications
+     * @param onRemoved Callback for removed notifications
+     * @return A function that stops the listener when called
      */
     fun listenToUser(
         userId: String,

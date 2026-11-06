@@ -1,22 +1,18 @@
 package com.example.summit_climb.model
 
-// Purpose: the data for one notification, saved in the Firestore "notifications" collection.
-// Types:
-//    - LOTTERY_WIN        = "You won the lottery!"
-//    - LOTTERY_LOSS       = "You lost the lottery."
-//    - RESERVATION_UPDATE = "Reservation for {campsite} is confirmed."
-//    - MESSAGE            = "{Campsite_owner} sent a message."
-// Known problems:
-//   - The time comes from the phone's clock, which can be wrong.
-//   - Tapping a notification cannot open the related screen yet.
+/**
+ * Represents the notification data stored in the Firestore
+ * "notifications collection.
+ *
+ * Notification types include lottery results, reservation updates,
+ * and messages between users.
+ *
+ * Known Issues:
+ * - The timestamp uses the phone's local clock
+ * - Tapping a notification may not navigate to its
+ * related screen if the destination is not available
+ */
 
-/** The different kinds of notification. Lets Admin filter them by kind for later */
-enum class NotificationType {
-    LOTTERY_WIN,            // the user won the lottery
-    LOTTERY_LOSS,           // the user lost the lottery
-    RESERVATION_UPDATE,     // a reservation was confirmed, cancelled, or rejected
-    MESSAGE                 // a message from a campsite owner or to an entrant
-}
 
 /**
  * One notification sent to one user.
@@ -47,3 +43,11 @@ data class Notification(
     val timestamp: Long = System.currentTimeMillis(),
     val read: Boolean = false
 )
+
+/** The different kinds of notifications supported by the app.  */
+enum class NotificationType {
+    LOTTERY_WIN,            // the user won the lottery
+    LOTTERY_LOSS,           // the user lost the lottery
+    RESERVATION_UPDATE,     // a reservation was confirmed, cancelled, or rejected
+    MESSAGE                 // a message from a campsite owner or to an entrant
+}

@@ -5,17 +5,23 @@ import androidx.compose.runtime.mutableStateListOf
 import com.example.summit_climb.model.Notification
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.Query
 
-// Purpose: saves and loads notifications using the Firestore "notifications" collection.
-// Known problems:
-//   - It downloads ALL notifications, not just the current user's, then picks the
-//     right ones on the phone.
-//   - It starts watching Firestore when created and never stops.
-//   - Notifications are not blocked yet when a user has turned them off.
 
-/** Firestore version of NotificationRepository. */
+/**
+ * Handles saving, retrieving, and listening for notifications
+ * using the Firestore "notifications" collection
+ *
+ * Known Issues:
+ *  - The initial snapshot listener downloads the entire notifications collection
+ *  - The initial snapshot listener is not removed
+ *  - User notification preferences are not checked yet.
+ */
+
+/**
+ * Implements NotificationRepository using Firebase Firestore.
+ *
+ * @param db Firestore database used to access notification documents.
+ */
 class FirestoreNotificationRepository(
     db: FirebaseFirestore
 ) : NotificationRepository {
@@ -50,30 +56,64 @@ class FirestoreNotificationRepository(
         }
     }
 
-    /** sends a notification by storing it in Firestore. Firestore makes the ID */
+    /**
+     * Saves a new notification to Firestore.
+     *
+     * Firestore generates a unique document ID for the notification.
+     *
+     * @param notification Notification data to save.
+     */
     override fun send(notification: Notification) {
         val doc = notificationsRef.document()
         doc.set(notification.copy(id = doc.id))
     }
 
-    /** marks a notification as read */
+    /**
+     * Marks the specified notification as read in Firestore.
+     *
+     * @param notificationId ID of the notification to update.
+     */
     override fun markRead(notificationId: String) {
         notificationsRef.document(notificationId).update("read", true)
     }
 
-    /** one user's inbox, newest first */
+    /**
+     * Retrieves notifications sent to a specific user, newest first.
+     *
+     * @param userId of the notification recipient.
+     * @return List of notifications belonging to one user.
+     */
     override fun forUser(userId: String): List<Notification> =
         _notifications
             .filter { it.recipientId == userId }        // only notifications sent to this user
             .sortedByDescending { it.timestamp }        // newest at the top
 
-    /** notifications sent by one person, newest first */
+
+    /**
+     *
+     * Retrieves notifications sent by a specific user, newest first.
+     *
+     * @param senderId ID of the notification sender.
+     * @return List of notifications sent by the user.
+     */
     override fun sentBy(senderId: String): List<Notification> =
         _notifications
             .filter { it.senderId == senderId }         // only notifications this person sent
             .sortedByDescending { it.timestamp }        // newest at the top
 
-    /** watches only this user's notifications and reports each change as it happens */
+    /**
+     *
+     * Listens for notification changes belonging to a specific user/
+     *
+     * Calls the appropriate callback when a notification is added,
+     * modified, or removed.
+     *
+     * @param userId ID of the notification recipient
+     * @param onAdded Callback for newly added notifications
+     * @param onModified Callback for modified notifications
+     * @param onRemoved Callback for removed notifications
+     * @return A function that removes the Firestore listener when called
+     */
     override fun listenToUser(
         userId: String,
         onAdded: (Notification) -> Unit,

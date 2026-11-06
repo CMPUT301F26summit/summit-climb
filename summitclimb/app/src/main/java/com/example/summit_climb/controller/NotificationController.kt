@@ -8,14 +8,24 @@ import com.example.summit_climb.data.NotificationRepository
 import com.example.summit_climb.model.Notification
 import com.example.summit_climb.model.NotificationType
 
-// Purpose: keeps the current user's notifications up to date while the app is open,
-//   counts the unread ones, tells the screens which one just arrived (for the in-app
-//   pop-up), marks one as read, and works out which screen a tapped notification opens.
-// Known problems:
-//          - it does not show notifications in the phone's notification bar yet
-//          (planned for the final checkpoint).
-//          - it does not check whether the user turned notifications off
+/**
+ * Manages the current user's notifications
+ *
+ * Listens for notification updates, tracks unread notifications,
+ * marks notifications as read, and determined navigation destination
+ * when a notification is selected.
+ *
+ * Known Issues:
+ *  - Notifications are not displayed yet in the phone's notification bar
+ *  - User preferences are not yet checked.
+ */
 
+/**
+ * Controls notification data and behaviour for the current user
+ *
+ * @property repository Provides access to notification data
+ * @property currentUserId Provides the ID of the currently logged-in user.
+ */
 class NotificationController(
     private val repository: NotificationRepository,
     private val currentUserId: () -> String?
@@ -34,7 +44,12 @@ class NotificationController(
     // anything created before this existed already; only later ones get a pop-up
     private var listeningSince = 0L
 
-    /** starts watching the logged-in user's notifications (call after login and on launch) */
+    /**
+     * Starts listening for notifications updates for the current user
+     *
+     * Removes any previous listener before starting  a new one
+     * Clears the current notification list before loading updates
+    */
     fun startListening() {
         val id = currentUserId() ?: return
         removeListener?.invoke()                 // never run two listeners at once
@@ -52,7 +67,11 @@ class NotificationController(
         )
     }
 
-    /** stops watching (call when the user logs out) */
+    /**
+     * Stops the notification listener and clears the current notification list.
+     *
+     * Should be called when the user logs out.
+    */
     fun stopListening() {
         removeListener?.invoke()
         removeListener = null
@@ -66,12 +85,21 @@ class NotificationController(
         if (index == -1) notifications.add(notification) else notifications.add(index, notification)
     }
 
-    // marks one notification as read
+    /**
+     * Marks a notification as read.
+     *
+     * @param notificationId ID of the notification to mark as read.
+    */
     fun markRead(notificationId: String) {
         repository.markRead(notificationId)
     }
 
-    /** the route of the screen this notification opens, or null to stay where we are */
+    /**
+     * Determines which screen should open when a notification is selected
+     *
+     * @param notification The selected notification
+     * @return The navigation route, or null if no destination is available
+     */
     fun destinationFor(notification: Notification): String? = when (notification.type) {
         NotificationType.LOTTERY_WIN,
         NotificationType.LOTTERY_LOSS -> "entrantLotteries"

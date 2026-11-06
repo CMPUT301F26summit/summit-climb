@@ -43,9 +43,9 @@ fun EntrantCampsiteList(
                 imageVector = Icons.Default.Notifications,
                 contentDescription = "Notifications",
                 tint = if (notificationController.unreadCount > 0) {
-                    Color(0xFFE3963E)
+                    Color(0xFFA6C8EB) // light blue
                 } else {
-                    LocalContentColor.current
+                    Color(0xFF36454F) // charcoal
                 },
                 modifier = Modifier.size(36.dp)
             )
