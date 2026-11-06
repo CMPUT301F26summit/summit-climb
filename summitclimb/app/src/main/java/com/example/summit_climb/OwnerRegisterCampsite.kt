@@ -39,7 +39,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
@@ -54,14 +53,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Hiking
-import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.LocalParking
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.filled.TableRestaurant
-import androidx.compose.material.icons.filled.Wc
-import androidx.compose.material.icons.filled.WaterDrop
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import android.net.Uri
@@ -69,22 +62,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.PickVisualMediaRequest
 
 // Color Palette
-private val charcoal = Color(0xFF36454F)
-private val lightRed = Color(0xFFFF7F7F)
-private val greyBlue = Color(0xFFC9DEF3)
-private val lightBlue = Color(0xFFA6C8EB)
-
-/** Holds the amenities for adding */
-private data class AddAmenity(val key: String, val label: String, val icon: ImageVector)
-
-private val Amenities = listOf(
-    AddAmenity("Parking", "Parking", Icons.Default.LocalParking),
-    AddAmenity("Washrooms", "Washrooms", Icons.Default.Wc),
-    AddAmenity("Fire", "Fire", Icons.Default.LocalFireDepartment),
-    AddAmenity("Trails", "Trails", Icons.Default.Hiking),
-    AddAmenity("Picnic tables", "Picnic Tables", Icons.Default.TableRestaurant),
-    AddAmenity("Water Tap", "Water Tap", Icons.Default.WaterDrop)
-)
 
 /**
  * Amenity border for an amenity icon.
@@ -95,7 +72,7 @@ private val Amenities = listOf(
  */
 @Composable
 private fun AmenityBorder(
-    amenity: AddAmenity,
+    amenity: AmenityOption,
     selected: Boolean,
     onClick: () -> Unit)
 {
@@ -138,10 +115,14 @@ private fun AmenityBorder(
 /**
  * Owner Register Campsite Screen
  *
+ * US 02.01.01, US 02.01.02
+ *
  * Displays a register page for new campsite listings
  * allows for adding of components:
  * campsite name, location, photo, price per night, occupancy, description, amenities, map location, tags, and rules/policies
  * Includes a cancel button for discarding changes
+ *
+ * Outstanding: the map shows coordinates until the shared map component is ready.
  *
  * @param navController navigation from (+) button on campsites listed screen
  * @param modifier modifier applied to register campsites screen
@@ -446,7 +427,7 @@ fun OwnerRegisterCampsite(
                     Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ){
-                    for (icon in Amenities) {
+                    for (icon in AllAmenities) {
                         val selected = icon.key in amenities
 
                         AmenityBorder(icon, selected) {

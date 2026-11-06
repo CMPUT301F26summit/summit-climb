@@ -54,7 +54,7 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     // firebase
-    implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
+    implementation(platform("com.google.firebase:firebase-bom:35.1.0"))
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-auth")
 
@@ -64,4 +64,9 @@ dependencies {
     // icons
     implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.compose.material:material-icons-extended")
+
+    // imaging
+    implementation("io.coil-kt.coil3:coil-compose:3.6.3")
+
+    implementation("com.google.firebase:firebase-storage")
 }

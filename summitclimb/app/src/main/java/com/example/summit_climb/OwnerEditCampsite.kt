@@ -71,22 +71,16 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.PickVisualMediaRequest
 
 
-// Color Palette
-private val charcoal = Color(0xFF36454F)
-private val lightRed = Color(0xFFFF7F7F)
-private val greyBlue = Color(0xFFC9DEF3)
-private val lightBlue = Color(0xFFA6C8EB)
-
 /** Holds the amenities for editing */
-private data class EditAmenity(val key: String, val label: String, val icon: ImageVector)
+data class AmenityOption(val key: String, val label: String, val icon: ImageVector)
 
-private val Amenities = listOf(
-    EditAmenity("Parking", "Parking", Icons.Default.LocalParking),
-    EditAmenity("Washrooms", "Washrooms", Icons.Default.Wc),
-    EditAmenity("Fire", "Fire", Icons.Default.LocalFireDepartment),
-    EditAmenity("Trails", "Trails", Icons.Default.Hiking),
-    EditAmenity("Picnic tables", "Picnic Tables", Icons.Default.TableRestaurant),
-    EditAmenity("Water Tap", "Water Tap", Icons.Default.WaterDrop)
+val AllAmenities = listOf(
+    AmenityOption("Parking", "Parking", Icons.Default.LocalParking),
+    AmenityOption("Washrooms", "Washrooms", Icons.Default.Wc),
+    AmenityOption("Fire", "Fire", Icons.Default.LocalFireDepartment),
+    AmenityOption("Trails", "Trails", Icons.Default.Hiking),
+    AmenityOption("Picnic tables", "Picnic Tables", Icons.Default.TableRestaurant),
+    AmenityOption("Water Tap", "Water Tap", Icons.Default.WaterDrop)
 )
 
 /**
@@ -98,7 +92,7 @@ private val Amenities = listOf(
  */
 @Composable
 private fun AmenityBorder(
-    amenity: EditAmenity,
+    amenity: AmenityOption,
     selected: Boolean,
     onClick: () -> Unit)
 {
@@ -141,10 +135,14 @@ private fun AmenityBorder(
 /**
  * Owner Edit Campsite Screen
  *
+ * US 02.01.03
+ *
  * Displays an editing page for campsite listing clicked
  * allows for editing:
  * campsite name, location, photo, price per night, occupancy, description, amenities, map location, tags, and rules/policies
  * Includes a cancel button for discarding changes and a delete button
+ *
+ * Outstanding: the map shows coordinates until the shared map component is ready.
  *
  * @param navController navigation from campsite details screen
  * @param modifier modifier applied to campsite editing screen
@@ -460,7 +458,7 @@ fun OwnerEditCampsite(
                     Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ){
-                    for (icon in Amenities) {
+                    for (icon in AllAmenities) {
                         val selected = icon.key in amenities
                         AmenityBorder(icon, selected) {
                             amenities =

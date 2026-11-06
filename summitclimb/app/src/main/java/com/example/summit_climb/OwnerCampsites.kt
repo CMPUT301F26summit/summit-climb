@@ -26,15 +26,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 
-// Color Palette
-private val charcoal = Color(0xFF36454F)
-private val lightBlue = Color(0xFFA6C8EB)
+
 /**
  * List of campsites listed by entrant (owner)
+ *
+ * US 02.01.01, US 02.03.01
  *
  * Shows a scrollable list of listed campsites or none if the owner has none yet
  * There is also a (+) button to  register a new campsite
  * Tapping a listing opens that campsite's details
+ *
  *
  * @param navController navigation for the register button and for opening campsite details
  * @param modifier modifier applied to listing screen
@@ -87,7 +88,8 @@ fun OwnerCampsites(
                     contentAlignment = Alignment.Center) {
                     Text(
                         text = "Tap + to list a campsite.",
-                        color = Color(0xFF757575))
+                        color = sonicSilver
+                    )
 
                 }
 

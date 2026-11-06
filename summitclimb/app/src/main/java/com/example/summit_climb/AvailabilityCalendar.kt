@@ -29,10 +29,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 
-private val charcoal = Color(0xFF36454F)
-private val darkGreen = Color(0xFF06402B)
-private val lightGreen = Color(0xFF96B38E)
-private val lightBlue = Color(0xFFA6C8EB)
 
 /**
  * Availability calendar

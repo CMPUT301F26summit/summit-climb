@@ -33,11 +33,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import java.time.LocalDate
 import com.example.summit_climb.model.LotteryStatus
 
@@ -46,67 +45,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.LocalParking
-import androidx.compose.material.icons.filled.Wc
-import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.Hiking
-import androidx.compose.material.icons.filled.TableRestaurant
-import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.filled.ArrowCircleRight
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-
-// Color Palette
-private val charcoal = Color(0xFF36454F)
-private val lightGreen = Color(0xFF96B38E)
-private val lightRed = Color(0xFFFF7F7F)
-private val lightOrange = Color(0xFFFFA759)
-private val greyBlue = Color(0xFFC9DEF3)
-private val lightBlue = Color(0xFFA6C8EB)
-
-/** Holds the amenity name and icon. */
-private data class Amenity(val name: String, val icon: ImageVector)
-
-private val amenityIcons = listOf(
-    Amenity("Parking", Icons.Default.LocalParking),
-    Amenity("Washrooms", Icons.Default.Wc),
-    Amenity("Fire", Icons.Default.LocalFireDepartment),
-    Amenity("Trails", Icons.Default.Hiking),
-    Amenity("Picnic tables", Icons.Default.TableRestaurant),
-    Amenity("Water Tap", Icons.Default.WaterDrop)
-)
-
-/**
- * Amenity border for an amenity icon.
- *
- * @param amenity displaying the amenity
- * @param modifier modifier applied to the box
- */
-@Composable
-private fun AmenityBorder(
-    amenity: Amenity,
-    modifier: Modifier = Modifier
-){
-    Column(
-        modifier
-            .size(50.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(lightBlue),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ){
-        Icon(amenity.icon,
-            contentDescription = null,
-            Modifier.size(26.dp),
-            tint = charcoal
-        )
-    }
-}
 
 /**
  * Campsite detail screen for an owner's campsite listing.
  *
+ * US 02.01.03, US 02.01.04, US 02.04.01, US 02.04.06, US 02.05.01, US 02.06.01
+ *
  * Shows campsite image, name, location, price, rating, lottery status, description,
  * amenities, and an availability calendar, with buttons to edit the campsite, manage it, or list it in a lottery
+ *
+ * Outstanding: the map shows coordinates until the shared map component is ready.
  *
  * @param navController navigation for manage campsite, edit lottery, edit campsite, and back buttons.
  * @param modifier modifier applied to the individual campsite listing screen
@@ -122,11 +72,11 @@ fun OwnerCampsiteDetails(
 
 ){
     val backButton = { navController.popBackStack(); Unit }
-    val editCampsite = { navController.navigate("ownerEditCamp/${campsite.id}") }
-    val manageCampsite = { navController.navigate("manageCampsiteScreen/${campsite.id}") }
-    val listInLottery = { navController.navigate("ownerListLottery") }
+    val editCampsite = { navController.navigate(Routes.OWNER_EDIT_CAMPSITE) }
+    val manageCampsite = { navController.navigate(Routes.OWNER_MANAGE_CAMPSITE) }
+    val listInLottery = { navController.navigate(Routes.OWNER_LIST_LOTTERY) }
 
-    val selectedAmenities = amenityIcons.filter { it.name in campsite.amenities }
+    val selectedAmenities = amenityDrawables.filter { it.name in campsite.amenities }
 
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
     val bookedDates = remember(campsite.bookedDates){
@@ -136,7 +86,10 @@ fun OwnerCampsiteDetails(
     }
 
     Scaffold(modifier = modifier) { padding ->
-        Column(Modifier.padding(padding)) {
+        Column(Modifier
+            .padding(padding)
+            .background(Color.White)
+        ){
 
             Column(
                 Modifier
@@ -239,12 +192,12 @@ fun OwnerCampsiteDetails(
                             LotteryStatus.OPEN -> lightGreen
                             LotteryStatus.DRAWN -> lightOrange
                             LotteryStatus.CLOSED -> lightRed
-                            null -> Color(0xFFDADAD8)
+                            null -> beige
                         }
 
                         val lotteryTextColor =
                             if (lotteryStatus == null)
-                                Color(0xFF757575)
+                                sonicSilver
                             else
                                 Color.White
 
@@ -292,7 +245,8 @@ fun OwnerCampsiteDetails(
                         Row(
                             verticalAlignment = Alignment.CenterVertically
                         ){
-                            Icon(Icons.Default.StarBorder, null,
+                            Icon(Icons.Default.StarBorder,
+                                null,
                                 Modifier.size(14.dp)
                             )
 
