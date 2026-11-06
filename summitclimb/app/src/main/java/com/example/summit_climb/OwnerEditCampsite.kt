@@ -174,9 +174,9 @@ fun OwnerEditCampsite(
     var addingTag by remember { mutableStateOf(false) }
     var newTag by remember { mutableStateOf("") }
 
-    var imageUri by remember { mutableStateOf<Uri?>(null) }
+    var image by remember { mutableStateOf<Uri?>(null) }
     var saving by remember { mutableStateOf(false) }
-    val newImage = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> imageUri = uri }
+    val newImage = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> image = uri }
 
     var deleteCampsite by remember { mutableStateOf(false) }
 
@@ -246,7 +246,7 @@ fun OwnerEditCampsite(
                     .clip(RoundedCornerShape(22.dp))
             ){
                 AsyncImage(
-                    model = imageUri ?: campsite.promoImageUrl,
+                    model = image ?: campsite.promoImageUrl,
                     contentDescription = campsite.name,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
@@ -651,7 +651,7 @@ fun OwnerEditCampsite(
                         rules = rules
                     )
 
-                    val pickedImage = imageUri
+                    val pickedImage = image
 
                     if (pickedImage == null) {
                         saveCampsite(updated)
