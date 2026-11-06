@@ -1,8 +1,10 @@
 package com.example.summit_climb.controller
 
+import com.example.summit_climb.data.NotificationRepository
 import com.example.summit_climb.model.Reservation
 import com.example.summit_climb.model.Notification
 import com.example.summit_climb.model.NotificationType
+import com.example.summit_climb.data.ReservationRepository
 
 class OwnerReservationController(
     private val repository: ReservationRepository,
