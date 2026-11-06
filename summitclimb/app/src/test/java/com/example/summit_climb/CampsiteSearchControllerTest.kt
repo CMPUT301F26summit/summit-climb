@@ -13,11 +13,8 @@ import org.mockito.Mockito.`when`
 
 /**
  * Purpose: unit tests for [CampsiteSearchController]
- * (US 01.01.01 search, 01.01.02 filter, 01.01.03 list, 01.01.05 details, 01.13.01 rate).
- *
  * [CampsiteRepository] connects to Firestore when it is created, so these tests use a
  * Mockito mock of it instead. The mock is never constructed for real, so no Firebase code runs.
- * Needs: testImplementation("org.mockito:mockito-core:5.14.2")
  */
 class CampsiteSearchControllerTest {
 
@@ -70,7 +67,7 @@ class CampsiteSearchControllerTest {
         controller = CampsiteSearchController(repository)
     }
 
-    // ---------- search ----------
+    // search
 
     @Test
     fun search_withEmptyKeywordAndFilter_returnsEveryApprovedCampsite() {
@@ -128,7 +125,7 @@ class CampsiteSearchControllerTest {
         assertTrue(results.isEmpty())
     }
 
-    // ---------- filter ----------
+    // filter
 
     @Test
     fun search_filterByLocation_ignoresCase() {
@@ -192,7 +189,7 @@ class CampsiteSearchControllerTest {
         assertEquals(listOf(summitCamp), results)
     }
 
-    // ---------- filterCamps ----------
+    //  filterCamps 
 
     @Test
     fun filterCamps_keepsOriginalOrder() {
@@ -203,7 +200,7 @@ class CampsiteSearchControllerTest {
         assertEquals(listOf(summitCamp, lakesideCamp), results)
     }
 
-    // ---------- campsiteDetails ----------
+    //  campsiteDetails 
 
     @Test
     fun campsiteDetails_returnsCampsiteWithThatId() {
@@ -221,7 +218,7 @@ class CampsiteSearchControllerTest {
         assertNull(campsite)
     }
 
-    // ---------- rateCampsite ----------
+    // rateCampsite
 
     @Test
     fun rateCampsite_validStars_savesRatingAndReturnsTrue() {
