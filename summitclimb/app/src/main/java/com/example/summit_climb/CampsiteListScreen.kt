@@ -7,34 +7,44 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.BottomAppBar
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import java.util.Locale
 
 /**
- * The entrant's campsite list screen: search bar, filters, and the matching campsites.
- * The list updates as the user types and whenever Firestore changes.
- * Tapping a campsite opens `CampsiteDetailsScreen/{campsiteId}`.
- * Tapping "Scan QR code" opens `QRScanner` (screen).
- * The bottom navigation bar has Campsites (this screen), My Camps (OwnerCampsitesScreen)
- * and Profile (ProfileScreen).
+ * The entrant's campsite list screen (Home).
+ * Tapping the search box shows the filters (location, start, end, guests) and a Search button.
+ * Pressing Search runs the search and hides the filters again.
+ * The list only changes when the user presses Search, not while they type.
+ * Tapping a campsite opens its details
  *
  * @param navController: app's navigation controller, used to open other screens.
  * @param searchController: finds the campsites to show.
@@ -44,42 +54,58 @@ fun CampsiteListScreen(
     navController: NavController,
     searchController: CampsiteSearchController
 ){
+    // What the user is typing right now (not searched yet)
     var keyword by remember { mutableStateOf("") }
     var filter by remember { mutableStateOf(CampsiteFilter()) }
-    val campsites = searchController.search(keyword, filter)
+
+    // What was searched the last time the user pressed Search
+    var searchedKeyword by remember { mutableStateOf("") }
+    var searchedFilter by remember { mutableStateOf(CampsiteFilter()) }
+
+    // true while the filter fields and Search button are showing
+    var showFilters by remember { mutableStateOf(false) }
+
+    val campsites = searchController.search(searchedKeyword, searchedFilter)
 
     CampsiteListContent(
         keyword = keyword,
-        onKeywordChange = {keyword = it},
+        onKeywordChange = { keyword = it },
         filter = filter,
-        onFilterChange = {filter = it},
+        onFilterChange = { filter = it },
+        showFilters = showFilters,
+        onSearchBoxTapped = { showFilters = true },
+        onSearchClick = {
+            searchedKeyword = keyword
+            searchedFilter = filter
+            showFilters = false
+        },
         campsites = campsites,
-        onCampsiteClick = {campsite ->
-            navController.navigate("CampsiteDetailsScreen/${campsite.id}")
+        onCampsiteClick = { campsite ->
+            navController.navigate(Routes.campsiteDetails(campsite.id))
         },
-        onScanClick = { navController.navigate("QRScanner")},
-        onMyCampsClick = {
-            navController.navigate(CampsiteListRoutes.MY_CAMPS) { launchSingleTop = true }
-        },
-        onProfileClick = {
-            navController.navigate(CampsiteListRoutes.PROFILE) { launchSingleTop = true }
+        onScanClick = { navController.navigate("QRScanner") },
+        onNotificationsClick = {
+            navController.navigate(Routes.NOTIFICATIONS) { launchSingleTop = true }
         }
     )
 }
 
+val black = Color.Black // for titles and icons
+
 /**
  * The layout of [CampsiteListScreen].
- * UI tests can show it with fake campsites.
  *
- * @param keyword: text in the search bar.
- * @param onKeywordChange called with the new text when the user types in the search bar.
- * @param filter: current location, date range and number of guests.
- * @param onFilterChange: called with the updated filter when the user changes a filter field.
+ * @param keyword: text in search box.
+ * @param onKeywordChange: called with new text when the user types in search box.
+ * @param filter: location, date range and number of guests user has typed.
+ * @param onFilterChange: called with updated filter when user changes a filter field.
+ * @param showFilters: `true` to show filter fields and Search button.
+ * @param onSearchBoxTapped: called when user taps search box.
+ * @param onSearchClick: called when user presses Search.
  * @param campsites: campsites to list.
- * @param onCampsiteClick: called with the campsite the user tapped.
- * @param onScanClick: called when the user taps "Scan QR code".
- * @param onMyCampsClick: called when the user taps "My Camps" in the bottom bar.
- * @param onProfileClick: called when the user taps "Profile" in the bottom bar.
+ * @param onCampsiteClick: called with campsite the user tapped.
+ * @param onScanClick: called when user taps the QR scan button.
+ * @param onNotificationsClick: called when the user taps bell.
  */
 @Composable
 fun CampsiteListContent(
@@ -87,81 +113,62 @@ fun CampsiteListContent(
     onKeywordChange: (String) -> Unit,
     filter: CampsiteFilter,
     onFilterChange: (CampsiteFilter) -> Unit,
+    showFilters: Boolean,
+    onSearchBoxTapped: () -> Unit,
+    onSearchClick: () -> Unit,
     campsites: List<Campsite>,
     onCampsiteClick: (Campsite) -> Unit,
     onScanClick: () -> Unit,
-    onMyCampsClick: () -> Unit,
-    onProfileClick: () -> Unit
+    onNotificationsClick: () -> Unit
 ) {
-    Scaffold(
-        bottomBar = {
-            CampsiteListBottomBar(
-                onMyCampsClick = onMyCampsClick,
-                onProfileClick = onProfileClick
+    val focusManager = LocalFocusManager.current
+    // Runs a search.
+    val runSearch = {
+        focusManager.clearFocus()
+        onSearchClick()
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        CampsiteListHeader(onNotificationsClick = onNotificationsClick)
+
+        SearchRow(
+            keyword = keyword,
+            onKeywordChange = onKeywordChange,
+            onSearchBoxTapped = onSearchBoxTapped,
+            onKeyboardSearch = runSearch,
+            onScanClick = onScanClick
+        )
+
+        if (showFilters) {
+            FilterFields(
+                filter = filter,
+                onFilterChange = onFilterChange,
+                onSearchClick = runSearch
             )
         }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp)
-        ) {
-            OutlinedTextField(
-                value = keyword,
-                onValueChange = onKeywordChange,
-                label = { Text("Search by name or keyword") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                value = filter.location,
-                onValueChange = { onFilterChange(filter.copy(location = it)) },
-                label = { Text("Location") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = filter.startDate,
-                    onValueChange = { onFilterChange(filter.copy(startDate = it)) },
-                    label = { Text("Start (YYYY-MM-DD)") },
-                    modifier = Modifier.weight(1f)
-                )
-                OutlinedTextField(
-                    value = filter.endDate,
-                    onValueChange = { onFilterChange(filter.copy(endDate = it)) },
-                    label = { Text("End (YYYY-MM-DD)") },
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            OutlinedTextField(
-                value = if (filter.guests == 0) "" else filter.guests.toString(),
-                onValueChange = { onFilterChange(filter.copy(guests = it.toIntOrNull() ?: 0)) },
-                label = { Text("Number of guests") },
-                modifier = Modifier.fillMaxWidth()
-            )
 
+        if (campsites.isEmpty()) {
+            Text(CampsiteListText.NO_RESULTS, color = charcoal)
+        }
 
-            Button(onClick = onScanClick, modifier = Modifier.padding(vertical = 8.dp)) {
-                Text("Scan QR code")
-            }
-
-            if (campsites.isEmpty()) {
-                Text(CampsiteListText.NO_RESULTS)
-            }
-
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(campsites) { campsite ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onCampsiteClick(campsite) }
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(campsite.name, style = MaterialTheme.typography.titleMedium)
-                            Text(campsite.location)
-                            Text("Up to ${campsite.maxOccupancy} guests")
-                            Text(formatCampsiteRating(campsite))
-                        }
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(campsites) { campsite ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(CampsiteListTags.campsiteCard(campsite.id))
+                        .clickable { onCampsiteClick(campsite) }
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(campsite.name, style = MaterialTheme.typography.titleMedium)
+                        Text(campsite.location)
+                        Text("Up to ${campsite.maxOccupancy} guests")
+                        Text(formatCampsiteRating(campsite))
                     }
                 }
             }
@@ -170,8 +177,162 @@ fun CampsiteListContent(
 }
 
 /**
+ * Top row has title  and the notifications bell
+ * @param onNotificationsClick: called when user taps bell.
+ */
+@Composable
+fun CampsiteListHeader(onNotificationsClick: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = CampsiteListText.TITLE,
+            style = MaterialTheme.typography.headlineSmall,
+            color = black,
+            modifier = Modifier.weight(1f)
+        )
+        IconButton(
+            onClick = onNotificationsClick,
+            modifier = Modifier.testTag(CampsiteListTags.NOTIFICATIONS_BUTTON)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_notifications),
+                contentDescription = CampsiteListText.NOTIFICATIONS,
+                tint = black,
+                modifier = Modifier.size(28.dp)
+            )
+        }
+    }
+}
+
+/**
+ * The search box with QR scan button
+ *
+ * @param keyword: text in search box.
+ * @param onKeywordChange: called with new text when user types.
+ * @param onSearchBoxTapped: called when search box gets focus (user tapped it).
+ * @param onKeyboardSearch: called when user presses keyboard's search key.
+ * @param onScanClick: called when user taps QR scan button.
+ */
+@Composable
+fun SearchRow(
+    keyword: String,
+    onKeywordChange: (String) -> Unit,
+    onSearchBoxTapped: () -> Unit,
+    onKeyboardSearch: () -> Unit,
+    onScanClick: () -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        OutlinedTextField(
+            value = keyword,
+            onValueChange = onKeywordChange,
+            placeholder = { Text(CampsiteListText.SEARCH_HINT, color = charcoal) },
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(R.drawable.ic_search),
+                    contentDescription = null,
+                    tint = charcoal
+                )
+            },
+            singleLine = true,
+            shape = RoundedCornerShape(24.dp),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(onSearch = { onKeyboardSearch() }),
+            modifier = Modifier
+                .weight(1f)
+                .testTag(CampsiteListTags.SEARCH_BOX)
+                .onFocusChanged { focusState ->
+                    if (focusState.isFocused) {
+                        onSearchBoxTapped()
+                    }
+                }
+        )
+        IconButton(
+            onClick = onScanClick,
+            modifier = Modifier.testTag(CampsiteListTags.SCAN_BUTTON)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_qr_scan),
+                contentDescription = CampsiteListText.SCAN_QR,
+                tint = black,
+                modifier = Modifier.size(28.dp)
+            )
+        }
+    }
+}
+
+/**
+ * The filter fields and Search button, shown only while user is searching.
+ *
+ * @param filter: location, date range and number of guests user has typed.
+ * @param onFilterChange: called with updated filter when user changes a field.
+ * @param onSearchClick: called when user presses Search.
+ */
+@Composable
+fun FilterFields(
+    filter: CampsiteFilter,
+    onFilterChange: (CampsiteFilter) -> Unit,
+    onSearchClick: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedTextField(
+            value = filter.location,
+            onValueChange = { onFilterChange(filter.copy(location = it)) },
+            label = { Text("Location") },
+            singleLine = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(CampsiteListTags.LOCATION_INPUT)
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                value = filter.startDate,
+                onValueChange = { onFilterChange(filter.copy(startDate = it)) },
+                label = { Text("Start (YYYY-MM-DD)") },
+                singleLine = true,
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag(CampsiteListTags.START_DATE_INPUT)
+            )
+            OutlinedTextField(
+                value = filter.endDate,
+                onValueChange = { onFilterChange(filter.copy(endDate = it)) },
+                label = { Text("End (YYYY-MM-DD)") },
+                singleLine = true,
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag(CampsiteListTags.END_DATE_INPUT)
+            )
+        }
+        OutlinedTextField(
+            value = if (filter.guests == 0) "" else filter.guests.toString(),
+            onValueChange = { onFilterChange(filter.copy(guests = it.toIntOrNull() ?: 0)) },
+            label = { Text("Number of guests") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(CampsiteListTags.GUESTS_INPUT)
+        )
+        Button(
+            onClick = onSearchClick,
+            colors = ButtonDefaults.buttonColors(containerColor = lightBlue, contentColor = black),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(CampsiteListTags.SEARCH_BUTTON)
+        ) {
+            Text(CampsiteListText.SEARCH_BUTTON)
+        }
+    }
+}
+
+/**
  * Formats a campsite's rating for display.
- * @return for example `"Rating: 4.5 ★"`, or `"No ratings yet"` if nobody has rated it.
+ * @return for example "Rating: 4.5 ★" or "No ratings yet" if nobody has rated it.
  */
 fun formatCampsiteRating(campsite: Campsite): String {
     if (campsite.ratings.isEmpty()) {
@@ -183,76 +344,39 @@ fun formatCampsiteRating(campsite: Campsite): String {
 
 /** Text shown on [CampsiteListScreen]. Tests compare against these. */
 object CampsiteListText {
-    //Shown when no campsites match the search.
+    // Screen title at top.
+    const val TITLE = "Find Your Next Campsite"
+
+    // Gray hint inside empty search box.
+    const val SEARCH_HINT = "Search by name or keyword"
+
+    // Label of button that runs the search.
+    const val SEARCH_BUTTON = "Search"
+
+    // Read by screen readers
+    const val NOTIFICATIONS = "Notifications"
+    const val SCAN_QR = "Scan QR code"
+
+    // Shown when no campsites match search.
     const val NO_RESULTS = "No campsites match your search."
-    // Label of the bottom bar button for this screen (the campsite list).
-    const val CAMPSITES = "Campsites"
-
-    // Label of the bottom bar button that opens the owner's campsites.
-    const val MY_CAMPS = "My Camps"
-
-    // Label of the bottom bar button that opens the profile
-    const val PROFILE = "Profile"
 }
 
-/**
- * Bottom navigation bar for [CampsiteListScreen] with three buttons: Campsites, My Camps and Profile.
- * Campsites is bold because it is the current screen, so tapping it does nothing.
- * @param onMyCampsClick: called when the user taps "My Camps".
- * @param onProfileClick: called when the user taps "Profile".
- */
-@Composable
-fun CampsiteListBottomBar(
-    onMyCampsClick: () -> Unit,
-    onProfileClick: () -> Unit
-) {
-    BottomAppBar {
-        BottomBarButton(
-            text = CampsiteListText.CAMPSITES,
-            isCurrentScreen = true,
-            onClick = { /* Already on this screen */ },
-            modifier = Modifier.weight(1f)
-        )
-        BottomBarButton(
-            text = CampsiteListText.MY_CAMPS,
-            isCurrentScreen = false,
-            onClick = onMyCampsClick,
-            modifier = Modifier.weight(1f)
-        )
-        BottomBarButton(
-            text = CampsiteListText.PROFILE,
-            isCurrentScreen = false,
-            onClick = onProfileClick,
-            modifier = Modifier.weight(1f)
-        )
+/** Test tags on [CampsiteListScreen]. for UI tests */
+object CampsiteListTags {
+    const val SEARCH_BOX = "searchBox"
+    const val SCAN_BUTTON = "scanButton"
+    const val NOTIFICATIONS_BUTTON = "notificationsButton"
+    const val LOCATION_INPUT = "locationInput"
+    const val START_DATE_INPUT = "startDateInput"
+    const val END_DATE_INPUT = "endDateInput"
+    const val GUESTS_INPUT = "guestsInput"
+    const val SEARCH_BUTTON = "searchButton"
+
+    /**
+     * Tag of one campsite's card in list.
+     * @return for example `"campsiteCard_sample-cedar-valley"`.
+     */
+    fun campsiteCard(campsiteId: String): String {
+        return "campsiteCard_$campsiteId"
     }
-}
-
-/**
- * One text button in the bottom bar.
- * @param text: the button's label.
- * @param isCurrentScreen: true if this button is for the screen the user is on; its text is bold.
- * @param onClick: called when the user taps the button.
- * @param modifier: used to give each button an equal share of the bar's width.
- */
-@Composable
-fun BottomBarButton(
-    text: String,
-    isCurrentScreen: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val fontWeight = if (isCurrentScreen) FontWeight.Bold else FontWeight.Normal
-
-    TextButton(onClick = onClick, modifier = modifier) {
-        Text(text = text, fontWeight = fontWeight)
-    }
-}
-
-/**
- * Navigation routes the bottom bar opens.
- */
-object CampsiteListRoutes {
-    const val MY_CAMPS = "OwnerCampsitesScreen"
-    const val PROFILE = "ProfileScreen"
 }

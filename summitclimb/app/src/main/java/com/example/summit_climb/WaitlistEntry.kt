@@ -1,19 +1,20 @@
 package com.example.summit_climb
 
+import com.example.summit_climb.model.Lottery
+
+/**
+ * Possible results of a WaitlistEntry.
+ * The normal order is WAITING → WON or LOST.
+ * A winner then goes to RESERVED or [DECLINED].
+ */
+enum class WaitlistResult {
+    WAITING, WON, LOST, DECLINED, RESERVED
+}
+
 /**
  * A entrant's place on one lottery's waitlist.
  * Stored by LotteryRepository in the `entries` subcollection of the lottery,
  * at `lotteries/{lotteryId}/entries/{entrantId}`.
- *
- * Example:
- * ```
- * val entry = WaitlistEntry(
- *     lotteryId = "lottery1",
- *     entrantId = "device123",
- *     joinedAt = System.currentTimeMillis()
- * )
- * entry.result // WAITING
- * ```
  *
  * @property lotteryId: ID of the Lottery this entry belongs to
  * @property entrantId: User.userId of the entrant who joined
@@ -34,8 +35,8 @@ class WaitlistEntry(
      * @param now: current time in milliseconds.
      * @return `true` if the lottery's registration is open at now.
      */
-    fun removable(lottery: Lottery, now: Long = System.currentTimeMillis()): Boolean{
-        return lottery.isRegisterationOpen(now)
+    fun removable(lottery: Lottery, now: Long = System.currentTimeMillis()): Boolean {
+        return lottery.isRegistrationOpen(now)
     }
 
     /**
@@ -46,18 +47,9 @@ class WaitlistEntry(
      * @param now: current time in milliseconds.
      * @return `true` if result is WON and now is inside the booking period.
      */
-    fun action(lottery: Lottery, now: Long = System.currentTimeMillis()): Boolean{
+    fun action(lottery: Lottery, now: Long = System.currentTimeMillis()): Boolean {
         val won = (result == WaitlistResult.WON)
         val booking_open = lottery.isInBookingPeriod(now)
         return won && booking_open
     }
-}
-
-/**
- * Possible results of a WaitlistEntry.
- * The normal order is WAITING → WON or LOST.
- * A winner then goes to RESERVED or [DECLINED].
- */
-enum class WaitlistResult{
-    WAITING, WON, LOST, DECLINED, RESERVED
 }

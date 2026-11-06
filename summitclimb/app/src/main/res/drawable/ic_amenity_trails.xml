@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icon: Amenity: Trails.
+     Material Symbols "hiking" (outlined, weight 400), Apache License 2.0.
+     The Compose Icon's tint sets the real colour, so the fill colour here doesn't matter. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
+    <!-- Material Symbols are drawn from y = -960 to 0, so shift them down into view. -->
+    <group android:translateY="960">
+        <path
+            android:fillColor="@android:color/black"
+            android:pathData="m282-40 121-620q5-24 23-37t38-13q20 0 37.5 9t28.5 26l39 64q19 32 52.5 57t78.5 39v-75h40v550h-40v-414q-51-11-96-39t-80-69l-29 145 85 81v296h-60v-244l-100-95-74 339h-64Zm17-403-75-14q-10-2-17.5-13t-5.5-22l30-157q5-29 29-44.5t53-10.5l36 7-50 254Zm179.5-332.5Q457-797 457-827t21.5-51.5Q500-900 530-900t51.5 21.5Q603-857 603-827t-21.5 51.5Q560-754 530-754t-51.5-21.5Z" />
+    </group>
+</vector>

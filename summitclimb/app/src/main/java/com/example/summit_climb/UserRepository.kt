@@ -23,10 +23,9 @@ import com.google.firebase.firestore.firestore
  * @param lotteryRepository: used to remove a user's waitlist entries when the user is deleted.
  * @constructor Connects to the `users` collection and starts listening for changes.
  */
-class UserRepository {
-    private  val db = Firebase.firestore
+class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getInstance()) {
     private val userRef = db.collection("users")
-    private val imageService = ImageService()
+    //private val imageService = ImageService()
     private val _users = mutableStateListOf<User>()
 
     // Every user in Firestore. Updates automatically. Used by the admin screens.
@@ -85,7 +84,7 @@ class UserRepository {
     /**
      * Saves the user's notification opt out setting.
      * @param userId: user to update.
-     * @param optedOut: `true` to stop notifications, `false` to receive them.
+     * @param optOut: `true` to stop notifications, `false` to receive them.
      */
     fun updateNotificationOpt(
         userId:String,
@@ -98,7 +97,7 @@ class UserRepository {
      * Deletes the user along with their waitlist entries and profile image.
      * Entrants use this to delete their own profile. Admin can use it to delete a user.
      * @param user: user to be deleted.
-     */
+     *
     fun deleteUser(
         user: User
     ){
@@ -112,7 +111,7 @@ class UserRepository {
             imageService.deleteImage(user.profileImageUrl)
         }
         userRef.document(user.userId).delete()
-    }
+    }*/
 
     /**
      * Gets all users, searched by name, email and filtered by account status. For admins.
