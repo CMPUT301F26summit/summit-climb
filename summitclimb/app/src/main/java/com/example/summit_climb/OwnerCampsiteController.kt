@@ -1,5 +1,6 @@
-package com.example.summit_climb
 /*
+package com.example.summit_climb
+
 import com.example.summit_climb.service.ImageService
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
