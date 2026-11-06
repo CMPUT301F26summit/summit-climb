@@ -53,6 +53,8 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
+    androidTestImplementation("androidx.navigation:navigation-testing:2.8.5")
+
     // firebase
     implementation(platform("com.google.firebase:firebase-bom:35.1.0"))
     implementation("com.google.firebase:firebase-firestore")
@@ -67,6 +69,4 @@ dependencies {
 
     // imaging
     implementation("io.coil-kt.coil3:coil-compose:3.6.3")
-
-    implementation("com.google.firebase:firebase-storage")
 }
