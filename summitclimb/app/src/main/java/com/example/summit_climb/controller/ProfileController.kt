@@ -1,21 +1,88 @@
-/*
 package com.example.summit_climb
 
-
-import com.example.summit_climb.User
-import com.example.summit_climb.UserRepository
-import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.ViewModel
+import android.net.Uri
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
-import android.net.Uri
-import com.example.summit_climb.ImageService
+
+/*Interfaces to improve access and communication with other files for ProfileControllerTest */
+interface UserDataSource {
+    fun getUser(uid: String, onFailure: (Exception) -> Unit = {}, onResult: (User) -> Unit)
+    fun saveProfile(user: User, onFailure: (Exception) -> Unit = {}, onSuccess: () -> Unit = {})
+    fun updateNotificationOpt(userId: String, optOut: Boolean, onFailure: (Exception) -> Unit = {})
+    fun deleteUser(user: User)
+}
+
+interface ImageUploader {
+    fun upload(imageUri: Uri, folder: String, onDone: (String?) -> Unit)
+
+    fun delete(imageUrl: String, onDone: (Boolean) -> Unit = {})
+}
+
+
+interface AccountService {
+    val currentUserId: String?
+
+    fun deleteAccount(onSuccess: () -> Unit, onFailure: (Exception) -> Unit)
+}
+
+class UserRepositoryAdapter(
+    private val repository: UserRepository = UserRepository()
+) : UserDataSource {
+
+    override fun getUser(uid: String, onFailure: (Exception) -> Unit, onResult: (User) -> Unit) {
+        repository.getUser(uid, onFailure = onFailure) { onResult(it) }
+    }
+
+    override fun saveProfile(user: User, onFailure: (Exception) -> Unit, onSuccess: () -> Unit) {
+        repository.saveProfile(user, onFailure = onFailure, onSuccess = onSuccess)
+    }
+
+    override fun updateNotificationOpt(userId: String, optOut: Boolean, onFailure: (Exception) -> Unit) {
+        repository.updateNotificationOpt(userId, optOut, onFailure = onFailure)
+    }
+
+    override fun deleteUser(user: User) {
+        repository.deleteUser(user)
+    }
+}
+
+class ImageServiceAdapter(
+    private val service: ImageService = ImageService()
+) : ImageUploader {
+
+    override fun upload(imageUri: Uri, folder: String, onDone: (String?) -> Unit) {
+        service.upload(imageUri, folder) { onDone(it) }
+    }
+
+    override fun delete(imageUrl: String, onDone: (Boolean) -> Unit) {
+        service.delete(imageUrl) { onDone(it) }
+    }
+}
+
+class FirebaseAccountService : AccountService {
+    override val currentUserId: String?
+        get() = Firebase.auth.currentUser?.uid
+
+    override fun deleteAccount(onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+        val account = Firebase.auth.currentUser
+        if (account == null) {
+            onFailure(Exception("Nobody is signed in"))
+            return
+        }
+        account.delete()
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { onFailure(it) }
+    }
+}
 
 /**
  * Controls the actions that a user can perform on their profile
- * Lets users view and edit information, toggle notifications, and delete their account
+ * Lets users view and edit information, toggle notifications, change their photo,
+ * and delete their account
  * Actions that can fail take an onFailure callback, called with a message to show the user.
  *
  * Example:
@@ -23,11 +90,16 @@ import com.example.summit_climb.ImageService
  * controller.name = "Mila"
  * controller.saveProfile()
  *
- * @param repository: repository containing user information
- * @constructor Creates a controller for the signed-in user's profile
+ * @param repository: where user information is read and saved
+ * @param imageService: uploads and deletes profile photos
+ * @param account: the signed-in account
+ * @constructor Creates a controller for the signed-in user's profile.
+ * With no arguments it uses the real Firebase versions. Tests pass fakes.
  */
-class ProfileController (
-    private val repository: UserRepository = UserRepository() ,
+class ProfileController(
+    private val repository: UserDataSource = UserRepositoryAdapter(),
+    private val imageService: ImageUploader = ImageServiceAdapter(),
+    private val account: AccountService = FirebaseAccountService()
 ) : ViewModel() {
 
     var currentUser by mutableStateOf<User?>(null)
@@ -35,8 +107,6 @@ class ProfileController (
     var name by mutableStateOf("")
     var email by mutableStateOf("")
     var phone by mutableStateOf("")
-
-    private val imageService = ImageService()
 
     var photoUrl by mutableStateOf("")
     var uploadPhoto by mutableStateOf(false)
@@ -68,7 +138,7 @@ class ProfileController (
      * @param onFailure: provides message if loading fails
      */
     fun loadProfile(onFailure: (Exception) -> Unit = {}) {
-        val uid = Firebase.auth.currentUser?.uid ?: return
+        val uid = account.currentUserId ?: return
         repository.getUser(uid, onFailure = {
             onFailure(Exception("Unable to load profile", it))
         }) { user ->
@@ -89,7 +159,7 @@ class ProfileController (
         user.email = email
         user.phoneNumber = phone
         repository.saveProfile(user, onFailure = {
-           onFailure(Exception("Unable to save profile", it))
+            onFailure(Exception("Unable to save profile", it))
         })
     }
 
@@ -101,17 +171,18 @@ class ProfileController (
      */
     fun deleteProfile(onFailure: (Exception) -> Unit = {}) {
         val user = currentUser ?: return
-        val firebaseAccount = Firebase.auth.currentUser ?: return
+        if (account.currentUserId == null) return
 
-        firebaseAccount.delete()
-            .addOnSuccessListener {
+        account.deleteAccount(
+            onSuccess = {
                 repository.deleteUser(user)
                 currentUser = null
                 deleteStatus = true
-            }
-            .addOnFailureListener {
+            },
+            onFailure = {
                 onFailure(Exception("Unable to delete account", it))
             }
+        )
     }
 
     /**
@@ -173,5 +244,3 @@ class ProfileController (
         }
     }
 }
- */
-
