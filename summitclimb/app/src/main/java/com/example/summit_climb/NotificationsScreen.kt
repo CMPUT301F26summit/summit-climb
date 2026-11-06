@@ -2,7 +2,6 @@
 package com.example.summit_climb
 
 import android.text.format.DateUtils
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,7 +23,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -38,24 +36,29 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.font.FontWeight.Companion.ExtraBold
 import androidx.compose.ui.unit.sp
-import com.example.summit_climb.R
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 
 // Summit Climb colours
-private val BackgroundBlue = Color(0xFFEAF5FA)
-private val DarkTeal = Color(0xFF245563)
-private val UnreadBlue = Color(0xFFD8EAF3)
-private val White = Color(0xFFFFFFFF)
-private val SecondaryText = Color(0xFF71818A)
-private val Orange = Color(0xFFE99A3D)
+private val black = Color.Black
+private val charcoal = Color(0xFF36454F)
+private val lightBlue = Color(0xFFA6C8EB)
+private val greyBlue = Color(0xFFC9DEF3)
+private val white = Color.White
 
-/** Shows the logged-in user's notifications. */
+/**
+ * Displays the current user's notifications.
+ *
+ * Shows unread notifications, notification messages, and timestamps.
+ * Allows users to mark notifications as read and navigate to available
+ * related screens
+ *
+ * Known Issues:
+ *  - Some notifications types do not have navigation destination yet.
+ *  - Notifications are not displayed in the phone's notification bar.
+ */
+
 @Composable
 fun NotificationsScreen(
     controller: NotificationController,
@@ -91,19 +94,19 @@ fun NotificationsScreen(
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Back",
-                            tint = DarkTeal
+                            tint = black
                         )
                     }
                     Text(
                         text = "Back",
-                        color = DarkTeal,
+                        color = black,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.clickable { navController.popBackStack() }
                     )
                 }
             }
 
-            // heading, unread count, and the temporary test button
+            // heading and unread count
             item {
                 Column {
                     Text(
@@ -112,25 +115,17 @@ fun NotificationsScreen(
                             fontSize = 42.sp,
                             fontWeight = FontWeight.ExtraBold
                         ),
-                        color = DarkTeal
+                        color = black
                     )
                     Text(
                         text = "${controller.unreadCount} unread",
-                        color = SecondaryText,
+                        color = charcoal,
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold
                         ),
                         modifier = Modifier.padding(top = 6.dp, bottom = 12.dp)
                     )
-
-                    // TEMPORARY: sends three sample notifications ==> remove before the pull request
-                    Button(
-                        onClick = { controller.sendTestNotifications() },
-                        colors = ButtonDefaults.buttonColors(containerColor = Orange)
-                    ) {
-                        Text("Send test notifications")
-                    }
                 }
             }
 
@@ -139,7 +134,7 @@ fun NotificationsScreen(
                 item {
                     Text(
                         text = "You don't have any notifications yet.",
-                        color = DarkTeal,
+                        color = black,
                         modifier = Modifier.padding(top = 12.dp)
                     )
                 }
@@ -186,9 +181,9 @@ private fun NotificationCard(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (notification.read) {
-                White
+                greyBlue
             } else {
-                UnreadBlue
+                lightBlue
             }
         ),
         elevation = CardDefaults.cardElevation(
@@ -205,7 +200,7 @@ private fun NotificationCard(
             ) {
                 Text(
                     text = header,
-                    color = Color(0xFFE3963E),
+                    color = black,
                     style = MaterialTheme.typography.titleMedium
                 )
 
@@ -214,7 +209,7 @@ private fun NotificationCard(
                 if (!notification.read) {
                     Text(
                         text = "NEW",
-                        color = Orange,
+                        color = charcoal,
                         style = MaterialTheme.typography.labelMedium
                     )
                 }
@@ -223,7 +218,7 @@ private fun NotificationCard(
             // smaller notification message
             Text(
                 text = notification.text,
-                color = DarkTeal,
+                color = charcoal,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 10.dp)
             )
@@ -235,7 +230,7 @@ private fun NotificationCard(
                     System.currentTimeMillis(),
                     DateUtils.MINUTE_IN_MILLIS
                 ).toString(),
-                color = SecondaryText,
+                color = charcoal,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(top = 12.dp)
             )

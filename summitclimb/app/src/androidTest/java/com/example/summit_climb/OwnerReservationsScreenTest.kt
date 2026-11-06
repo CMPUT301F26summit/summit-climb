@@ -163,10 +163,9 @@ class OwnerReservationsScreenTest {
         }
         composeTestRule.onNodeWithText("Reject").performClick()
         composeTestRule.onNodeWithText("Reject reservation?").assertIsDisplayed()
-        composeTestRule.onNodeWithText(
-            "Are you sure you want to reject Noah Patel's reservation for October 20–22, 2026?"
-        )
-            .assertIsDisplayed()
+        composeTestRule.onNodeWithText("Noah Patel · October 20–22, 2026").assertIsDisplayed()
+        composeTestRule.onNodeWithText("The guest will be notified and the dates " +
+                "will open up again.").assertIsDisplayed()
 
         composeTestRule.onAllNodesWithText("Reject")
             .onLast()
