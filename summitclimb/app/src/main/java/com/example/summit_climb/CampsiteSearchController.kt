@@ -11,7 +11,7 @@ package com.example.summit_climb
  * @constructor Creates a controller that searches the given repository.
  */
 class CampsiteSearchController(private val campsiteRepository: CampsiteRepository) {
-    private val qrService = QRCodeService()
+    //private val qrService = QRCodeService()
 
     /**
      * Searches approved campsites by keyword and filters them by location, date and guests number.
@@ -36,6 +36,7 @@ class CampsiteSearchController(private val campsiteRepository: CampsiteRepositor
         return campsiteRepository.getCampsite(campsiteId)
     }
 
+    /*
     /**
      * Gets a campsite's details from the text of a scanned QR code.
      * @param qrText: raw text the scanner read from the QR code.
@@ -45,6 +46,7 @@ class CampsiteSearchController(private val campsiteRepository: CampsiteRepositor
         val campsiteId = qrService.campsiteIDFromQRText(qrText) ?: return null
         return campsiteDetails(campsiteId)
     }
+    */
 
     /**
      * Saves an entrant's star rating for a campsite.

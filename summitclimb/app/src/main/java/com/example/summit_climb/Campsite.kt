@@ -1,5 +1,6 @@
 package com.example.summit_climb
 
+import com.example.summit_climb.model.Lottery
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Calendar
