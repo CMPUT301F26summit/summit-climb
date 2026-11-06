@@ -1,18 +1,17 @@
 package com.example.summit_climb
 
-import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsOff
-import androidx.compose.ui.test.assertIsOn
-import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
 import androidx.navigation.testing.TestNavHostController
-import com.example.summit_climb.controller.ProfileController
 import org.junit.Rule
 import org.junit.Test
 
+/**
+ * User Interface tests for the profile screen
+ * Checks that the text, input fields, buttons, and notifications
+ * are properly represented with the correct values
+ * Checks for error messages and error handling
+ */
 class ProfileScreenTest {
-
     @get:Rule
     val composeTestRule = createComposeRule()
     lateinit var navController: TestNavHostController
@@ -35,6 +34,7 @@ class ProfileScreenTest {
 
     private fun navigation() = navController.currentBackStackEntry?.destination?.route
 
+    // show information
     @Test
     fun showTitle() {
         showProfile()
@@ -77,6 +77,7 @@ class ProfileScreenTest {
         composeTestRule.onNodeWithText("Policies & guidelines").assertIsDisplayed()
     }
 
+    // tests notification switch
     @Test
     fun notificationsSwitchCanBeTurnedOn() {
         showProfile(notifications = true)
@@ -91,6 +92,7 @@ class ProfileScreenTest {
         composeTestRule.onNode(isToggleable()).assertIsOff()
     }
 
+    // error handling
     @Test
     fun noErrorMessageAtStart() {
         showProfile()
@@ -100,4 +102,3 @@ class ProfileScreenTest {
         composeTestRule.onNodeWithText("Unable to update notifications").assertDoesNotExist()
     }
 }
-
