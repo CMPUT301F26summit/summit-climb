@@ -70,4 +70,6 @@ dependencies {
     implementation(libs.zxing.core)
     implementation(libs.play.services.code.scanner)
     implementation("com.google.firebase:firebase-storage")
+    androidTestImplementation("androidx.navigation:navigation-testing:2.8.5")
+
 }
