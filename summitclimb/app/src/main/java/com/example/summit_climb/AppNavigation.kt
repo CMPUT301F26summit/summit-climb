@@ -8,6 +8,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.summit_climb.model.LotteryStatus
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import com.example.summit_climb.controller.OwnerReservationController
+import com.example.summit_climb.ui.owner.OwnerReservationsFromFirestore
+
 
 
 @Composable
@@ -81,6 +86,30 @@ fun AppNavigation(container: AppContainer) {
 
                 }
 
+                val activeReservations = remember(campsite?.id) {
+                    mutableStateOf(0)
+                }
+
+                LaunchedEffect(campsite?.id) {
+                    if (campsite != null) {
+                        container.reservationRepository.getReservationsByCampsite(
+                            campsiteId = campsite.id,
+                            onSuccess = { reservations ->
+                                activeReservations.value = reservations.count {
+                                    it.status == "ACTIVE"
+                                }
+                            },
+                            onFailure = { exception ->
+                                android.util.Log.e(
+                                    "ManageCampsite",
+                                    "Could not load reservations",
+                                    exception
+                                )
+                            }
+                        )
+                    }
+                }
+
                 // Display the campsite information
                 if (campsite != null) {
 
@@ -97,9 +126,11 @@ fun AppNavigation(container: AppContainer) {
                         campsiteName = campsite.name,
                         location = campsite.location,
                         lotteryStatus = status,
-                        activeReservations = 0,         // placeholder for now
+                        activeReservations = activeReservations.value,
                         entrantCount = lottery?.entrantCount ?: 0,
-                        sentCount = 0           // placeholder for now
+                        sentCount = container.notificationRepository
+                            .sentBy(campsite.ownerId)
+                            .count { it.campsiteId == campsite.id }
                     )
 
                 } else {
@@ -153,7 +184,30 @@ fun AppNavigation(container: AppContainer) {
                     Text("Loading campsite lottery information....")
                 }
             }
-            //composable("ownerActiveReserve"){ ownerActiveReserve(navController) }
+            composable("ownerActiveReserve") {
+                val campsite = container.currUserId?.let { ownerId ->
+                    container.campsiteRepository.campsite.firstOrNull {
+                        it.ownerId == ownerId
+                    }
+                }
+
+                if (campsite != null) {
+                    val controller = remember {
+                        OwnerReservationController(container.reservationRepository)
+                    }
+
+                    OwnerReservationsFromFirestore(
+                        campsiteId = campsite.id,
+                        controller = controller,
+                        onReservationClick = { reservationId ->
+                            // Details navigation will be connected separately.
+                        }
+                    )
+                } else {
+                    Text("No campsite found for this account.")
+                }
+            }
+
             //composable("ownerPastReserve"){ ownerPastReserve(navController) }
             //composable("ownerCancelledReserve"){ ownerCancelledReserve(navController) }
             ////composable("ownerReserveDetails"){ ownerReserveDetails(navController) }
