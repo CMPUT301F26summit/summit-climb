@@ -1,9 +1,10 @@
-package com.example.summit_climb
 /*
+package com.example.summit_climb
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import com.example.summit_climb.controller.ProfileController
+import com.example.summit_climb.ProfileController
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -33,12 +34,23 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import coil3.compose.AsyncImage
+
+
+// Summit Climb Colors
+private val lightRed = Color(0xFFFF7F7F)
+private val lightBlue = Color(0xFFA6C8EB)
+
 
 // Displays the User Profile to allow user to view and edit their personal information
 @Composable
@@ -46,14 +58,18 @@ fun ProfileScreen(
     navController: NavController,
     controller: ProfileController = viewModel()
 ) {
+
+    var error by remember { mutableStateOf<String?>(null) }
+
     /**
-     * The following code for profile photo selection contains lines
+     * The following code for profile photo selection contains code
      * from Chase at https://medium.com/@jpmtech/jetpack-compose-display-a-photo-picker-6bcb9b357a3a
      */
     val photoSelector =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             if (uri != null) {
-                controller.updateProfilePhoto(uri)
+                error = null
+                controller.updateProfilePhoto(uri, onFailure = { error = it.message })
             }
         }
 
@@ -81,6 +97,18 @@ fun ProfileScreen(
 
         Spacer(Modifier.height(8.dp))
 
+        error?.let {
+            Text(
+                text = it,
+                color = Color(0xFFB96666),
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
+            )
+        }
+
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -89,7 +117,7 @@ fun ProfileScreen(
                 modifier = Modifier
                     .size(96.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF627F5C)),
+                    .background(lightBlue),
                 contentAlignment = Alignment.Center
             ) {
                 if (controller.photoUrl.isNotBlank()) {
@@ -105,7 +133,7 @@ fun ProfileScreen(
             Spacer(Modifier.height(10.dp))
 
             Text(
-                text = controller.currentUser?.name.orEmpty(),
+                text = controller.name,
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Bold,
                 fontSize = 22.sp,
@@ -127,20 +155,13 @@ fun ProfileScreen(
                     }
                     .padding(vertical = 4.dp)
             )
-            controller.photoMessage?.let {
-                Text(
-                    text = it,
-                    fontSize = 12.sp,
-                    color = Color(0xFFB96666)
-                )
-            }
         }
 
         Spacer(Modifier.height(20.dp))
 
         Card(
             shape = (RoundedCornerShape(24.dp)),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(containerColor = lightBlue),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(
@@ -162,6 +183,10 @@ fun ProfileScreen(
                     onValueChange = { controller.name = it },
                     label = { Text("Name") },
                     shape = RoundedCornerShape(14.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -170,6 +195,10 @@ fun ProfileScreen(
                     onValueChange = { controller.email = it },
                     label = { Text("Email") },
                     shape = RoundedCornerShape(14.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -178,11 +207,18 @@ fun ProfileScreen(
                     onValueChange = { controller.phone = it },
                     label = { Text("Phone Number") },
                     shape = RoundedCornerShape(14.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Button(
-                    onClick = { controller.saveProfile() },
+                    onClick = {
+                        error = null
+                        controller.saveProfile(onFailure = { error = it.message })
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(46.dp),
@@ -225,7 +261,10 @@ fun ProfileScreen(
                     }
                     Switch(
                         checked = controller.notificationsStatus,
-                        onCheckedChange = { controller.setNotifications(it) }
+                        onCheckedChange = { on ->
+                            error = null
+                            controller.setNotifications(on, onFailure = { error = it.message })
+                        },
                     )
                 }
                 Row(
@@ -249,13 +288,16 @@ fun ProfileScreen(
         Spacer(Modifier.height(20.dp))
 
         Button(
-            onClick = { controller.deleteProfile() },
+            onClick = {
+                error = null
+                controller.deleteProfile(onFailure = { error = it.message })
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
             shape = RoundedCornerShape(10.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFB96666),
+                containerColor = lightRed,
                 contentColor = Color.Black
             )
         ) {
@@ -270,3 +312,6 @@ fun ProfileScreen(
     }
 }
  */
+
+
+
