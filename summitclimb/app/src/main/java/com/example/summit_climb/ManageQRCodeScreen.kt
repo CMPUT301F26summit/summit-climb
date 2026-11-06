@@ -2,7 +2,6 @@ package com.example.summit_climb
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,8 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
@@ -43,7 +40,7 @@ private val white = Color.White
 
 // Displays the unique campsite QR code for a campsite owner
 @Composable
-fun ManageQRCodeScreen (
+fun ManageQRCodeScreen(
     navController: NavController,
     campsiteName: String,
     campsiteID: String
@@ -57,18 +54,18 @@ fun ManageQRCodeScreen (
 
     Column(
         modifier = Modifier
-        .fillMaxSize()
-        .background(white)
-        .padding(horizontal = 20.dp, vertical = 16.dp)
+            .fillMaxSize()
+            .background(white)
+            .padding(horizontal = 20.dp, vertical = 16.dp)
     ) {
         // Back Button
-        val backButton =  {navController.popBackStack(); Unit }
+        val backButton = { navController.popBackStack(); Unit }
         Row(
             Modifier
                 .clickable(onClick = backButton)
                 .padding(vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
-        ){
+        ) {
             Icon(
                 Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Back Button",
@@ -115,7 +112,8 @@ fun ManageQRCodeScreen (
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .padding(horizontal = 24.dp, vertical = 36.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -148,49 +146,6 @@ fun ManageQRCodeScreen (
                     text = "Campsite ID: $campsiteID",
                     color = charcoal,
                     fontSize = 13.sp
-                )
-            }
-        }
-
-        Spacer(Modifier.height(25.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Save Button
-            Button(
-                onClick = { /* WIP: save image function */ },
-                modifier = Modifier.weight(1f)
-                    .height(56.dp),
-                shape = RoundedCornerShape(28.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = lightGrey
-                )
-            ) {
-                Text(
-                    text = "Save",
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 18.sp,
-                    color = charcoal
-                )
-            }
-
-            // Share button
-            Button(
-                onClick = { /* WIP: share image function */ },
-                modifier = Modifier.weight(1f)
-                    .height(56.dp),
-                shape = RoundedCornerShape(28.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = charcoal
-                )
-            ) {
-                Text(
-                    text = "Share",
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 18.sp,
-                    color = white
                 )
             }
         }
