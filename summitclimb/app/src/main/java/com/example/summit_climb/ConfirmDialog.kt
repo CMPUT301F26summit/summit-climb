@@ -5,14 +5,18 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 
-/** Purpose: a reusable confirmation dialog with Confirm and Cancel buttons.
-*
- * @param title The dialog heading
- * @param message The message explaining the action
- * @param confirmText Text displayed on the confirm button
- * @param canceltext Text displayed on the cancel button
- * @param onConfirm Called when the user confirms
- * @param onDismiss Called when the user cancels or dismisses the dialog
+/**
+ * Displays a reusable confirmation dialog with Confirm and Cancel buttons.
+ *
+ * Shows a title and message explaining the action before the user confirms
+ * or dismisses it.
+ *
+ * @param title heading displayed at the top of the dialog
+ * @param message message explaining the action
+ * @param confirmText text displayed on the confirm button
+ * @param cancelText text displayed on the cancel button
+ * @param onConfirm action performed when the confirm button is clicked
+ * @param onDismiss action performed when the dialog is cancelled or dismissed
  */
 
 @Composable
