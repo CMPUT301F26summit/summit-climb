@@ -70,11 +70,7 @@ class UserRepository {
 
     /** Saves changes to a user's profile. */
     fun saveProfile(user: User) {
-        userRef.document(user.userId)
-            .set(user)
-            .addOnFailureListener { error ->
-                Log.e("UserRepository", "Failed to save profile", error)
-            }
+        userRef.document(user.userId).set(user)
     }
 
     /** Updates the user's notification preference. */
@@ -82,11 +78,7 @@ class UserRepository {
         userId: String,
         optOut: Boolean
     ) {
-        userRef.document(userId)
-            .update("notificationsOptedOut", optOut)
-            .addOnFailureListener { error ->
-                Log.e("UserRepository", "Failed to update notifications", error)
-            }
+        userRef.document(userId).update("notificationOptOut", optOut)
     }
 
     /**
@@ -111,35 +103,23 @@ class UserRepository {
 
                 batch.delete(userRef.document(user.userId))
 
-                batch.commit()
-                    .addOnSuccessListener {
+                batch.commit().addOnSuccessListener {
                         if (user.profileImageUrl.isNotBlank()) {
-                            imageService.delete(user.profileImageUrl) { success ->
-                                if (!success) {
-                                    Log.e("UserRepository", "Failed to delete profile image")
-                                }
-                            }
+                            imageService.delete(user.profileImageUrl)
                         }
                     }
-                    .addOnFailureListener { error ->
-                        Log.e("UserRepository", "Failed to delete user", error)
-                    }
-            }
-            .addOnFailureListener { error ->
-                Log.e("UserRepository", "Failed to load waitlist entries", error)
-            }
-    }
+                }
+        }
 
     /** Searches users by name, email, and account status. */
     fun searchUsers(
         searchText: String,
         status: AccountStatus?
     ): List<User> {
-        val query = searchText.trim()
 
         return _users.filter { user ->
-            val nameMatch = user.name.contains(query, ignoreCase = true)
-            val emailMatch = user.email.contains(query, ignoreCase = true)
+            val nameMatch = user.name.contains(searchText.trim(), ignoreCase = true)
+            val emailMatch = user.email.contains(searchText.trim(), ignoreCase = true)
             val statusMatch = status == null || user.accountStatus == status
 
             (nameMatch || emailMatch) && statusMatch
@@ -151,10 +131,6 @@ class UserRepository {
         userId: String,
         status: AccountStatus
     ) {
-        userRef.document(userId)
-            .update("accountStatus", status.name)
-            .addOnFailureListener { error ->
-                Log.e("UserRepository", "Failed to update account status", error)
-            }
+        userRef.document(userId).update("accountStatus", status.name)
     }
 }
