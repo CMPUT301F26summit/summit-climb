@@ -10,7 +10,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-
+import com.example.summit_climb.model.Reservation
+import com.example.summit_climb.ui.owner.OwnerReservationDetailsScreen
+import java.util.concurrent.TimeUnit
 
 @Composable
 fun OwnerReservationDetailsScreen(
@@ -20,7 +22,7 @@ fun OwnerReservationDetailsScreen(
     guests: Int,
     totalPrice: String,
     status: String,
-    rulesAccepted: Boolean,
+    rulesAccepted: Boolean?,
     onMessageClick: () -> Unit,
     onRejectClick: () -> Unit
 ) {
@@ -61,10 +63,10 @@ fun OwnerReservationDetailsScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    if (rulesAccepted) {
-                        "Campsite rules: Accepted"
-                    } else {
-                        "Campsite rules: Not accepted"
+                    when (rulesAccepted) {
+                        true -> "Campsite rules: Accepted"
+                        false -> "Campsite rules: Not accepted"
+                        null -> "Campsite rules: Not available"
                     }
                 )
             }
