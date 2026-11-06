@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.summit_climb"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
@@ -71,5 +71,7 @@ dependencies {
     implementation(libs.play.services.code.scanner)
     implementation("com.google.firebase:firebase-storage")
     androidTestImplementation("androidx.navigation:navigation-testing:2.8.5")
+    implementation("io.coil-kt.coil3:coil-compose:3.6.0")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.6.0")
 
 }

@@ -5,8 +5,6 @@ package com.example.summit_climb
  * I think this will reduce crash risk caused by typo in filename
  */
 object Routes {
-    // Bottom bar tabs
-
     /** Entrant home: the campsite list.*/
     const val CAMPSITE_LIST = "entrantCampsiteList"
 
@@ -22,9 +20,9 @@ object Routes {
     /** The user's profile. */
     const val PROFILE = "entrantProfile"
 
-    // Other screens
+    // Entrant screens
 
-    /** Argument name for the campsite ID in [CAMPSITE_DETAILS].*/
+    /** Argument name for the campsite ID in every route that has one.*/
     const val CAMPSITE_ID_ARG = "campsiteId"
 
     /** Route pattern for campsite details, registered in NavHost.*/
@@ -33,15 +31,44 @@ object Routes {
     /** The user's notifications (opened from the bell on the campsite list).*/
     const val NOTIFICATIONS = "entrantNotifs"
 
+    /** QR code scanner (opened from the scan button on the campsite list).*/
+    const val QR_SCANNER = "QRScanner"
+
+    /** Policies & guidelines (opened from the profile screen).*/
+    const val POLICIES = "policies"
+
+    // Owner screens
+
+    /** Pattern: owner's view of one campsite.*/
     const val OWNER_CAMPSITE_DETAILS = "ownerCampsiteDetails/{$CAMPSITE_ID_ARG}"
 
+    /** Pattern: edit one existing campsite.*/
     const val OWNER_EDIT_CAMPSITE = "ownerEditCampsite/{$CAMPSITE_ID_ARG}"
 
-    const val OWNER_REGISTER_CAMPSITE = "ownerRegisterCamp/{$CAMPSITE_ID_ARG}"
+    /**
+     * Register a NEW campsite. Plain route with no ID, because a campsite that
+     * doesn't exist yet has no ID. The (+) button navigates straight to this.
+     */
+    const val OWNER_REGISTER_CAMPSITE = "ownerRegisterCamp"
 
+    /** Pattern: owner's management menu for one campsite.*/
     const val OWNER_MANAGE_CAMPSITE = "ownerManageCamp/{$CAMPSITE_ID_ARG}"
 
+    /** Pattern: list one campsite in a lottery.*/
     const val OWNER_LIST_LOTTERY = "ownerListLottery/{$CAMPSITE_ID_ARG}"
+
+    /** Pattern: waitlist of one campsite (opened from the manage menu).*/
+    const val OWNER_WAITLIST = "ownerWaitlist/{$CAMPSITE_ID_ARG}"
+
+    /** Owner's active reservations (opened from the manage menu).*/
+    const val OWNER_ACTIVE_RESERVATIONS = "ownerActiveReserve"
+
+    /** Notifications the owner has sent (opened from the manage menu).*/
+    const val OWNER_SENT_NOTIFICATIONS = "ownerSentNotifications"
+
+    /** Owner's QR code screen (opened from the manage menu).*/
+    const val MANAGE_QR_CODE = "manageQRCode"
+
 
     /**
      * Builds the route that opens one campsite's details.
@@ -50,5 +77,30 @@ object Routes {
      */
     fun campsiteDetails(campsiteId: String): String {
         return "entrantCampDetails/$campsiteId"
+    }
+
+    /** @return for example `"ownerCampsiteDetails/abc123"`.*/
+    fun ownerCampsiteDetails(campsiteId: String): String {
+        return "ownerCampsiteDetails/$campsiteId"
+    }
+
+    /** @return for example `"ownerEditCampsite/abc123"`.*/
+    fun ownerEditCampsite(campsiteId: String): String {
+        return "ownerEditCampsite/$campsiteId"
+    }
+
+    /** @return for example `"ownerManageCamp/abc123"`.*/
+    fun ownerManageCampsite(campsiteId: String): String {
+        return "ownerManageCamp/$campsiteId"
+    }
+
+    /** @return for example `"ownerListLottery/abc123"`.*/
+    fun ownerListLottery(campsiteId: String): String {
+        return "ownerListLottery/$campsiteId"
+    }
+
+    /** @return for example `"ownerWaitlist/abc123"`.*/
+    fun ownerWaitlist(campsiteId: String): String {
+        return "ownerWaitlist/$campsiteId"
     }
 }

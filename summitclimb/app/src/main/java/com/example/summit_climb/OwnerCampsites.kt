@@ -99,7 +99,7 @@ fun OwnerCampsites(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(campsites, key = { it.id }) {
-                        c -> CampsiteRow(campsite = c, lotteryStatus = lotteryStatus[c.id]) { navController.navigate("ownerCampsiteDetails/${c.id}")}
+                        c -> CampsiteRow(campsite = c, lotteryStatus = lotteryStatus[c.id]) { navController.navigate(Routes.OWNER_REGISTER_CAMPSITE)}
                     }
                 }
             }

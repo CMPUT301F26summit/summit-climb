@@ -33,8 +33,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
-import androidx.compose.foundation.layout.Box
-import androidx.compose.material3.Scaffold
 
 /**
  * Purpose: the entrant's "My Lotteries" tab.
@@ -47,14 +45,7 @@ import androidx.compose.material3.Scaffold
  * Opened from the bottom bar's Lotteries button and from lottery notifications.
  */
 
-// team colours (from the info doc)
-// NOTE: delete these once Kshitij's CampsiteDetailsScreen.kt is on this branch (it has the same ones)
-private val charcoal = Color(0xFF36454F)
-private val lightGreen = Color(0xFF96B38E)
-private val lightRed = Color(0xFFFF7F7F)
-private val lightOrange = Color(0xFFFFA759)
-private val lightBlue = Color(0xFFA6C8EB)
-private val greyBlue = Color(0xFFC9DEF3)
+
 
 /**
  * What one lottery card shows.

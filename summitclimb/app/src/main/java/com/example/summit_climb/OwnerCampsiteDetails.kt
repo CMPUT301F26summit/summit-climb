@@ -325,7 +325,7 @@ fun OwnerCampsiteDetails(
                 ){
                     AvailabilityCalendar(
                         bookedDates = bookedDates,
-                        selectedDate = selectedDate,
+                        selectedDate = selectedDate ?: LocalDate.now(),
                         onDateSelected = { selectedDate = it }
                     )
                 }

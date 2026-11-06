@@ -54,7 +54,7 @@ fun HomeScreen(navController: NavController) {
             Button(
                 onClick = {
                     auth.signInAnonymously()
-                        .addOnSuccessListener { navController.navigate("homeScreen") }
+                        .addOnSuccessListener { navController.navigate(Routes.CAMPSITE_LIST) }
                         .addOnFailureListener { errorMessage = "login failed" }
                 },
                 modifier = Modifier

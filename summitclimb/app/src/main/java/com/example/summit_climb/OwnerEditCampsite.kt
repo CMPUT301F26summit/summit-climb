@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.material3.OutlinedButton
+import com.example.summit_climb.service.ImageService
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack

@@ -16,6 +16,7 @@ import com.example.summit_climb.controller.OwnerReservationController
 import com.example.summit_climb.model.Reservation
 import com.example.summit_climb.ui.owner.OwnerReservationsFromFirestore
 import com.example.summit_climb.model.Notification
+import com.example.summit_climb.data.NotificationRepository
 
 class OwnerReservationsScreenTest {
 

@@ -3,6 +3,8 @@ package com.example.summit_climb
 import com.example.summit_climb.data.LotteryRepository
 import com.example.summit_climb.model.Lottery
 import com.example.summit_climb.model.LotteryStatus
+import com.example.summit_climb.model.WaitlistEntry
+import com.example.summit_climb.model.WaitlistResult
 
 /**
  * Handles what an entrant does with lotteries: join, leave, see results and decline a win.

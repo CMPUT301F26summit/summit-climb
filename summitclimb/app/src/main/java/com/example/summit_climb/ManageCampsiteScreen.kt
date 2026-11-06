@@ -30,7 +30,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 
@@ -42,17 +41,7 @@ import androidx.navigation.compose.rememberNavController
 //      - Displays values provided through function parameters rather than loading them directly.
 //      - Some menu options may show "Coming soon" if their navigation routes are unavailable.
 
-// Summit Climb colours
-private val black = Color.Black
-private val charcoal = Color(0xFF36454F)
-private val lightGreen = Color(0xFF96B38E)
-private val lightRed = Color(0xFFFF7F7F)
-private val lightOrange = Color(0xFFFFA759)
 
-private val lightBlue = Color(0xFFA6C8EB)
-private val greyBlue = Color(0xFFC9DEF3)
-
-private val white = Color.White
 
 /**
  * Displays the management menu for a selected campsite.
@@ -184,7 +173,7 @@ fun ManageCampsiteScreen(
             open("ownerSentNotifications")
         }
         MenuCard("QR code", "Share a link to your campsite", null) {
-            open("ownerQrCode")
+            open(Routes.MANAGE_QR_CODE)
         }
     }
 }

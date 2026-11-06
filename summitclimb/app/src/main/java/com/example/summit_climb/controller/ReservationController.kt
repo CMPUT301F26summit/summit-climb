@@ -1,5 +1,7 @@
 package com.example.summit_climb.controller
 
+import com.example.summit_climb.data.ReservationRepository
+
 class ReservationController(
     private val repository: ReservationRepository
 ) {

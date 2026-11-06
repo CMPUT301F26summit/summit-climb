@@ -1,3 +1,4 @@
+/*
 package com.example.summit_climb
 
 import androidx.compose.foundation.background
@@ -106,7 +107,7 @@ fun overlapsBooked(checkIn: LocalDate, checkOut: LocalDate, bookedDates: Set<Loc
 fun datesProblem(checkIn: LocalDate?, checkOut: LocalDate?, info: ReservationUiInfo): String? {
     if (checkIn == null) return ReservationText.PICK_CHECK_IN
     if (checkOut == null) return ReservationText.PICK_CHECK_OUT
-    if (!isInBookingPeriod(checkIn, checkOut, info.bookingStart, info.bookingEnd)) {
+    if (!isInBookingPeriod(checkIn!!, checkOut!!, info.bookingStart, info.bookingEnd)) {
         return "Please pick dates between ${info.bookingStart.format(dateFormat)} and ${info.bookingEnd.format(dateFormat)}."
     }
     if (overlapsBooked(checkIn, checkOut, info.bookedDates)) return ReservationText.ALREADY_BOOKED
@@ -236,14 +237,14 @@ fun ReservationContent(
                 // calendar (Using availablitityCalendar.kt): highlights the date being picked
                 AvailabilityCalendar(
                     bookedDates = info.bookedDates,
-                    selectedDate = checkOut ?: checkIn,
+                    // Add a fallback so it passes a non-null LocalDate when nothing is selected yet:
+                    selectedDate = checkOut ?: checkIn ?: info.bookingStart ?: LocalDate.now(),
                     onDateSelected = { tapped ->
                         val picked = nextSelection(checkIn, checkOut, tapped)
                         checkIn = picked.first
                         checkOut = picked.second
                     }
                 )
-
                 // picked dates as text
                 val pickedIn = checkIn
                 val pickedOut = checkOut
@@ -337,7 +338,7 @@ fun ReservationContent(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        onConfirm(confirmIn, confirmOut)
+                        onConfirm(checkIn!!, checkOut!!)
                         showConfirmPopup = false
                     },
                     enabled = acceptedTerms,

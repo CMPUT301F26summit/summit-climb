@@ -13,3 +13,5 @@ val noLotteryGrey = Color(0xFFDADAD8)
 val darkGreen = Color(0xFF06402B) // used for titles and icons
 val beige = Color(0xFFDADAD8)
 val sonicSilver = Color(0xFF757575)
+val white = Color.White
+val black = Color.Black

@@ -40,12 +40,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.navigationBarsPadding
 
-// Summit Climb colours
-private val black = Color.Black
-private val charcoal = Color(0xFF36454F)
-private val lightBlue = Color(0xFFA6C8EB)
-private val greyBlue = Color(0xFFC9DEF3)
-private val white = Color.White
 
 /**
  * Displays the current user's notifications.

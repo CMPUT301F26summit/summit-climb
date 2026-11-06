@@ -11,7 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -26,17 +25,6 @@ import androidx.compose.ui.unit.sp
  // Known Issues:
  // - Entrant information is currently provided through the function parameters.
 
-private val black = Color.Black
-private val charcoal = Color(0xFF36454F)
-
-private val lightGreen = Color(0xFF96B38E)
-private val lightRed = Color(0xFFFF7F7F)
-private val lightOrange = Color(0xFFFFA759)
-
-private val lightBlue = Color(0xFFA6C8EB)
-private val greyBlue = Color(0xFFC9DEF3)
-
-private val white = Color.White
 
 /**
  * Represents a person who has joined a campsite waitlist.

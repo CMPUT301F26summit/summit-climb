@@ -6,9 +6,6 @@ import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import android.net.Uri
 import android.graphics.Bitmap
-import com.example.summit_climb.data.CampsiteRepository
-import com.example.summit_climb.model.Campsite
-import com.example.summit_climb.service.QRCodeService
 
 /**
  * Handles the registation, validation, and editing of campsites
@@ -199,7 +196,7 @@ class OwnerCampsiteController(private val campsiteRepository: CampsiteRepository
         if (storedCampsite.ownerId != ownerId) {
             return null
         }
-        return qrService.generateQRCode(storedCampsite)
+        return qrService.generateQRCode(storedCampsite.id)
     }
 
     // Helper function for changePromoImage

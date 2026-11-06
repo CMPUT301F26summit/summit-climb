@@ -1,10 +1,9 @@
-/*
 package com.example.summit_climb
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import com.example.summit_climb.ProfileController
+import com.example.summit_climb.controller.ProfileController
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -45,12 +44,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import coil3.compose.AsyncImage
-
-
-// Summit Climb Colors
-private val lightRed = Color(0xFFFF7F7F)
-private val lightBlue = Color(0xFFA6C8EB)
-
 
 // Displays the User Profile to allow user to view and edit their personal information
 @Composable
@@ -311,7 +304,6 @@ fun ProfileScreen(
         Spacer(Modifier.height(16.dp))
     }
 }
- */
 
 
 

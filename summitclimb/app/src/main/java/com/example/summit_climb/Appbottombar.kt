@@ -28,9 +28,6 @@ private val selectedBlue = Color(0xFF007AFF)
 
 
 
-/** Bar background (the team's screen background colour). */
-private val white = Color.White
-
 /**
  * One button in the bottom bar.
  *
