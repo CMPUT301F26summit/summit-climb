@@ -30,7 +30,7 @@ class OwnerCampsitesIntentTest {
             )
         }
         composeTestRule
-            .onNodeWithText("No campsites yet. Tap + to list a campsite.")
+            .onNodeWithText("Tap + to list a campsite.")
             .assertIsDisplayed()
     }
 
