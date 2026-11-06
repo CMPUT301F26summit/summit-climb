@@ -36,12 +36,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 
-// Purpose: the owner's menu for one campsite. Shows its name, location, lottery status,
-// and a row for reservations, waitlist, sent notifications and QR code.
-// Known problems:
-//   - It shows the values it is given; nothing feeds it real data yet.
-//   - A row only opens its screen once that screen's route exists; until then it
-//     shows "Coming soon".
+// Displays the owner's management menu for a selected campsite.
+// Shows the campsite's name, location, lottery status, reservations,
+// waitlist, sent notifications, and QR code options.
+//
+// Known Issues:
+//      - Displays values provided through function parameters rather than loading them directly.
+//      - Some menu options may show "Coming soon" if their navigation routes are unavailable.
 
 // Summit Climb colours
 private val black = Color.Black
@@ -56,7 +57,21 @@ private val greyBlue = Color(0xFFC9DEF3)
 
 private val white = Color.White
 
-/** The owner's menu for one campsite. */
+/**
+ * Displays the management menu for a selected campsite.
+ *
+ * Shows campsite information and provides navigation to reservations,
+ * waitlist, sent notifications, and QR code screens.
+ *
+ * @param navController handles navigation between screens
+ * @param campsiteId unique identifier of the campsite
+ * @param campsiteName name of the campsite
+ * @param location location of the campsite
+ * @param lotteryStatus current lottery status
+ * @param activeReservations number of active reservations
+ * @param entrantCount number of people on the waitlist
+ * @param sentCount number of notifications sent
+ */
 @Composable
 fun ManageCampsiteScreen(
     navController: NavController,
@@ -177,7 +192,16 @@ fun ManageCampsiteScreen(
     }
 }
 
-/** One tappable card: a title with a short line under it, an optional count, and an arrow. */
+/**
+ *
+ * Displays a clickable menu card with a title, subtitle, optional count,
+ * and navigation arrow.
+ *
+ * @param title title displayed on the card
+ * @param subtitle short description displayed below the title
+ * @param count optional count displayed on the card
+ * @param onClick action performed when the card is clicked
+*/
 @Composable
 private fun MenuCard(
     title: String,

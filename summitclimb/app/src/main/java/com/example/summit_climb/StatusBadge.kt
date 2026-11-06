@@ -11,10 +11,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// Purpose: a small coloured pill showing a status (lottery,
-// reservation, waitlist).
+// Displays a reusable coloured badge showing a short status.
+// Used to indicate lottery, reservation, or waitlist statuses.
 
-/** A coloured pill with a short status word, like "Open" or "No Lottery". */
+/**
+ * Displays a coloured badge containing a short status label.
+ *
+ * Used throughout the app to show statuses such as "Open" or "No Lottery".
+ *
+ * @param text status label displayed inside the badge
+ * @param color background colour of the badge
+ * @param modifier modifier applied to the badge
+ */
 @Composable
 fun StatusBadge(text: String, color: Color, modifier: Modifier = Modifier) {
     Text(

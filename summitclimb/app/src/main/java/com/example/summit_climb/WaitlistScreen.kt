@@ -17,6 +17,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+ // Displays the waitlist for a campsite.
+ //
+ // Shows the campsite's lottery status, entrant count, winners drawn date,
+ // and list of entrants. Allows campsite owners to view all entrants and
+ // notify them
+ //
+ // Known Issues:
+ // - Entrant information is currently provided through the function parameters.
+
 private val black = Color.Black
 private val charcoal = Color(0xFF36454F)
 
@@ -29,13 +38,31 @@ private val greyBlue = Color(0xFFC9DEF3)
 
 private val white = Color.White
 
-// Purpose:
+/**
+ * Represents a person who has joined a campsite waitlist.
+ *
+ * @property id unique identifier of the entrant
+ * @property name name of the entrant
+ * @property joinedDate date the entrant joined the waitlist
+ */
 data class Entrant(
     val id: String,
     val name: String,
     val joinedDate: String
 )
 
+/**
+ * Displays the waitlist screen for a selected campsite.
+ *
+ *  @param campsiteName name of the campsite
+ *  @param entrants list of people who joined the waitlist
+ *  @param lotteryStatus current status of the lottery
+ *  @param entrantCount total number of entrants
+ *  @param winnersDrawnDate date the winners were drawn
+ *  @param maxEntrants maximum number of entrants, or null if there is no limit
+ *  @param onBack action performed when the back button is clicked
+ *  @param onNotifyEntrants action performed when the notify button is clicked
+ */
 @Composable
 fun WaitlistScreen(
     campsiteName: String,
@@ -257,6 +284,13 @@ fun WaitlistScreen(
     }
 }
 
+/**
+ * Displays one entrant's information in the waitlist.
+ *
+ * Shows the entrant's initials, name, and joined date.
+ *
+ * @param entrant entrant whose information is displayed
+ */
 @Composable
 fun EntrantRow(entrant: Entrant) {
 
