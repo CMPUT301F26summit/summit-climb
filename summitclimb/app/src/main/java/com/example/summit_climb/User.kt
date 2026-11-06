@@ -1,4 +1,4 @@
-package com.example.summit_climb.model
+package com.example.summit_climb
 
 
 /**

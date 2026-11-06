@@ -1,15 +1,15 @@
-package com.example.summit_climb.data
+package com.example.summit_climb
 
 import androidx.compose.runtime.mutableStateListOf
-import com.example.summit_climb.model.AccountStatus
-import com.example.summit_climb.model.User
 import com.google.firebase.Firebase
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
+
 
 /**
  * Handles the Firestore operations for user profiles.
  * Firestore stores users in a `users` collection.
- * Each document's ID is the user's device based User.userId.
+ * Each document's ID is the user's device based User.userId. 
  * A snapshot listener keeps users up to date for the admin screens.
  *
  * Example:
@@ -23,10 +23,9 @@ import com.google.firebase.firestore.firestore
  * @param lotteryRepository: used to remove a user's waitlist entries when the user is deleted.
  * @constructor Connects to the `users` collection and starts listening for changes.
  */
-class UserRepository {
-    private  val db = Firebase.firestore
+class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getInstance()) {
     private val userRef = db.collection("users")
-    private val imageService = ImageService()
+    //private val imageService = ImageService()
     private val _users = mutableStateListOf<User>()
 
     // Every user in Firestore. Updates automatically. Used by the admin screens.
@@ -77,7 +76,7 @@ class UserRepository {
      * @param user: user with the changes.
      */
     fun saveProfile(
-        user: User
+        user:User
     ){
         userRef.document(user.userId).set(user)
     }
@@ -98,7 +97,7 @@ class UserRepository {
      * Deletes the user along with their waitlist entries and profile image.
      * Entrants use this to delete their own profile. Admin can use it to delete a user.
      * @param user: user to be deleted.
-     */
+     *
     fun deleteUser(
         user: User
     ){
@@ -112,11 +111,11 @@ class UserRepository {
             imageService.deleteImage(user.profileImageUrl)
         }
         userRef.document(user.userId).delete()
-    }
+    }*/
 
     /**
      * Gets all users, searched by name, email and filtered by account status. For admins.
-     * Example: `searchUsers("alex", AccountStatus.ACTIVE)`
+     * Example: `searchUsers("alex", AccountStatus.ACTIVE)` 
      * returns active users whose name or email contains "alex".
      *
      * @param searchText: text the name or email must contain. Not case sensitive.
