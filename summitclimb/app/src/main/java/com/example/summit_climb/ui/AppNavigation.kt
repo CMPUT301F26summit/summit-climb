@@ -34,10 +34,21 @@ import com.example.summit_climb.model.CampsiteFilter
 import com.example.summit_climb.ui.entrant.CampsiteDetailsScreen
 import com.example.summit_climb.ui.entrant.CampsiteListScreen
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.NavHostController
 
 //testing (ignore, just to show ui)
 import com.example.summit_climb.model.ListingStatus
 import com.example.summit_climb.data.SampleData
+import androidx.compose.runtime.LaunchedEffect
+import com.example.summit_climb.ui.entrant.MyLotteriesText
+import com.example.summit_climb.ui.entrant.LotteryUiItem
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import com.example.summit_climb.ui.entrant.MyLotteriesContent
+import com.example.summit_climb.model.WaitlistEntry
+import com.example.summit_climb.model.WaitlistResult
 
 val campsiteIdArgs = listOf(
     navArgument(Routes.CAMPSITE_ID_ARG) { type = NavType.StringType }
@@ -89,18 +100,48 @@ fun AppNavigation(
             composable(Routes.MANAGE_QR_CODE) { ManageQRCodeScreen(navController) }
 
             composable(Routes.MY_RESERVATIONS) { ComingSoonScreen("My Reservations") }
-            composable(Routes.MY_LOTTERIES) { ComingSoonScreen("My Lotteries") }
+
+            // test
+            composable(Routes.MY_LOTTERIES) {
+                var lotteries by remember {
+                    mutableStateOf(
+                        listOf(
+                            LotteryUiItem("sample-lottery-cedar-valley", "Cedar Valley", "Banff, AB", MyLotteriesText.PENDING, "Lottery closes in 14 days"),
+                            LotteryUiItem("sample-lottery-lakeside-camp", "Lakeside Camp", "Jasper, AB", MyLotteriesText.WON, "You've been selected!"),
+                            LotteryUiItem("sample-lottery-summit-camp", "Summit Camp", "Hinton, AB", MyLotteriesText.LOST, "You weren't selected this time.")
+                        )
+                    )
+                }
+                var message by remember { mutableStateOf("") }
+
+                MyLotteriesContent(
+                    lotteries = lotteries,
+                    message = message,
+                    onMessageShown = { message = "" },
+                    onLeave = { id ->
+                        val name = lotteries.find { it.lotteryId == id }?.campsiteName ?: ""
+                        lotteries = lotteries.filter { it.lotteryId != id }
+                        message = MyLotteriesText.left(name)
+                    },
+                    onConfirmReservation = { navController.navigate(Routes.MY_RESERVATIONS) }
+                )
+            }
+
+            // test
             composable(Routes.PROFILE) { ProfileScreen(navController) }
 
-            // Entrant screens
+            // ----- Entrant screens -------  //
             composable(Routes.NOTIFICATIONS) { ComingSoonScreen("Notifications") }
             composable(Routes.QR_SCANNER) { ComingSoonScreen("QR Scanner") }
             composable(Routes.POLICIES) { ComingSoonScreen("Policies & guidelines") }
             composable(Routes.MANAGE_QR_CODE) { ManageQRCodeScreen(navController) }
 
+            // test
             composable(Routes.CAMPSITE_LIST) {
                 CampsiteListScreen(navController, searchController)
             }
+
+            // test
             composable(
                 route = Routes.CAMPSITE_DETAILS,
                 arguments = campsiteIdArgs
@@ -113,30 +154,35 @@ fun AppNavigation(
                     lotteryController = lotteryController
                 )
             }
+
+            // test
             composable(Routes.OWNER_CAMPSITES) {
-                val mine = searchController
+                val user = searchController
                     .search("", CampsiteFilter())
                     .filter { it.ownerId == currentUserId || it.id.startsWith("sample-") }
-                OwnerCampsites(navController = navController, campsites = mine)
+                OwnerCampsites(navController = navController, campsites = user)
             }
 
+            // test
             composable(
                 route = Routes.OWNER_CAMPSITE_DETAILS,
                 arguments = campsiteIdArgs
-            ) { backStackEntry ->
+            ){ backStackEntry ->
                 val id = backStackEntry.campsiteId()
-                android.util.Log.e("Details", "id = '$id'")
 
                 val campsite = searchController.campsiteDetails(id)
                     ?: searchController.search("", CampsiteFilter()).find { it.id == id }
 
                 if (campsite == null) {
-                    Text(text = "Loading...", modifier = Modifier.padding(16.dp))
+                    Text(
+                        text = "Loading...",
+                        modifier = Modifier.padding(16.dp))
                 } else {
                     OwnerCampsiteDetails(navController = navController, campsite = campsite)
                 }
             }
 
+            // test
             composable(
                 route = Routes.OWNER_EDIT_CAMPSITE,
                 arguments = campsiteIdArgs
@@ -149,6 +195,7 @@ fun AppNavigation(
                 }
             }
 
+            // test
             composable(Routes.OWNER_REGISTER_CAMPSITE) {
                 OwnerRegisterCampsite(
                     navController = navController,
@@ -168,6 +215,7 @@ fun AppNavigation(
                 )
             }
 
+            // test
             composable(
                 route = Routes.OWNER_MANAGE_CAMPSITE,
                 arguments = campsiteIdArgs
