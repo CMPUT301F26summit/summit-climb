@@ -2,6 +2,7 @@ package com.example.summit_climb
 
 import android.graphics.Bitmap
 import android.graphics.Color
+import com.example.summit_climb.service.QRCodeService
 import com.google.zxing.BinaryBitmap
 import com.google.zxing.RGBLuminanceSource
 import com.google.zxing.common.HybridBinarizer

@@ -1,8 +1,11 @@
 package com.example.summit_climb
 
+import com.example.summit_climb.controller.EntrantLotteryController
 import com.example.summit_climb.data.LotteryRepository
 import com.example.summit_climb.model.Lottery
 import com.example.summit_climb.model.LotteryStatus
+import com.example.summit_climb.model.WaitlistEntry
+import com.example.summit_climb.model.WaitlistResult
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -11,7 +14,7 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * Purpose: unit tests for [EntrantLotteryController].
+ * Purpose: unit tests for [com.example.summit_climb.controller.EntrantLotteryController].
  * Uses [FakeLotteryRepository], an in-memory [LotteryRepository], so no Firestore is needed.
  */
 class EntrantLotteryControllerTest {
@@ -330,7 +333,13 @@ class EntrantLotteryControllerTest {
     @Test
     fun filterWonLotteriesInBookingPeriod_usesGivenTime() {
         val lottery = Lottery(id = "l1", bookingStart = 1_000L, bookingEnd = 2_000L)
-        val won = listOf(WaitlistEntry(lotteryId = "l1", entrantId = currentUserId, result = WaitlistResult.WON))
+        val won = listOf(
+            WaitlistEntry(
+                lotteryId = "l1",
+                entrantId = currentUserId,
+                result = WaitlistResult.WON
+            )
+        )
 
         val during = EntrantLotteryController.filterWonLotteriesInBookingPeriod(won, listOf(lottery), now = 1_500L)
         val after = EntrantLotteryController.filterWonLotteriesInBookingPeriod(won, listOf(lottery), now = 2_500L)

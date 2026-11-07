@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.testing.TestNavHostController
+import com.example.summit_climb.ui.owner.ManageQRCodeScreen
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test

@@ -5,6 +5,10 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.example.summit_climb.ui.entrant.LotteryUiItem
+import com.example.summit_climb.ui.entrant.MyLotteriesContent
+import com.example.summit_climb.ui.entrant.MyLotteriesTags
+import com.example.summit_climb.ui.entrant.MyLotteriesText
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -19,7 +23,13 @@ class MyLotteriesScreenTest {
 
     // one lottery of each status
     private val sample = listOf(
-        LotteryUiItem("1", "Summit Camp", "Banff, AB", "Pending", "Lottery closes October 30, 2026"),
+        LotteryUiItem(
+            "1",
+            "Summit Camp",
+            "Banff, AB",
+            "Pending",
+            "Lottery closes October 30, 2026"
+        ),
         LotteryUiItem("2", "Cedar Valley", "Banff, AB", "Won", "You've been selected!"),
         LotteryUiItem("4", "Pine Ridge", "Canmore, AB", "Lost", "You weren't selected this time.")
     )

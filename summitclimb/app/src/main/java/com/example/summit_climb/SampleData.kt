@@ -1,8 +1,8 @@
 package com.example.summit_climb.data
 
 import android.util.Log
-import com.example.summit_climb.Campsite
-import com.example.summit_climb.ListingStatus
+import com.example.summit_climb.model.Campsite
+import com.example.summit_climb.model.ListingStatus
 import com.example.summit_climb.model.Lottery
 import com.example.summit_climb.model.LotteryStatus
 import com.google.firebase.firestore.DocumentReference

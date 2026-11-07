@@ -1,5 +1,7 @@
 package com.example.summit_climb
 
+import com.example.summit_climb.model.Campsite
+import com.example.summit_climb.model.ListingStatus
 import com.example.summit_climb.model.Lottery
 import com.example.summit_climb.model.LotteryStatus
 
@@ -24,7 +26,13 @@ object TestCampsites {
         price = 60.0,
         rules = "Quiet hours 10 PM – 7 AM.",
         cancellationPolicy = "Full refund up to 7 days before check-in.",
-        availableDates = listOf("2026-12-01", "2026-12-02", "2026-12-03", "2026-12-04", "2026-12-05"),
+        availableDates = listOf(
+            "2026-12-01",
+            "2026-12-02",
+            "2026-12-03",
+            "2026-12-04",
+            "2026-12-05"
+        ),
         listingStatus = ListingStatus.APPROVED
     )
 

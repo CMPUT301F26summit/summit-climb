@@ -4,10 +4,13 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.navigation.compose.rememberNavController
+import com.example.summit_climb.model.Campsite
+import com.example.summit_climb.model.ListingStatus
 import org.junit.Rule
 import org.junit.Test
 import kotlin.collections.emptyList
 import com.example.summit_climb.model.LotteryStatus
+import com.example.summit_climb.ui.owner.OwnerCampsites
 
 
 class OwnerCampsitesIntentTest {

@@ -24,6 +24,8 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import com.example.summit_climb.model.Campsite
+import com.example.summit_climb.ui.owner.OwnerRegisterCampsite
 
 class OwnerRegisterCampIntentTest {
     @get:Rule

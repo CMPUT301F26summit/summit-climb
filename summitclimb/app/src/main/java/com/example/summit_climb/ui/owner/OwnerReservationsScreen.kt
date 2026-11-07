@@ -23,7 +23,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
 
-
 // Contains reservation information displayed on the owner's.
 data class ReservationUiItem(
     val id: String,

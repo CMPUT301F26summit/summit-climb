@@ -12,7 +12,12 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.example.summit_climb.controller.EntrantLotteryController
+import com.example.summit_climb.model.Campsite
 import com.example.summit_climb.model.Lottery
+import com.example.summit_climb.ui.entrant.CampsiteDetailsContent
+import com.example.summit_climb.ui.entrant.CampsiteDetailsTags
+import com.example.summit_climb.ui.entrant.CampsiteDetailsText
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -20,7 +25,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * UI tests for [CampsiteDetailsScreen]
+ * UI tests for [com.example.summit_climb.ui.entrant.CampsiteDetailsScreen]
  * The screen is shown with fake campsites and lotteries from [TestCampsites] instead of Firestore.
  */
 @RunWith(AndroidJUnit4::class)
@@ -232,7 +237,7 @@ class CampsiteDetailsScreenTest {
 }
 
 /**
- * [CampsiteDetailsContent] with join, leave and rating
+ * [com.example.summit_climb.ui.entrant.CampsiteDetailsContent] with join, leave and rating
  *
  * @param campsite: campsite to show.
  * @param lottery: the campsite's active lottery, or `null` for none.

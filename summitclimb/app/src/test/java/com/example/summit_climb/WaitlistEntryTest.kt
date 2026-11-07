@@ -1,6 +1,8 @@
 package com.example.summit_climb
 
 import com.example.summit_climb.model.Lottery
+import com.example.summit_climb.model.WaitlistEntry
+import com.example.summit_climb.model.WaitlistResult
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -8,7 +10,7 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * Unit tests for [WaitlistEntry]: when it can be removed, declined or reserved.
+ * Unit tests for [com.example.summit_climb.model.WaitlistEntry]: when it can be removed, declined or reserved.
  *
  * Times are fixed numbers so the tests give the same result every day.
  * The lottery's timeline is:

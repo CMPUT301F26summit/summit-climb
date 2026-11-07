@@ -19,6 +19,8 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import com.example.summit_climb.model.Campsite
+import com.example.summit_climb.ui.owner.OwnerEditCampsite
 
 class OwnerEditCampIntentTest {
     @get:Rule

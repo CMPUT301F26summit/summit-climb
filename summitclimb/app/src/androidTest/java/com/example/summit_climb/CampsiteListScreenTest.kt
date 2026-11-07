@@ -17,15 +17,23 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.example.summit_climb.model.Campsite
+import com.example.summit_climb.model.CampsiteFilter
+import com.example.summit_climb.ui.Routes
+import com.example.summit_climb.ui.entrant.CampsiteDetailsContent
+import com.example.summit_climb.ui.entrant.CampsiteDetailsTags
+import com.example.summit_climb.ui.entrant.CampsiteListContent
+import com.example.summit_climb.ui.entrant.CampsiteListTags
+import com.example.summit_climb.ui.entrant.CampsiteListText
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * UI tests for [CampsiteListScreen]
+ * UI tests for [com.example.summit_climb.ui.entrant.CampsiteListScreen]
  * The screen is shown with the fake campsites in [TestCampsites] instead of Firestore,
- * using same state handling as [CampsiteListScreen]
+ * using same state handling as [com.example.summit_climb.ui.entrant.CampsiteListScreen]
  */
 @RunWith(AndroidJUnit4::class)
 class CampsiteListScreenTest {
@@ -339,7 +347,7 @@ class CampsiteListScreenTest {
 }
 
 /**
- * [CampsiteListContent] with the same state handling as [CampsiteListScreen],
+ * [com.example.summit_climb.ui.entrant.CampsiteListContent] with the same state handling as [com.example.summit_climb.ui.entrant.CampsiteListScreen],
  * but searching a fixed list instead of Firestore.
  *
  * @param campsites: campsites to search.

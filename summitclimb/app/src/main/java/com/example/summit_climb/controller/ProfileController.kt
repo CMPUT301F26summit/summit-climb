@@ -8,8 +8,8 @@ import androidx.lifecycle.ViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
-import com.example.summit_climb.User
-import com.example.summit_climb.UserRepository
+import com.example.summit_climb.model.User
+import com.example.summit_climb.data.UserRepository
 import com.example.summit_climb.service.ImageService
 
 /*Interfaces to improve access and communication with other files for ProfileControllerTest */

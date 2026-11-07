@@ -10,9 +10,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.summit_climb.model.Reservation
-import com.example.summit_climb.ui.owner.OwnerReservationDetailsScreen
-import java.util.concurrent.TimeUnit
 
 @Composable
 fun OwnerReservationDetailsScreen(

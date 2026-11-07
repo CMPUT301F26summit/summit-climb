@@ -1,5 +1,11 @@
 package com.example.summit_climb
 
+import com.example.summit_climb.controller.CampsiteSearchController
+import com.example.summit_climb.controller.Rating
+import com.example.summit_climb.data.CampsiteRepository
+import com.example.summit_climb.model.Campsite
+import com.example.summit_climb.model.CampsiteFilter
+import com.example.summit_climb.model.ListingStatus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -12,8 +18,8 @@ import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
 
 /**
- * Purpose: unit tests for [CampsiteSearchController]
- * [CampsiteRepository] connects to Firestore when it is created, so these tests use a
+ * Purpose: unit tests for [com.example.summit_climb.controller.CampsiteSearchController]
+ * [com.example.summit_climb.data.CampsiteRepository] connects to Firestore when it is created, so these tests use a
  * Mockito mock of it instead. The mock is never constructed for real, so no Firebase code runs.
  */
 class CampsiteSearchControllerTest {
@@ -29,7 +35,13 @@ class CampsiteSearchControllerTest {
         maxOccupancy = 6,
         description = "A quiet, tree-lined site near Banff townsite.",
         tags = listOf("climbing", "river"),
-        availableDates = listOf("2026-12-01", "2026-12-02", "2026-12-03", "2026-12-04", "2026-12-05"),
+        availableDates = listOf(
+            "2026-12-01",
+            "2026-12-02",
+            "2026-12-03",
+            "2026-12-04",
+            "2026-12-05"
+        ),
         listingStatus = ListingStatus.APPROVED
     )
 
@@ -225,7 +237,13 @@ class CampsiteSearchControllerTest {
         val saved = controller.rateCampsite("cedar-valley", "device-123", 4)
 
         assertTrue(saved)
-        verify(repository).saveRating(Rating(entrantId = "device-123", campsiteId = "cedar-valley", stars = 4))
+        verify(repository).saveRating(
+            Rating(
+                entrantId = "device-123",
+                campsiteId = "cedar-valley",
+                stars = 4
+            )
+        )
     }
 
     @Test
