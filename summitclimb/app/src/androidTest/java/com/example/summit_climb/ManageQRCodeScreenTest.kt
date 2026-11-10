@@ -103,6 +103,7 @@ class ManageQRCodeScreenTest {
             .assertDoesNotExist()
     }
 
+    // The following test was suggested by Claude, Anthropic, "What are some possible tests for a QR Code Generation Screen?"
     // Back button returns to the previous screen
     @Test
     fun backButtonReturnsToPrevScreen() {
