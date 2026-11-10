@@ -1,4 +1,4 @@
-package com.example.summit_climb
+package com.example.summit_climb.controller
 
 import android.net.Uri
 import androidx.compose.runtime.getValue
@@ -7,8 +7,13 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import com.google.firebase.firestore.firestore
+import com.example.summit_climb.User
+import com.example.summit_climb.UserRepository
+import com.example.summit_climb.service.ImageService
 
-/*Interfaces to improve access and communication with other files for ProfileControllerTest */
+// The use of interfaces to replicate the functionality was suggested by Claude, Anthropic "How to replace the functionality of other files to run tests for a controller" 2026-10-05
+// Interfaces to improve access and communication with other files for ProfileControllerTest
 interface UserDataSource {
     fun getUser(uid: String, onFailure: (Exception) -> Unit = {}, onResult: (User) -> Unit)
     fun saveProfile(user: User, onFailure: (Exception) -> Unit = {}, onSuccess: () -> Unit = {})
@@ -34,19 +39,20 @@ class UserRepositoryAdapter(
 ) : UserDataSource {
 
     override fun getUser(uid: String, onFailure: (Exception) -> Unit, onResult: (User) -> Unit) {
-        repository.getUser(uid, onFailure = onFailure) { onResult(it) }
+        repository.getUser(uid) { onResult(it) }
     }
 
     override fun saveProfile(user: User, onFailure: (Exception) -> Unit, onSuccess: () -> Unit) {
-        repository.saveProfile(user, onFailure = onFailure, onSuccess = onSuccess)
+        repository.saveProfile(user)
+        onSuccess()
     }
 
     override fun updateNotificationOpt(userId: String, optOut: Boolean, onFailure: (Exception) -> Unit) {
-        repository.updateNotificationOpt(userId, optOut, onFailure = onFailure)
+        repository.updateNotificationOpt(userId, optOut)
     }
 
     override fun deleteUser(user: User) {
-        repository.deleteUser(user)
+        Firebase.firestore.collection("users").document(user.userId).delete()
     }
 }
 
