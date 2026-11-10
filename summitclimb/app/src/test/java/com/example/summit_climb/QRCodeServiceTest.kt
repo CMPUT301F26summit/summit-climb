@@ -17,6 +17,13 @@ class QRCodeGenerationTest {
 
     private val service = QRCodeService()
 
+    /*
+        Author: Jameo https://stackoverflow.com/users/jameo
+        Title: "ZXing convert Bitmap to BinaryBitmap"
+        Answer: https://stackoverflow.com/questions/14861553/zxing-convert-bitmap-to-binarybitmap
+        Date: 2013-02-18
+        License: CC-BY-SA 4.0 (International)
+    */
     private fun decode(bitmap: Bitmap): String {
         val pixels = IntArray(bitmap.width * bitmap.height)
         bitmap.getPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
@@ -49,6 +56,7 @@ class QRCodeGenerationTest {
         assertEquals(256, bitmap.height)
     }
 
+    // The following test was suggested by Claude, Anthropic "What are some possible tests for a QR Code Generation Function?"
     @Test
     fun usesOnlyBlackAndWhitePixels() {
         val bitmap = service.generateQRCode("abc123", size = 128)!!
@@ -59,8 +67,6 @@ class QRCodeGenerationTest {
         assertTrue("no black pixels", pixels.any { it == Color.BLACK })
         assertTrue("no white pixels", pixels.any { it == Color.WHITE })
     }
-
-
 
     @Test
     fun differentIdsMakeDifferentImages() {
@@ -76,6 +82,7 @@ class QRCodeGenerationTest {
         assertTrue(a.sameAs(b))
     }
 
+    // The following test was suggested by Claude, Anthropic, "What are some possible tests for a QR Code Generation Function?"
     @Test
     fun scanningTheGeneratedCodeGivesBackTheCampsiteId() {
         val id = "Xk3pQ9mZaB7vL2nRtY8w"
