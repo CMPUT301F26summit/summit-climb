@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import coil3.compose.AsyncImage
 import java.time.LocalDate
 import com.example.summit_climb.model.LotteryStatus
+
 import com.example.summit_climb.ui.charcoal
 import com.example.summit_climb.ui.lightGreen
 import com.example.summit_climb.ui.lightRed

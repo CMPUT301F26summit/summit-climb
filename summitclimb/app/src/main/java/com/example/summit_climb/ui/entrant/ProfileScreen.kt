@@ -45,11 +45,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import coil3.compose.AsyncImage
 import androidx.compose.foundation.border
+import com.example.summit_climb.ui.ScreensBackground
+import androidx.compose.material3.SwitchDefaults
 
 import com.example.summit_climb.ui.lightRed
 import com.example.summit_climb.ui.lightBlue
 import com.example.summit_climb.ui.greyBlue
 import com.example.summit_climb.ui.charcoal
+import com.example.summit_climb.ui.sonicSilver
 
 // Displays the User Profile to allow user to view and edit their personal information
 @Composable
@@ -72,247 +75,261 @@ fun ProfileScreen(
             }
         }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFE8E8E8))
-            .padding(
-                horizontal = 20.dp,
-                vertical = 16.dp
-            )
-    ) {
-
-        Spacer(Modifier.height(4.dp))
-
-        Text(
-            text = "Profile",
-            modifier = Modifier.fillMaxWidth(),
-            fontFamily = FontFamily.Serif,
-            fontWeight = FontWeight.Bold,
-            fontSize = 28.sp,
-            color = Color.Black,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(Modifier.height(8.dp))
-
-        error?.let {
-            Text(
-                text = it,
-                color = Color(0xFFB96666),
-                fontSize = 14.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp)
-            )
-        }
-
+    Box(Modifier.fillMaxSize()) {
+        ScreensBackground()
         Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    horizontal = 20.dp,
+                    vertical = 16.dp
+                )
         ) {
-            Box(
-                modifier = Modifier
-                    .size(96.dp)
-                    .clip(CircleShape)
-                    .background(lightBlue)
-                    .border(width = 1.5.dp,
-                        color = charcoal,
-                        shape = RoundedCornerShape(90.dp)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                if (controller.photoUrl.isNotBlank()) {
-                    AsyncImage(
-                        model = controller.photoUrl,
-                        contentDescription = "Profile Photo",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(10.dp))
-
-            Text(
-                text = controller.name,
-                fontFamily = FontFamily.Serif,
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp,
-                color = Color.Black
-            )
 
             Spacer(Modifier.height(4.dp))
 
             Text(
-                text = "Change photo",
-                fontSize = 13.sp,
-                color = charcoal,
-                fontWeight = FontWeight.SemiBold,
+                text = "Profile",
                 modifier = Modifier
-                    .clickable(enabled = !controller.uploadPhoto) {
-                        photoSelector.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    .align(Alignment.CenterHorizontally)
+                    .fillMaxWidth(0.6f)
+                    .background(Color.White, RoundedCornerShape(20.dp))
+                    .padding(7.dp),
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                fontSize = 28.sp,
+                color = Color.Black,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            error?.let {
+                Text(
+                    text = it,
+                    color = Color(0xFFB96666),
+                    fontSize = 14.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
+                )
+            }
+
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(96.dp)
+                        .clip(CircleShape)
+                        .background(Color.White)
+                        .border(
+                            width = 1.5.dp,
+                            color = greyBlue,
+                            shape = RoundedCornerShape(90.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (controller.photoUrl.isNotBlank()) {
+                        AsyncImage(
+                            model = controller.photoUrl,
+                            contentDescription = "Profile Photo",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
                         )
                     }
-                    .padding(vertical = 4.dp)
-            )
-        }
+                }
 
-        Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(10.dp))
 
-        Card(
-            shape = (RoundedCornerShape(24.dp)),
-            colors = CardDefaults.cardColors(containerColor = greyBlue),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
                 Text(
-                    text = "Personal Information",
+                    text = controller.name,
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
+                    fontSize = 22.sp,
                     color = Color.Black
                 )
 
-                OutlinedTextField(
-                    value = controller.name,
-                    onValueChange = { controller.name = it },
-                    label = { Text("Name") },
-                    shape = RoundedCornerShape(14.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Spacer(Modifier.height(4.dp))
 
-                OutlinedTextField(
-                    value = controller.email,
-                    onValueChange = { controller.email = it },
-                    label = { Text("Email") },
-                    shape = RoundedCornerShape(14.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White
-                    ),
-                    modifier = Modifier.fillMaxWidth()
+                Text(
+                    text = "Change photo",
+                    fontSize = 13.sp,
+                    color = charcoal,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .clickable(enabled = !controller.uploadPhoto) {
+                            photoSelector.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        }
+                        .padding(vertical = 4.dp)
                 )
+            }
 
-                OutlinedTextField(
-                    value = controller.phone,
-                    onValueChange = { controller.phone = it },
-                    label = { Text("Phone Number") },
-                    shape = RoundedCornerShape(14.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
+            Spacer(Modifier.height(20.dp))
 
-                Button(
-                    onClick = {
-                        error = null
-                        controller.saveProfile(onFailure = { error = it.message })
-                    },
+            Card(
+                shape = (RoundedCornerShape(24.dp)),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(46.dp),
-                    shape = RoundedCornerShape(28.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = lightBlue,
-                        contentColor = Color.White
-                    )
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     Text(
-                        text = "Save Changes",
-                        fontWeight = FontWeight.SemiBold,
+                        text = "Personal Information",
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
                         color = charcoal
                     )
+
+                    OutlinedTextField(
+                        value = controller.name,
+                        onValueChange = { controller.name = it },
+                        label = { Text(text = "Name", color = charcoal) },
+                        shape = RoundedCornerShape(14.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = controller.email,
+                        onValueChange = { controller.email = it },
+                        label = { Text(text = "Email", color = charcoal) },
+                        shape = RoundedCornerShape(14.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = controller.phone,
+                        onValueChange = { controller.phone = it },
+                        label = { Text(text = "Phone Number", color = charcoal) },
+                        shape = RoundedCornerShape(14.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Button(
+                        onClick = {
+                            error = null
+                            controller.saveProfile(onFailure = { error = it.message })
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(46.dp),
+                        shape = RoundedCornerShape(28.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = greyBlue,
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Text(
+                            text = "Save Changes",
+                            fontWeight = FontWeight.SemiBold,
+                            color = charcoal
+                        )
+                    }
                 }
             }
-        }
 
-        Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(20.dp))
 
-        Card(
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column() {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .padding(horizontal = 20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column() {
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column() {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .padding(horizontal = 20.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column() {
+                            Text(
+                                text = "Notifications",
+                                fontSize = 15.sp,
+                                color = charcoal
+                            )
+                        }
+                        Switch(
+                            checked = controller.notificationsStatus,
+                            onCheckedChange = { on ->
+                                error = null
+                                controller.setNotifications(on, onFailure = { error = it.message })
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = lightBlue,
+                                uncheckedThumbColor = Color.White,
+                                uncheckedTrackColor = sonicSilver,
+                                uncheckedBorderColor = sonicSilver
+                            )
+                        )
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { navController.navigate("policies") }
+                            .height(56.dp)
+                            .padding(horizontal = 20.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            text = "Notifications",
+                            text = "Policies & guidelines",
                             fontSize = 15.sp,
                             color = Color.Black
                         )
                     }
-                    Switch(
-                        checked = controller.notificationsStatus,
-                        onCheckedChange = { on ->
-                            error = null
-                            controller.setNotifications(on, onFailure = { error = it.message })
-                        },
-                    )
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { navController.navigate("policies") }
-                        .height(56.dp)
-                        .padding(horizontal = 20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Policies & guidelines",
-                        fontSize = 15.sp,
-                        color = Color.Black
-                    )
                 }
             }
+
+            Spacer(Modifier.height(20.dp))
+
+            Button(
+                onClick = {
+                    error = null
+                    controller.deleteProfile(onFailure = { error = it.message })
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = lightRed,
+                    contentColor = Color.Black
+                )
+            ) {
+                Text(
+                    text = "Delete Account",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
         }
-
-        Spacer(Modifier.height(20.dp))
-
-        Button(
-            onClick = {
-                error = null
-                controller.deleteProfile(onFailure = { error = it.message })
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = lightRed,
-                contentColor = Color.Black
-            )
-        ) {
-            Text(
-                text = "Delete Account",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-
-        Spacer(Modifier.height(16.dp))
     }
 }
 

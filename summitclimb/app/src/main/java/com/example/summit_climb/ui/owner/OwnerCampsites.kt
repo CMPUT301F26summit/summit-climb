@@ -21,6 +21,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.summit_climb.model.LotteryStatus
+import com.example.summit_climb.ui.ScreensBackground
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.background
+
 import androidx.compose.foundation.lazy.items
 import com.example.summit_climb.ui.charcoal
 import com.example.summit_climb.ui.lightBlue
@@ -55,7 +59,7 @@ fun OwnerCampsites(
     lotteryStatus: Map<String, LotteryStatus> = emptyMap(),
     campsites: List<Campsite> = emptyList()
 
-){
+) {
     Scaffold(
         modifier = modifier,
         containerColor = Color.White,
@@ -63,54 +67,67 @@ fun OwnerCampsites(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    navController.navigate("ownerRegisterCamp") },
+                    navController.navigate("ownerRegisterCamp")
+                },
                 shape = CircleShape,
                 containerColor = lightBlue,
                 contentColor = charcoal
 
             ) {
-                Icon(Icons.Default.Add,
-                    contentDescription = "Add campsite") }
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = "Add campsite"
+                )
+            }
         }
 
     ) { padding ->
-        Column(Modifier
-            .padding(padding)
-            .padding(horizontal = 16.dp))
-
-        {
-            Text(
-                text = "My Campsites",
-                fontFamily = FontFamily.Serif,
-                fontWeight = FontWeight.Bold,
-                fontSize = 26.sp,
-                modifier = Modifier
-                    .padding(top = 24.dp, bottom = 12.dp)
+        Box(modifier = Modifier.fillMaxSize()) {
+            ScreensBackground()
+            Column(
+                Modifier
+                    .padding(padding)
+                    .padding(horizontal = 16.dp)
             )
 
-            if (campsites.isEmpty()) {
-                Box(Modifier
-                    .fillMaxSize(),
-                    contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "Tap + to list a campsite.",
-                        color = sonicSilver
-                    )
+            {
+                Text(
+                    text = "My Campsites",
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 26.sp,
+                    color = charcoal,
+                    modifier = Modifier
+                        .padding(top = 24.dp, bottom = 12.dp)
+                        .background(Color.White, RoundedCornerShape(12.dp))
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                )
 
-                }
+                if (campsites.isEmpty()) {
+                    Box(
+                        Modifier
+                            .fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Tap + to list a campsite.",
+                            color = sonicSilver
+                        )
 
-            } else {
-                LazyColumn(
-                    contentPadding = PaddingValues(bottom = 88.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(campsites, key = { it.id }) {
-                        c ->
-                        CampsiteRow(
-                            campsite = c,
-                            lotteryStatus = lotteryStatus[c.id]
-                        ) // uncomment in actual { navController.navigate(Routes.OWNER_CAMPSITE_DETAILS) }
-                         {navController.navigate(Routes.ownerCampsiteDetails(c.id))} // for testing
+                    }
+
+                } else {
+                    LazyColumn(
+                        contentPadding = PaddingValues(bottom = 88.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(campsites, key = { it.id }) { c ->
+                            CampsiteRow(
+                                campsite = c,
+                                lotteryStatus = lotteryStatus[c.id]
+                            ) // uncomment in actual { navController.navigate(Routes.OWNER_CAMPSITE_DETAILS) }
+                            { navController.navigate(Routes.ownerCampsiteDetails(c.id)) } // for testing
+                        }
                     }
                 }
             }

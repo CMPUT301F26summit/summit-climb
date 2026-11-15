@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.CardDefaults
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -22,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,6 +39,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import java.util.Locale
+import androidx.compose.foundation.layout.Box
+import com.example.summit_climb.ui.ScreensBackground
+import androidx.compose.foundation.background
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.foundation.BorderStroke
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.QrCodeScanner
@@ -47,8 +56,7 @@ import com.example.summit_climb.model.CampsiteFilter
 import com.example.summit_climb.controller.CampsiteSearchController
 import com.example.summit_climb.ui.Routes
 import com.example.summit_climb.ui.charcoal
-import com.example.summit_climb.ui.lightBlue
-
+import com.example.summit_climb.ui.greyBlue
 
 /**
  * The entrant's campsite list screen (Home).
@@ -95,15 +103,13 @@ fun CampsiteListScreen(
             navController.navigate(Routes.campsiteDetails(campsite.id))
         },
         onScanClick = {
-            navController.navigate(Routes.MANAGE_QR_CODE)
+            //navController.navigate(Routes.SCAN_QR_CODE)
         },
         onNotificationsClick = {
             navController.navigate(Routes.NOTIFICATIONS) { launchSingleTop = true }
         }
     )
 }
-
-
 /**
  * The layout of [CampsiteListScreen].
  *
@@ -140,47 +146,65 @@ fun CampsiteListContent(
         onSearchClick()
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        CampsiteListHeader(onNotificationsClick = onNotificationsClick)
+    Box(Modifier.fillMaxSize()) {
+        ScreensBackground()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            CampsiteListHeader(onNotificationsClick = onNotificationsClick)
 
-        SearchRow(
-            keyword = keyword,
-            onKeywordChange = onKeywordChange,
-            onSearchBoxTapped = onSearchBoxTapped,
-            onKeyboardSearch = runSearch,
-            onScanClick = onScanClick
-        )
-
-        if (showFilters) {
-            FilterFields(
-                filter = filter,
-                onFilterChange = onFilterChange,
-                onSearchClick = runSearch
+            SearchRow(
+                keyword = keyword,
+                onKeywordChange = onKeywordChange,
+                onSearchBoxTapped = onSearchBoxTapped,
+                onKeyboardSearch = runSearch,
+                onScanClick = onScanClick
             )
-        }
 
-        if (campsites.isEmpty()) {
-            Text(CampsiteListText.NO_RESULTS, color = charcoal)
-        }
+            if (showFilters) {
+                FilterFields(
+                    filter = filter,
+                    onFilterChange = onFilterChange,
+                    onSearchClick = runSearch
+                )
+            }
 
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(campsites) { campsite ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag(CampsiteListTags.campsiteCard(campsite.id))
-                        .clickable { onCampsiteClick(campsite) }
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(campsite.name, style = MaterialTheme.typography.titleMedium)
-                        Text(campsite.location)
-                        Text("Up to ${campsite.maxOccupancy} guests")
-                        Text(formatCampsiteRating(campsite))
+            if (campsites.isEmpty()) {
+                Text(CampsiteListText.NO_RESULTS, color = charcoal)
+            }
+
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(campsites) { campsite ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag(CampsiteListTags.campsiteCard(campsite.id))
+                            .clickable { onCampsiteClick(campsite) },
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        border = BorderStroke(1.dp, greyBlue)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                campsite.name,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontFamily = FontFamily.Serif,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Black
+                            )
+                            Text(
+                                campsite.location,
+                                fontSize = 12.sp)
+                            Text(
+                                "Up to ${campsite.maxOccupancy} guests",
+                                fontSize = 12.sp)
+                            Text(
+                                formatCampsiteRating(campsite),
+                                fontSize = 12.sp)
+                        }
                     }
                 }
             }
@@ -200,9 +224,14 @@ fun CampsiteListHeader(onNotificationsClick: () -> Unit) {
     ) {
         Text(
             text = CampsiteListText.TITLE,
+            fontFamily = FontFamily.Serif,
+            fontSize = 22.sp,
             style = MaterialTheme.typography.headlineSmall,
             color = Color.Black,
+            fontWeight = FontWeight.Bold,
             modifier = Modifier.weight(1f)
+                .background(Color.White, RoundedCornerShape(12.dp))
+                .padding(12.dp)
         )
         IconButton(
             onClick = onNotificationsClick,
@@ -252,6 +281,14 @@ fun SearchRow(
             },
             singleLine = true,
             shape = RoundedCornerShape(24.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White,
+                focusedBorderColor = Color.White,
+                unfocusedBorderColor = Color.White,
+                focusedTextColor = charcoal,
+                unfocusedTextColor = charcoal
+            ),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
             keyboardActions = KeyboardActions(onSearch = { onKeyboardSearch() }),
             modifier = Modifier
@@ -298,7 +335,16 @@ fun FilterFields(
             singleLine = true,
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag(CampsiteListTags.LOCATION_INPUT)
+                .testTag(CampsiteListTags.LOCATION_INPUT),
+            shape = RoundedCornerShape(24.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White,
+                focusedBorderColor = Color.White,
+                unfocusedBorderColor = Color.White,
+                focusedTextColor = charcoal,
+                unfocusedTextColor = charcoal
+            )
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
@@ -308,7 +354,16 @@ fun FilterFields(
                 singleLine = true,
                 modifier = Modifier
                     .weight(1f)
-                    .testTag(CampsiteListTags.START_DATE_INPUT)
+                    .testTag(CampsiteListTags.START_DATE_INPUT),
+                shape = RoundedCornerShape(24.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
+                    focusedBorderColor = Color.White,
+                    unfocusedBorderColor = Color.White,
+                    focusedTextColor = charcoal,
+                    unfocusedTextColor = charcoal
+                )
             )
             OutlinedTextField(
                 value = filter.endDate,
@@ -317,7 +372,16 @@ fun FilterFields(
                 singleLine = true,
                 modifier = Modifier
                     .weight(1f)
-                    .testTag(CampsiteListTags.END_DATE_INPUT)
+                    .testTag(CampsiteListTags.END_DATE_INPUT),
+                shape = RoundedCornerShape(24.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
+                    focusedBorderColor = Color.White,
+                    unfocusedBorderColor = Color.White,
+                    focusedTextColor = charcoal,
+                    unfocusedTextColor = charcoal
+                )
             )
         }
         OutlinedTextField(
@@ -328,11 +392,20 @@ fun FilterFields(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag(CampsiteListTags.GUESTS_INPUT)
+                .testTag(CampsiteListTags.GUESTS_INPUT),
+            shape = RoundedCornerShape(24.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White,
+                focusedBorderColor = Color.White,
+                unfocusedBorderColor = Color.White,
+                focusedTextColor = charcoal,
+                unfocusedTextColor = charcoal
+            )
         )
         Button(
             onClick = onSearchClick,
-            colors = ButtonDefaults.buttonColors(containerColor = lightBlue, contentColor = Color.Black),
+            colors = ButtonDefaults.buttonColors(containerColor = greyBlue, contentColor = Color.Black),
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag(CampsiteListTags.SEARCH_BUTTON)

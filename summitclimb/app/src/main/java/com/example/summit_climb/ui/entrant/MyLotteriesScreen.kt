@@ -33,6 +33,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import com.example.summit_climb.ui.ScreensBackground
+import androidx.compose.foundation.layout.Box
+
 import com.example.summit_climb.ui.charcoal
 import com.example.summit_climb.ui.lightGreen
 import com.example.summit_climb.ui.lightRed
@@ -98,78 +101,84 @@ fun MyLotteriesContent(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-            .padding(16.dp)
-    ) {
-        //title
-        Text(
-            text = MyLotteriesText.TITLE,
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Bold,
-            fontFamily = FontFamily.Serif,
-            color = Color.Black
-        )
+    Box(Modifier.fillMaxSize()) {
+        ScreensBackground()
 
-        //short message (e.g. after leaving)
-        if (message.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(8.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            //title
             Text(
-                text = message,
+                text = MyLotteriesText.TITLE,
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily.Serif,
                 color = charcoal,
-                fontSize = 14.sp,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .background(greyBlue, RoundedCornerShape(12.dp))
-                    .padding(12.dp)
-                    .testTag(MyLotteriesTags.MESSAGE)
+                    .background(Color.White, RoundedCornerShape(12.dp))
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
             )
-        }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        if (lotteries.isEmpty()) {
-            Text(text = MyLotteriesText.NONE, color = charcoal, fontSize = 14.sp)
-        }
-
-        //scrollable list of lottery cards
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            items(lotteries) { lottery ->
-                LotteryCard(
-                    lottery = lottery,
-                    onLeave = { toLeave = lottery },      // opens the popup first
-                    onConfirmReservation = onConfirmReservation
+            //short message (e.g. after leaving)
+            if (message.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = message,
+                    color = charcoal,
+                    fontSize = 14.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(greyBlue, RoundedCornerShape(12.dp))
+                        .padding(12.dp)
+                        .testTag(MyLotteriesTags.MESSAGE)
                 )
             }
-        }
-    }
 
-    //"Leave Lottery?" popup
-    val leaving = toLeave
-    if (leaving != null) {
-        AlertDialog(
-            onDismissRequest = { toLeave = null },
-            title = { Text(MyLotteriesText.LEAVE_TITLE) },
-            text = { Text("Are you sure you would like to leave the lottery for ${leaving.campsiteName}?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        onLeave(leaving.lotteryId)
-                        toLeave = null
-                    },
-                    modifier = Modifier.testTag(MyLotteriesTags.CONFIRM_LEAVE)
-                ) {
-                    Text(MyLotteriesText.CONFIRM_LEAVE, color = lightRed)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { toLeave = null }) {
-                    Text(MyLotteriesText.CANCEL, color = charcoal)
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (lotteries.isEmpty()) {
+                Text(text = MyLotteriesText.NONE, color = charcoal, fontSize = 14.sp)
+            }
+
+            //scrollable list of lottery cards
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                items(lotteries) { lottery ->
+                    LotteryCard(
+                        lottery = lottery,
+                        onLeave = { toLeave = lottery },      // opens the popup first
+                        onConfirmReservation = onConfirmReservation
+                    )
                 }
             }
-        )
+        }
+
+        //"Leave Lottery?" popup
+        val leaving = toLeave
+        if (leaving != null) {
+            AlertDialog(
+                onDismissRequest = { toLeave = null },
+                title = { Text(MyLotteriesText.LEAVE_TITLE) },
+                text = { Text("Are you sure you would like to leave the lottery for ${leaving.campsiteName}?") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            onLeave(leaving.lotteryId)
+                            toLeave = null
+                        },
+                        modifier = Modifier.testTag(MyLotteriesTags.CONFIRM_LEAVE)
+                    ) {
+                        Text(MyLotteriesText.CONFIRM_LEAVE, color = lightRed)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { toLeave = null }) {
+                        Text(MyLotteriesText.CANCEL, color = charcoal)
+                    }
+                }
+            )
+        }
     }
 }
 
@@ -183,7 +192,7 @@ fun LotteryCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(greyBlue, RoundedCornerShape(20.dp))
+            .background(Color.White, RoundedCornerShape(20.dp))
             .padding(16.dp)
     ) {
         //name on the left, status badge on the right
@@ -196,7 +205,7 @@ fun LotteryCard(
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily.Serif,
-                color = Color.Black
+                color = charcoal
             )
             Text(
                 text = lottery.status,
@@ -218,9 +227,9 @@ fun LotteryCard(
             Button(
                 onClick = onLeave,
                 modifier = Modifier.testTag(MyLotteriesTags.leave(lottery.lotteryId)),
-                colors = ButtonDefaults.buttonColors(containerColor = lightBlue)
+                colors = ButtonDefaults.buttonColors(containerColor = greyBlue)
             ) {
-                Text(text = MyLotteriesText.LEAVE, color = Color.Black)
+                Text(text = MyLotteriesText.LEAVE, color = charcoal)
             }
         }
 
@@ -232,9 +241,9 @@ fun LotteryCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag(MyLotteriesTags.confirm(lottery.lotteryId)),
-                colors = ButtonDefaults.buttonColors(containerColor = lightBlue)
+                colors = ButtonDefaults.buttonColors(containerColor = greyBlue)
             ) {
-                Text(text = MyLotteriesText.CONFIRM_RESERVATION, color = Color.Black)
+                Text(text = MyLotteriesText.CONFIRM_RESERVATION, color = charcoal)
             }
         }
     }

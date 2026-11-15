@@ -92,7 +92,7 @@ fun CampsiteRow(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
-            .background(lightBlue, RoundedCornerShape(24.dp))
+            .background(Color.White, RoundedCornerShape(24.dp))
             .clickable(onClick = onClick)
     ){
         Row(verticalAlignment = Alignment.CenterVertically) {

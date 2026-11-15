@@ -29,6 +29,15 @@ import androidx.compose.foundation.layout.Spacer
 import com.example.summit_climb.R
 
 @Composable
+fun ScreensBackground() {
+    Image(
+        painter = painterResource(R.drawable.screens_background),
+        contentDescription = null,
+        modifier = Modifier.fillMaxSize(),
+        contentScale = ContentScale.Crop
+    )
+}
+@Composable
 fun HomeScreen(navController: NavController) {
     var errorMessage by remember { mutableStateOf("") }
     val auth = FirebaseAuth.getInstance()

@@ -33,6 +33,10 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.summit_climb.ui.Routes
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.graphics.Color
 
 import com.example.summit_climb.ui.charcoal
 import com.example.summit_climb.ui.greyBlue
@@ -104,84 +108,95 @@ fun ManageCampsiteScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(white)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        // back button
-        val backButton = {
-            navController.popBackStack()
-            Unit
-        }
-
-        Row(
+    Box(modifier = Modifier.fillMaxSize()) {
+        ScreensBackground()
+        Column(
             modifier = Modifier
-                .clickable(onClick = backButton)
-                .padding(vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Icon(
-                Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back Button",
-                modifier = Modifier.size(20.dp),
-                tint = charcoal
-            )
+            // back button
+            val backButton = {
+                navController.popBackStack()
+                Unit
+            }
 
-            Text(
-                text = "Back",
-                color = charcoal,
-                fontSize = 15.sp,
-                lineHeight = 22.sp,
-                modifier = Modifier.padding(horizontal = 8.dp)
-            )
-        }
-
-        // heading, campsite name and location, and the lottery status pill
-        Column {
-            Text(
-                text = "Manage",
-                style = MaterialTheme.typography.headlineLarge.copy(
-                    fontSize = 42.sp,
-                    fontWeight = FontWeight.ExtraBold
-                ),
-                color = black
-            )
-            Text(
-                text = "$campsiteName · $location",
-                color = charcoal,
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-            Text(
-                text = lotteryStatus,
-                color = white,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
+            Row(
                 modifier = Modifier
-                    .padding(top = 12.dp)
-                    .background(statusColor, RoundedCornerShape(50))
-                    .padding(horizontal = 12.dp, vertical = 4.dp)
-            )
-        }
+                    .clickable(onClick = backButton)
+                    .background(Color.White, RoundedCornerShape(20.dp))
+                    .padding(horizontal = 6.dp, vertical = 1.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back Button",
+                    modifier = Modifier.size(20.dp),
+                    tint = charcoal
+                )
 
-        // the menu
-        MenuCard("Reservations", "Active, past & cancelled", "$activeReservations active") {
-            open("ownerActiveReserve")
-        }
-        MenuCard("Waitlist", "Entrants in your lottery", "$entrantCount") {
-            openWaitlist()
-        }
-        MenuCard("Sent notifications", "Messages sent to entrants", "$sentCount") {
-            open("ownerSentNotifications")
-        }
-        MenuCard("QR code", "Share a link to your campsite", null) {
-            open(Routes.MANAGE_QR_CODE)
+                Text(
+                    text = "Back",
+                    color = charcoal,
+                    fontSize = 15.sp,
+                    lineHeight = 22.sp,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+            }
+
+            // heading, campsite name and location, and the lottery status pill
+            Column {
+                Text(
+                    text = "Manage",
+                    style = MaterialTheme.typography.headlineLarge.copy(
+                        fontSize = 42.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    ),
+                    color = black,
+                    modifier = Modifier
+                        .background(Color.White, RoundedCornerShape(20.dp))
+                        .padding(horizontal = 20.dp, vertical = 8.dp)
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                Text(
+                    text = "$campsiteName · $location",
+                    color = charcoal,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier
+                        .background(Color.White, RoundedCornerShape(20.dp))
+                        .padding(horizontal = 10.dp, vertical = 1.dp)
+                )
+                Text(
+                    text = lotteryStatus,
+                    color = white,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .padding(top = 12.dp)
+                        .background(statusColor, RoundedCornerShape(50))
+                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                )
+            }
+
+            // the menu
+            MenuCard("Reservations", "Active, past & cancelled", "$activeReservations active") {
+                open("ownerActiveReserve")
+            }
+            MenuCard("Waitlist", "Entrants in your lottery", "$entrantCount") {
+                openWaitlist()
+            }
+            MenuCard("Sent notifications", "Messages sent to entrants", "$sentCount") {
+                open("ownerSentNotifications")
+            }
+            MenuCard("QR code", "Share a link to your campsite", null) {
+                open(Routes.MANAGE_QR_CODE)
+            }
         }
     }
 }
@@ -208,7 +223,7 @@ private fun MenuCard(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = greyBlue),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(

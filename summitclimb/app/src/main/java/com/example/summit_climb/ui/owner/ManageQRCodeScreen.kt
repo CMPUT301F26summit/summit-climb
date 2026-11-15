@@ -34,6 +34,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.summit_climb.service.QRCodeService
+import androidx.compose.foundation.layout.Box
+import com.example.summit_climb.ui.ScreensBackground
+import androidx.compose.foundation.shape.CircleShape
+
 import com.example.summit_climb.ui.charcoal
 import com.example.summit_climb.ui.greyBlue
 import com.example.summit_climb.ui.lightBlue
@@ -50,139 +54,152 @@ fun ManageQRCodeScreen (
     }
     val backButton = { navController.popBackStack(); Unit }
 
-    Column(
-        modifier = Modifier
-        .fillMaxSize()
-        .background(Color(0xFFFAF3EB))
-        .padding(horizontal = 20.dp, vertical = 16.dp)
-    ) {
-        Row(
-            Modifier
-                .clickable(onClick = backButton)
-                .padding(vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ){
-            Icon(
-                Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back Button",
-                modifier = Modifier.size(20.dp),
-                tint = charcoal
-            )
+    Box(modifier = Modifier.fillMaxWidth()) {
+        ScreensBackground()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp, vertical = 16.dp)
+        ) {
+            Row(
+                Modifier
+                    .clickable(onClick = backButton)
+                    .background(Color.White, RoundedCornerShape(20.dp))
+                    .padding(horizontal = 6.dp, vertical = 1.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back Button",
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .size(15.dp),
+                    tint = charcoal
+                )
+
+                Text(
+                    text = "Back",
+                    color = charcoal,
+                    fontSize = 15.sp,
+                    lineHeight = 22.sp,
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
 
             Text(
-                text = "Back",
-                color = charcoal,
-                fontSize = 15.sp,
-                lineHeight = 22.sp,
+                text = "QR Code",
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                fontSize = 32.sp,
+                color = Color.Black,
                 modifier = Modifier
-                    .padding(horizontal = 8.dp)
-
+                    .background(Color.White, RoundedCornerShape(12.dp))
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .align(Alignment.CenterHorizontally)
             )
-        }
 
-        Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(16.dp))
 
-        Text(
-            text = "QR Code",
-            fontFamily = FontFamily.Serif,
-            fontWeight = FontWeight.Bold,
-            fontSize = 32.sp,
-            color = Color.Black
-        )
-
-        Spacer(Modifier.height(8.dp))
-
-        Text(
-            text = "Guests can scan this to open your campsite",
-            fontSize = 14.sp,
-            color = Color.Gray
-        )
-        Spacer(Modifier.height(16.dp))
-
-        Card(
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
                 modifier = Modifier.fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 36.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                if (qrCode != null) {
-                    Image(
-                        bitmap = qrCode.asImageBitmap(),
-                        contentDescription = "QR code for $campsiteName",
-                        modifier = Modifier.size(200.dp)
-                    )
-                } else {
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 36.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (qrCode != null) {
+                        Image(
+                            bitmap = qrCode.asImageBitmap(),
+                            contentDescription = "QR code for $campsiteName",
+                            modifier = Modifier.size(200.dp)
+                        )
+                    } else {
+                        Text(
+                            text = "Sorry, the QR Code for this campsite is not available yet",
+                            color = Color.DarkGray
+                        )
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
                     Text(
-                        text = "Sorry, the QR Code for this campsite is not available yet",
-                        color = Color.DarkGray
+                        text = campsiteName,
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        color = Color.Black
+                    )
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Text(
+                        text = "Campsite ID: $campsiteID",
+                        color = Color.LightGray,
+                        fontSize = 13.sp
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(25.dp))
+
+            Text(
+                text = "Your guests can scan this QR Code to see campsite details.",
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                fontSize = 10.sp,
+                color = Color.Black,
+                modifier = Modifier
+                    .background(Color.White, RoundedCornerShape(12.dp))
+                    .padding(horizontal = 11.dp, vertical = 4.dp)
+                    .align(Alignment.CenterHorizontally)
+            )
+            Spacer(Modifier.height(25.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Button(
+                    onClick = { /* WIP: save image function */ },
+                    modifier = Modifier.weight(1f)
+                        .height(56.dp),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = greyBlue
+                    )
+                ) {
+                    Text(
+                        text = "Save",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 18.sp,
+                        color = charcoal
                     )
                 }
 
-                Spacer(Modifier.height(16.dp))
-
-                Text(
-                    text = campsiteName,
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    color = Color.Black
-                )
-
-                Spacer(Modifier.height(16.dp))
-
-                Text(
-                    text = "Campsite ID: $campsiteID",
-                    color = Color.LightGray,
-                    fontSize = 13.sp
-                )
+                Button(
+                    onClick = { /* WIP: share image function */ },
+                    modifier = Modifier.weight(1f)
+                        .height(56.dp),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = lightBlue
+                    )
+                ) {
+                    Text(
+                        text = "Share",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 20.sp,
+                        color = Color.White
+                    )
+                }
             }
         }
 
-        Spacer(Modifier.height(25.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Button(
-                onClick = { /* WIP: save image function */ },
-                modifier = Modifier.weight(1f)
-                    .height(56.dp),
-                shape = RoundedCornerShape(28.dp),
-                border = BorderStroke(1.dp, Color.LightGray),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = greyBlue
-                )
-            ) {
-                Text(
-                    text = "Save",
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 18.sp,
-                    color = Color.Black
-                )
-            }
-
-            Button(
-                onClick = { /* WIP: share image function */ },
-                modifier = Modifier.weight(1f)
-                    .height(56.dp),
-                shape = RoundedCornerShape(28.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = lightBlue
-                )
-            ) {
-                Text(
-                    text = "Share",
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 20.sp,
-                    color = Color.White
-                )
-            }
-        }
     }
-
 }
