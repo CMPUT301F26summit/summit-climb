@@ -29,20 +29,24 @@ import androidx.navigation.NavController
 import com.example.summit_climb.controller.NotificationController
 import com.example.summit_climb.model.Notification
 import com.example.summit_climb.model.NotificationType
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.navigationBarsPadding
-import com.example.summit_climb.R
 import com.example.summit_climb.ui.charcoal
 import com.example.summit_climb.ui.greyBlue
 import com.example.summit_climb.ui.lightBlue
 import com.example.summit_climb.ui.black
-
+import androidx.compose.foundation.background
+import com.example.summit_climb.ui.white
+import androidx.compose.runtime.remember
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
+import com.example.summit_climb.data.NotificationRepository
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
+import com.example.summit_climb.ui.ScreensBackground
 
 
 /**
@@ -62,15 +66,10 @@ fun NotificationsScreen(
     controller: NotificationController,
     navController: NavController
 ) {
-    Box(modifier = Modifier.fillMaxSize()) {
-
-        // summit climb background image
-        Image(
-            painter = painterResource(id = R.drawable.summit_climb_no_text),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        ScreensBackground()
 
         // the whole screen is one list, so everything scrolls together
         LazyColumn(
@@ -106,35 +105,45 @@ fun NotificationsScreen(
 
             // heading and unread count
             item {
-                Column {
-                    Text(
-                        text = "Notifications",
-                        style = MaterialTheme.typography.headlineLarge.copy(
-                            fontSize = 42.sp,
-                            fontWeight = FontWeight.ExtraBold
-                        ),
-                        color = black
-                    )
-                    Text(
-                        text = "${controller.unreadCount} unread",
-                        color = charcoal,
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
-                        ),
-                        modifier = Modifier.padding(top = 6.dp, bottom = 12.dp)
-                    )
-                }
+                Text(
+                    text = "Notifications",
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 35.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    modifier = Modifier
+                        .background(white, RoundedCornerShape(12.dp))
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                )
+            }
+
+            item {
+                Text(
+                    text = "${controller.unreadCount} unread",
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    modifier = Modifier
+                        .background(white, RoundedCornerShape(12.dp))
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                )
             }
 
             // the notifications
             if (controller.notifications.isEmpty()) {
                 item {
-                    Text(
-                        text = "You don't have any notifications yet.",
-                        color = black,
-                        modifier = Modifier.padding(top = 12.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No notifications yet",
+                            color = black
+                        )
+                    }
                 }
             } else {
                 items(
@@ -235,3 +244,97 @@ private fun NotificationCard(
         }
     }
 }
+
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+private fun NotificationsScreenPreview() {
+
+    // Sample notifications for the preview
+    val sampleNotifications = listOf(
+        Notification(
+            id = "1",
+            senderId = "system",
+            recipientId = "preview-user",
+            type = NotificationType.LOTTERY_WIN,
+            title = "Lottery Result",
+            text = "Congratulations! You have been selected for your campsite reservation at Pine Ridge Campground.",
+            timestamp = System.currentTimeMillis() - 5 * 60 * 1000,
+            read = false
+        ),
+
+        Notification(
+            id = "2",
+            senderId = "system",
+            recipientId = "preview-user",
+            type = NotificationType.RESERVATION_UPDATE,
+            title = "Reservation Update",
+            text = "Your reservation has been confirmed. Check your reservations for more details.",
+            timestamp = System.currentTimeMillis() - 60 * 60 * 1000,
+            read = false
+        ),
+
+        Notification(
+            id = "3",
+            senderId = "system",
+            recipientId = "preview-user",
+            type = NotificationType.LOTTERY_LOSS,
+            title = "Lottery Result",
+            text = "Unfortunately, you were not selected for this campsite lottery. Better luck next time!",
+            timestamp = System.currentTimeMillis() - 24 * 60 * 60 * 1000,
+            read = true
+        ),
+
+        Notification(
+            id = "4",
+            senderId = "owner123",
+            recipientId = "preview-user",
+            type = NotificationType.MESSAGE,
+            title = "New Message",
+            text = "Hello! Please remember to review the campsite guidelines before your upcoming visit.",
+            timestamp = System.currentTimeMillis() - 2 * 24 * 60 * 60 * 1000,
+            read = true
+        )
+    )
+
+    // Temporary repository so the preview does not need Firestore
+    val previewRepository = object : NotificationRepository {
+
+        override val notifications = sampleNotifications
+
+        override fun send(notification: Notification) {}
+
+        override fun markRead(notificationId: String) {}
+
+        override fun forUser(userId: String): List<Notification> {
+            return sampleNotifications
+        }
+
+        override fun sentBy(senderId: String): List<Notification> {
+            return sampleNotifications
+        }
+
+        override fun listenToUser(
+            userId: String,
+            onAdded: (Notification) -> Unit,
+            onModified: (Notification) -> Unit,
+            onRemoved: (Notification) -> Unit
+        ): () -> Unit {
+            return {}
+        }
+    }
+
+    val previewController = remember {
+        NotificationController(previewRepository) {
+            "preview-user"
+        }.apply {
+            notifications.addAll(sampleNotifications)
+        }
+    }
+
+    NotificationsScreen(
+        controller = previewController,
+        navController = rememberNavController()
+    )
+}
+

@@ -62,7 +62,7 @@ object Routes {
     const val OWNER_WAITLIST = "ownerWaitlist/{$CAMPSITE_ID_ARG}"
 
     /** Owner's active reservations (opened from the manage menu).*/
-    const val OWNER_ACTIVE_RESERVATIONS = "ownerActiveReserve"
+    const val OWNER_ACTIVE_RESERVATIONS = "ownerActiveReserve/{$CAMPSITE_ID_ARG}"
 
     /** Notifications the owner has sent (opened from the manage menu).*/
     const val OWNER_SENT_NOTIFICATIONS = "ownerSentNotifications"
@@ -115,6 +115,7 @@ object Routes {
         return "ownerListLottery/$campsiteId"
     }*/
 
+
     //testing
     fun ownerListLottery(campsiteId: String): String {
         return OWNER_LIST_LOTTERY.replace("{$CAMPSITE_ID_ARG}", campsiteId)
@@ -122,6 +123,13 @@ object Routes {
 
     /** @return for example `"ownerWaitlist/abc123"`.*/
     fun ownerWaitlist(campsiteId: String): String {
-        return "ownerWaitlist/$campsiteId"
+        return OWNER_WAITLIST.replace("{$CAMPSITE_ID_ARG}", campsiteId)
+    }
+
+    fun ownerActiveReservations(campsiteId: String): String {
+        return OWNER_ACTIVE_RESERVATIONS.replace(
+            "{$CAMPSITE_ID_ARG}",
+            campsiteId
+        )
     }
 }

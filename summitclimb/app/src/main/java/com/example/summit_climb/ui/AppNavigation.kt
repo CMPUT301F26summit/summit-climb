@@ -9,6 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,7 +35,7 @@ import com.example.summit_climb.model.CampsiteFilter
 import com.example.summit_climb.ui.entrant.CampsiteDetailsScreen
 import com.example.summit_climb.ui.entrant.CampsiteListScreen
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.NavHostController
+
 
 //testing (ignore, just to show ui)
 import com.example.summit_climb.model.ListingStatus
@@ -46,9 +47,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import com.example.summit_climb.controller.NotificationController
+import com.example.summit_climb.controller.OwnerLotteryController
 import com.example.summit_climb.ui.entrant.MyLotteriesContent
 import com.example.summit_climb.model.WaitlistEntry
 import com.example.summit_climb.model.WaitlistResult
+import com.example.summit_climb.ui.entrant.NotificationsScreen
+import com.example.summit_climb.ui.owner.WaitlistScreen
+import com.example.summit_climb.ui.owner.OwnerReservationsFromFirestore
+import com.example.summit_climb.controller.OwnerReservationController
+import com.example.summit_climb.model.LotteryStatus
+import com.example.summit_climb.ui.owner.Entrant
+import com.google.firebase.firestore.FirebaseFirestore
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import com.example.summit_climb.data.FirestoreReservationRepository
+import com.example.summit_climb.model.Reservation
+import com.example.summit_climb.ui.entrant.MyReservationUiItem
+import com.example.summit_climb.ui.entrant.MyReservationsContent
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 val campsiteIdArgs = listOf(
     navArgument(Routes.CAMPSITE_ID_ARG) { type = NavType.StringType }
@@ -72,7 +91,10 @@ fun AppNavigation(
     searchController: CampsiteSearchController,
     lotteryController: EntrantLotteryController,
     currentUserId: String,
-    ownerCampsiteController: OwnerCampsiteController
+    ownerCampsiteController: OwnerCampsiteController,
+    notificationController: NotificationController,
+    reservationController: OwnerReservationController,
+    ownerLotteryController: OwnerLotteryController
 ){
     val navController = rememberNavController()
 
@@ -92,7 +114,7 @@ fun AppNavigation(
             modifier = Modifier
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding)
-        ){
+        ) {
 
             composable("homescreen") { HomeScreen(navController) }
 
@@ -106,9 +128,27 @@ fun AppNavigation(
                 var lotteries by remember {
                     mutableStateOf(
                         listOf(
-                            LotteryUiItem("sample-lottery-cedar-valley", "Cedar Valley", "Banff, AB", MyLotteriesText.PENDING, "Lottery closes in 14 days"),
-                            LotteryUiItem("sample-lottery-lakeside-camp", "Lakeside Camp", "Jasper, AB", MyLotteriesText.WON, "You've been selected!"),
-                            LotteryUiItem("sample-lottery-summit-camp", "Summit Camp", "Hinton, AB", MyLotteriesText.LOST, "You weren't selected this time.")
+                            LotteryUiItem(
+                                "sample-lottery-cedar-valley",
+                                "Cedar Valley",
+                                "Banff, AB",
+                                MyLotteriesText.PENDING,
+                                "Lottery closes in 14 days"
+                            ),
+                            LotteryUiItem(
+                                "sample-lottery-lakeside-camp",
+                                "Lakeside Camp",
+                                "Jasper, AB",
+                                MyLotteriesText.WON,
+                                "You've been selected!"
+                            ),
+                            LotteryUiItem(
+                                "sample-lottery-summit-camp",
+                                "Summit Camp",
+                                "Hinton, AB",
+                                MyLotteriesText.LOST,
+                                "You weren't selected this time."
+                            )
                         )
                     )
                 }
@@ -131,10 +171,14 @@ fun AppNavigation(
             composable(Routes.PROFILE) { ProfileScreen(navController) }
 
             // ----- Entrant screens -------  //
-            composable(Routes.NOTIFICATIONS) { ComingSoonScreen("Notifications") }
+            composable(Routes.NOTIFICATIONS) {
+                NotificationsScreen(
+                    controller = notificationController,
+                    navController = navController
+                )
+            }
             composable(Routes.QR_SCANNER) { ComingSoonScreen("QR Scanner") }
             composable(Routes.POLICIES) { ComingSoonScreen("Policies & guidelines") }
-            composable(Routes.MANAGE_QR_CODE) { ManageQRCodeScreen(navController) }
 
             // test
             composable(Routes.CAMPSITE_LIST) {
@@ -145,7 +189,7 @@ fun AppNavigation(
             composable(
                 route = Routes.CAMPSITE_DETAILS,
                 arguments = campsiteIdArgs
-            ){ backStackEntry ->
+            ) { backStackEntry ->
                 CampsiteDetailsScreen(
                     navController = navController,
                     campsiteId = backStackEntry.campsiteId(),
@@ -167,7 +211,7 @@ fun AppNavigation(
             composable(
                 route = Routes.OWNER_CAMPSITE_DETAILS,
                 arguments = campsiteIdArgs
-            ){ backStackEntry ->
+            ) { backStackEntry ->
                 val id = backStackEntry.campsiteId()
 
                 val campsite = searchController.campsiteDetails(id)
@@ -176,7 +220,8 @@ fun AppNavigation(
                 if (campsite == null) {
                     Text(
                         text = "Loading...",
-                        modifier = Modifier.padding(16.dp))
+                        modifier = Modifier.padding(16.dp)
+                    )
                 } else {
                     OwnerCampsiteDetails(navController = navController, campsite = campsite)
                 }
@@ -186,7 +231,7 @@ fun AppNavigation(
             composable(
                 route = Routes.OWNER_EDIT_CAMPSITE,
                 arguments = campsiteIdArgs
-            ){ backStackEntry ->
+            ) { backStackEntry ->
                 val campsite = searchController.campsiteDetails(backStackEntry.campsiteId())
                 if (campsite == null) {
                     Text("Loading...", modifier = Modifier.padding(16.dp))
@@ -219,7 +264,7 @@ fun AppNavigation(
             composable(
                 route = Routes.OWNER_MANAGE_CAMPSITE,
                 arguments = campsiteIdArgs
-            ){ backStackEntry ->
+            ) { backStackEntry ->
                 val campsite = searchController.campsiteDetails(backStackEntry.campsiteId())
                 if (campsite == null) {
                     Text("Loading...", modifier = Modifier.padding(16.dp))
@@ -243,11 +288,57 @@ fun AppNavigation(
             ) { ComingSoonScreen("List in Lottery") }
 
             // Owner screens, uncomment when ready to use. Each route constant already exists in Routes.
-            //composable(Routes.OWNER_WAITLIST, arguments = campsiteIdArgs) { ... }
-            //composable(Routes.OWNER_ACTIVE_RESERVATIONS) { ... }
+            composable(
+                route = Routes.OWNER_WAITLIST,
+                arguments = campsiteIdArgs
+            ) { backStackEntry ->
+                WaitlistScreen(
+                    campsiteId = backStackEntry.campsiteId(),
+                    currentUserId = currentUserId,
+                    searchController = searchController,
+                    ownerLotteryController = ownerLotteryController,
+                    onBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            composable(
+                route = Routes.OWNER_ACTIVE_RESERVATIONS,
+                arguments = campsiteIdArgs
+
+            ) { backStackEntry ->
+
+                val id = backStackEntry.campsiteId()
+
+                val campsite = searchController.campsiteDetails(id)
+                    ?: searchController.search("", CampsiteFilter())
+                        .find { it.id == id }
+
+                if (campsite == null) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Loading...",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                } else {
+                    OwnerReservationsFromFirestore(
+                        campsiteId = id,
+                        controller = reservationController,
+                        onReservationClick = { reservationId ->
+                            // reservations details navigation connected later
+                        }
+                    )
+                }
+            }
             //composable(Routes.OWNER_SENT_NOTIFICATIONS) { ... }
         }
     }
+
 }
 
 /**

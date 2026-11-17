@@ -6,6 +6,7 @@ import com.example.summit_climb.data.LotteryRepository
 import com.example.summit_climb.data.NotificationRepository
 import com.example.summit_climb.data.FirestoreReservationRepository
 import com.example.summit_climb.data.FirestoreNotificationRepository
+import com.example.summit_climb.data.ReservationRepository
 
 class AppContainer {
     private val auth = FirebaseAuth.getInstance()
@@ -19,7 +20,8 @@ class AppContainer {
     //val userRepository: UserRepository = FirestoreUserRepository(firestore)
     //val campsiteRepository: CampsiteRepository = FirestoreCampsiteRepository(firestore)
     //val lotteryRepository: LotteryRepository = FirestoreLotteryRepository(firestore)
-    //val reservationRepository: ReservationRepository = FirestoreReservationRepository(firestore)
-    //val notificationRepository: NotificationRepository = FirestoreNotificationRepository(firestore)
+    val reservationRepository: ReservationRepository = FirestoreReservationRepository(firestore)
+
+    val notificationRepository: NotificationRepository = FirestoreNotificationRepository(firestore)
 
 }

@@ -101,4 +101,23 @@ class OwnerLotteryController(
         }
         return "Closed"
     }
+
+    // to retrieve appropriate lottery for a campsite
+    fun lotteryForCampsite(
+        ownerId: String,
+        campsiteId: String
+    ): Lottery? {
+        val lotteries = lotteriesFor(ownerId)
+            .filter { campsiteId in it.campsiteIds }
+
+        return lotteries
+            .filter { it.status == LotteryStatus.OPEN }
+            .maxByOrNull { it.registrationEnd }
+            ?: lotteries
+                .filter {
+                    it.status == LotteryStatus.DRAWN ||
+                            it.status == LotteryStatus.CLOSED
+                }
+                .maxByOrNull { it.registrationEnd }
+    }
 }

@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import com.example.summit_climb.data.NotificationRepository
 import com.example.summit_climb.model.Notification
 import com.example.summit_climb.model.NotificationType
+import com.example.summit_climb.ui.Routes
 
 /**
  * Manages the current user's notifications
@@ -100,11 +101,12 @@ class NotificationController(
      * @param notification The selected notification
      * @return The navigation route, or null if no destination is available
      */
-    fun destinationFor(notification: Notification): String? = when (notification.type) {
-        NotificationType.LOTTERY_WIN,
-        NotificationType.LOTTERY_LOSS -> "entrantLotteries"
+    fun destinationFor(notification: Notification): String? =
+        when (notification.type) {
+            NotificationType.LOTTERY_WIN,
+            NotificationType.LOTTERY_LOSS -> Routes.MY_LOTTERIES
 
-        NotificationType.RESERVATION_UPDATE -> null   // set once a My Reservations route exists
-        NotificationType.MESSAGE -> null
-    }
+            NotificationType.RESERVATION_UPDATE -> Routes.MY_RESERVATIONS
+            NotificationType.MESSAGE -> null   // TO BE DONE
+        }
 }
