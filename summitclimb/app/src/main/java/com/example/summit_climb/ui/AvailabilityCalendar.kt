@@ -39,11 +39,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
  * @param bookedDates dates that have a reservation
  * @param selectedDate the date currently selected, or null if none is selected
  * @param onDateSelected called with the date the owner presses
+ * @param rangeDates other dates to highlight (e.g. a picked stay). Empty by default.
  */
 @Composable
 fun AvailabilityCalendar(
     bookedDates: Set<LocalDate>,
     selectedDate: LocalDate?,
+    rangeDates: Set<LocalDate> = emptySet(),
     onDateSelected: (LocalDate?) -> Unit = {}
     ){
 
@@ -142,6 +144,7 @@ fun AvailabilityCalendar(
 
                         val date = month.atDay(day)
                         val booked = date in bookedDates
+                        val inRange = date in rangeDates
                         val selected = date == selectedDate
 
                         Box(
@@ -155,6 +158,9 @@ fun AvailabilityCalendar(
 
                                     else if (booked)
                                         lightGreen
+
+                                    else if (inRange)
+                                        darkGreen.copy(alpha = 0.5f)
 
                                     else
                                         Color.Transparent,
@@ -178,7 +184,7 @@ fun AvailabilityCalendar(
                                 color = if (selected)
                                     Color.White
 
-                                else if (booked)
+                                else if (booked || inRange)
                                     Color.White
 
                                 else

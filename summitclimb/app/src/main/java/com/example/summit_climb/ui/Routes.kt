@@ -12,6 +12,9 @@ object Routes {
     /** The entrant's reservations.*/
     const val MY_RESERVATIONS = "entrantReservations"
 
+    /** The entrant's booking screen for a won lottery.*/
+    const val RESERVATION = "entrantReservation"
+
     /** The lotteries the entrant joined.*/
     const val MY_LOTTERIES = "entrantLotteries"
 

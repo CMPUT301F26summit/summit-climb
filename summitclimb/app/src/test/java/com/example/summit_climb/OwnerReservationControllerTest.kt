@@ -7,6 +7,8 @@ import org.junit.Test
 import org.junit.Assert.assertTrue
 import com.example.summit_climb.model.Notification
 import java.lang.Exception
+import com.example.summit_climb.data.ReservationRepository
+import com.example.summit_climb.data.NotificationRepository
 
 
 class OwnerReservationControllerTest {
