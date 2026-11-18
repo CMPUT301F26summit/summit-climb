@@ -209,7 +209,7 @@ fun ManageCampsiteScreen(
             }
 
             MenuCard("QR code", "Share a link to your campsite", null) {
-                open(Routes.MANAGE_QR_CODE)
+                navController.navigate(Routes.manageQRCode(campsiteId))
             }
         }
     }
@@ -224,64 +224,64 @@ fun ManageCampsiteScreen(
  * @param count optional count displayed on the card
  * @param onClick action performed when the card is clicked
  */
-    @Composable
-    private fun MenuCard(
-        title: String,
-        subtitle: String,
-        count: String?,
-        onClick: () -> Unit
+@Composable
+private fun MenuCard(
+    title: String,
+    subtitle: String,
+    count: String?,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClick),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(18.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(18.dp)
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = title,
-                        color = black,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = subtitle,
-                        color = charcoal,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                }
-                if (count != null) {
-                    Text(
-                        text = count,
-                        color = black,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(end = 12.dp)
-                    )
-                }
-                Text(text = "›", color = charcoal, fontSize = 28.sp)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    color = black,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = subtitle,
+                    color = charcoal,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
             }
+            if (count != null) {
+                Text(
+                    text = count,
+                    color = black,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(end = 12.dp)
+                )
+            }
+            Text(text = "›", color = charcoal, fontSize = 28.sp)
         }
     }
+}
 
 
-    @Preview(showBackground = true)
-    @Composable
-    private fun ManageCampsitePreview() {
-        ManageCampsiteScreen(
-            navController = rememberNavController(),
-            campsiteId = "preview-campsite-id",
-            campsiteName = "Mt. Green Camp",
-            location = "Banff, AB",
-            lotteryStatus = "No Lottery",
-            activeReservations = 3,
-            entrantCount = 12,
-            sentCount = 29
-        )
-    }
+@Preview(showBackground = true)
+@Composable
+private fun ManageCampsitePreview() {
+    ManageCampsiteScreen(
+        navController = rememberNavController(),
+        campsiteId = "preview-campsite-id",
+        campsiteName = "Mt. Green Camp",
+        location = "Banff, AB",
+        lotteryStatus = "No Lottery",
+        activeReservations = 3,
+        entrantCount = 12,
+        sentCount = 29
+    )
+}

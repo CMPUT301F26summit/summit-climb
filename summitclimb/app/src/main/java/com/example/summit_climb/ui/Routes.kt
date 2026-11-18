@@ -71,7 +71,7 @@ object Routes {
     const val OWNER_SENT_NOTIFICATIONS = "ownerSentNotifications"
 
     /** Owner's QR code screen (opened from the manage menu).*/
-    const val MANAGE_QR_CODE = "manageQRCode"
+    const val MANAGE_QR_CODE = "manageQRCode/{$CAMPSITE_ID_ARG}"
 
 
     /**
@@ -82,11 +82,11 @@ object Routes {
     fun campsiteDetails(campsiteId: String): String {
         return "entrantCampDetails/$campsiteId"
     }
-/*
-    /** @return for example `"ownerCampsiteDetails/abc123"`.*/
-    fun ownerCampsiteDetails(campsiteId: String): String {
-        return "ownerCampsiteDetails/$campsiteId"
-    }*/
+    /*
+        /** @return for example `"ownerCampsiteDetails/abc123"`.*/
+        fun ownerCampsiteDetails(campsiteId: String): String {
+            return "ownerCampsiteDetails/$campsiteId"
+        }*/
 
     //testing
     fun ownerCampsiteDetails(campsiteId: String): String {
@@ -94,9 +94,9 @@ object Routes {
     }
 
     /** @return for example `"ownerEditCampsite/abc123"`.*/
-   /* fun ownerEditCampsite(campsiteId: String): String {
-        return "ownerEditCampsite/$campsiteId"
-    }*/
+    /* fun ownerEditCampsite(campsiteId: String): String {
+         return "ownerEditCampsite/$campsiteId"
+     }*/
 
     // testing
     fun ownerEditCampsite(campsiteId: String): String {
@@ -104,9 +104,9 @@ object Routes {
     }
 
     /** @return for example `"ownerManageCamp/abc123"`.*/
-   /* fun ownerManageCampsite(campsiteId: String): String {
-        return "ownerManageCamp/$campsiteId"
-    }*/
+    /* fun ownerManageCampsite(campsiteId: String): String {
+         return "ownerManageCamp/$campsiteId"
+     }*/
 
     //testing
     fun ownerManageCampsite(campsiteId: String): String {
@@ -134,5 +134,9 @@ object Routes {
             "{$CAMPSITE_ID_ARG}",
             campsiteId
         )
+    }
+
+    fun manageQRCode(campsiteId: String): String {
+        return MANAGE_QR_CODE.replace("{$CAMPSITE_ID_ARG}", campsiteId)
     }
 }

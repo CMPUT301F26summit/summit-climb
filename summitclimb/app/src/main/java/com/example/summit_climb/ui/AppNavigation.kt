@@ -123,9 +123,6 @@ fun AppNavigation(
 
             composable("homescreen") { HomeScreen(navController) }
 
-
-            composable(Routes.MANAGE_QR_CODE) { ManageQRCodeScreen(navController) }
-
             // test
             composable(Routes.MY_RESERVATIONS) {
                 var reservations by remember {
@@ -199,6 +196,15 @@ fun AppNavigation(
 
             // test
             composable(Routes.PROFILE) { ProfileScreen(navController) }
+            composable(
+                route = Routes.MANAGE_QR_CODE,
+                arguments = campsiteIdArgs
+            ) { entry ->
+                ManageQRCodeScreen(
+                    navController = navController,
+                    campsiteID = entry.campsiteId()
+                )
+            }
 
             // ----- Entrant screens -------  //
             composable(Routes.NOTIFICATIONS) {
@@ -209,9 +215,9 @@ fun AppNavigation(
             }
             composable(Routes.QR_SCANNER) { ComingSoonScreen("QR Scanner") }
             composable(Routes.POLICIES) { PoliciesScreen(navController) }
-            composable("policy_details/{code}") { backStackEntry ->
+            composable("policy_details/{code}") { entry ->
                 PolicyDetailsScreen(
-                    policyCode = backStackEntry.arguments?.getString("code").orEmpty(),
+                    policyCode = entry.arguments?.getString("code").orEmpty(),
                     navController = navController
                 )
             }
