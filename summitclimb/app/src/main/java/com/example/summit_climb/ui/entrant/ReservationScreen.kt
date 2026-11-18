@@ -1,5 +1,4 @@
-/*
-package com.example.summit_climb
+package com.example.summit_climb.ui.entrant
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -39,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import com.example.summit_climb.ui.AvailabilityCalendar
 
 /**
  * Purpose: the "Confirm Reservation" screen, opened from a Won or Reserved card on My Lotteries
@@ -117,6 +117,7 @@ fun datesProblem(checkIn: LocalDate?, checkOut: LocalDate?, info: ReservationUiI
 /**
  * Works out the new check in / check out after the user taps a date.
  * First tap = check-in, second tap (later date) = check-out, any other tap starts over.
+ *
  * @return the new (check-in, check-out).
  */
 fun nextSelection(checkIn: LocalDate?, checkOut: LocalDate?, tapped: LocalDate): Pair<LocalDate?, LocalDate?> {
@@ -234,15 +235,44 @@ fun ReservationContent(
                 Text(text = ReservationText.SELECT_DATES, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                 Text(text = ReservationText.HOW_TO_PICK, fontSize = 12.sp, color = ReservationColors.charcoal)
 
+                // the dates they're allowed to book
+                Text(
+                    text = ReservationText.bookingPeriod(
+                        info.bookingStart.format(dateFormat),
+                        info.bookingEnd.format(dateFormat)
+                    ),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = ReservationColors.charcoal
+                )
+
+
+                // every day of the picked stay, so the whole range is highlighted
+                val stay = mutableSetOf<LocalDate>()
+                val stayIn = checkIn
+                val stayOut = checkOut
+                if (stayIn != null && stayOut != null) {
+                    var day: LocalDate = stayIn
+                    while (!day.isAfter(stayOut)) {
+                        stay.add(day)
+                        day = day.plusDays(1)
+                    }
+                } else if (stayIn != null) {
+                    stay.add(stayIn)
+                }
+
                 // calendar (Using availablitityCalendar.kt): highlights the date being picked
                 AvailabilityCalendar(
                     bookedDates = info.bookedDates,
-                    // Add a fallback so it passes a non-null LocalDate when nothing is selected yet:
-                    selectedDate = checkOut ?: checkIn ?: info.bookingStart ?: LocalDate.now(),
-                    onDateSelected = { tapped ->
-                        val picked = nextSelection(checkIn, checkOut, tapped)
-                        checkIn = picked.first
-                        checkOut = picked.second
+                    selectedDate = checkOut ?: checkIn ?: info.bookingStart,
+                    rangeDates = stay,
+                    onDateSelected = {
+                        tapped ->
+                        if (tapped != null) {
+                            val picked = nextSelection(checkIn, checkOut, tapped)
+                            checkIn = picked.first
+                            checkOut = picked.second
+                        }
                     }
                 )
                 // picked dates as text
@@ -405,6 +435,11 @@ object ReservationText {
     const val CANCEL = "Cancel"
     const val DECLINE_TITLE = "Decline Reservation?"
     const val ARE_YOU_SURE = "Are you sure?"
+
+    // tells the user which dates they're allowed to book
+    fun bookingPeriod(start: String, end: String): String {
+        return "You can book between $start and $end."
+    }
 }
 
 // Test tags on the reservation screen, for UI tests.
@@ -442,4 +477,3 @@ fun ReservationPreview() {
         onGuidelinesClick = {}
     )
 }
-*/

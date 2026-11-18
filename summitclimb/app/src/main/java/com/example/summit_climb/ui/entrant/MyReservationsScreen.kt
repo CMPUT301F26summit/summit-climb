@@ -33,6 +33,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import androidx.compose.foundation.layout.Box
+import com.example.summit_climb.ui.ScreensBackground
 
 /**
  * Purpose: the entrant's "My Reservations" tab (US 01.06.01, 01.06.02, 01.07.01).
@@ -107,73 +109,80 @@ fun MyReservationsContent(
     // only the reservations for the chosen tab
     val shown = reservations.filter { reservation -> isInTab(reservation.status, selectedTab) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-            .padding(16.dp)
-    ) {
-        //title
-        Text(
-            text = MyReservationsText.TITLE,
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Bold,
-            fontFamily = FontFamily.Serif,
-            color = Color.Black
-        )
+    Box(Modifier.fillMaxSize()) {
+        ScreensBackground()
 
-        //short message (e.g. after cancelling)
-        if (message.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = message,
-                color = ReservationListColors.charcoal,
-                fontSize = 14.sp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(ReservationListColors.greyBlue, RoundedCornerShape(12.dp))
-                    .padding(12.dp)
-                    .testTag(MyReservationsTags.MESSAGE)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        //Active, Past, Cancelled tabs
-        TabRow(
-            selectedTabIndex = tabs.indexOf(selectedTab),
-            containerColor = Color.White
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
         ) {
-            for (tab in tabs) {
-                Tab(
-                    selected = selectedTab == tab,
-                    onClick = { selectedTab = tab },
-                    text = { Text(tab) },
-                    selectedContentColor = ReservationListColors.charcoal,
-                    unselectedContentColor = ReservationListColors.charcoal,
-                    modifier = Modifier.testTag(MyReservationsTags.tab(tab)),
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        if (shown.isEmpty()) {
+            //title
             Text(
-                text = "No ${selectedTab.lowercase()} reservations.",
+                text = MyReservationsText.TITLE,
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily.Serif,
                 color = ReservationListColors.charcoal,
-                fontSize = 14.sp
+                modifier = Modifier
+                    .background(Color.White, RoundedCornerShape(12.dp))
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
             )
-        }
 
-        //scrollable list of reservation cards
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            items(shown) { reservation ->
-                ReservationCard(
-                    reservation = reservation,
-                    onCancel = { toCancel = reservation } // opens the popup first
+            //short message (e.g. after cancelling)
+            if (message.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = message,
+                    color = ReservationListColors.charcoal,
+                    fontSize = 14.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(ReservationListColors.greyBlue, RoundedCornerShape(12.dp))
+                        .padding(12.dp)
+                        .testTag(MyReservationsTags.MESSAGE)
                 )
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            //Active, Past, Cancelled tabs
+            TabRow(
+                selectedTabIndex = tabs.indexOf(selectedTab),
+                containerColor = Color.White
+            ) {
+                for (tab in tabs) {
+                    Tab(
+                        selected = selectedTab == tab,
+                        onClick = { selectedTab = tab },
+                        text = { Text(tab) },
+                        selectedContentColor = ReservationListColors.charcoal,
+                        unselectedContentColor = ReservationListColors.charcoal,
+                        modifier = Modifier.testTag(MyReservationsTags.tab(tab)),
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (shown.isEmpty()) {
+                Text(
+                    text = "No ${selectedTab.lowercase()} reservations.",
+                    color = ReservationListColors.charcoal,
+                    fontSize = 14.sp
+                )
+            }
+
+            //scrollable list of reservation cards
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                items(shown) { reservation ->
+                    ReservationCard(
+                        reservation = reservation,
+                        onCancel = { toCancel = reservation } // opens the popup first
+                    )
+                }
+            }
+
         }
     }
 
@@ -228,7 +237,7 @@ fun ReservationCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(ReservationListColors.greyBlue, RoundedCornerShape(20.dp))
+            .background(Color.White, RoundedCornerShape(20.dp))
             .padding(16.dp)
     ) {
         //name on the left, status badge on the right

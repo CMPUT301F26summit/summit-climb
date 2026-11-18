@@ -7,6 +7,7 @@ import org.junit.Assert.assertFalse
 import com.example.summit_climb.model.Reservation
 import java.lang.Exception
 import org.junit.Assert.assertEquals
+import com.example.summit_climb.data.ReservationRepository
 
 class ReservationControllerTest {
 
