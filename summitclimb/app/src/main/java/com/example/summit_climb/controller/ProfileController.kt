@@ -152,6 +152,16 @@ class ProfileController(
     }
 
     /**
+     * Ensures that the personal information fields are cleared upon account deletion
+     */
+    fun clearProfileFields() {
+        name = ""
+        email = ""
+        phone = ""
+        photoUrl = ""
+        deleteStatus = true
+    }
+    /**
      * Uploads a new profile photo, saves its URL and deletes the old photo.
      * Keeps old photo if update fails
      * Does nothing if the profile has not loaded.
@@ -167,7 +177,7 @@ class ProfileController(
         }
         val oldUrl = user.profileImageUrl
         uploadPhoto = true
-        imageService.upload(uri, "profilePicture/${user.userId}") { url ->
+        imageService.upload(uri, "campsites") { url ->
             uploadPhoto = false
             if (url == null) {
                 onFailure(Exception("Unable to upload photo"))
