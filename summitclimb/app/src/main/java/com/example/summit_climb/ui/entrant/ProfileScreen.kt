@@ -47,6 +47,12 @@ import coil3.compose.AsyncImage
 import androidx.compose.foundation.border
 import com.example.summit_climb.ui.ScreensBackground
 import androidx.compose.material3.SwitchDefaults
+import com.example.summit_climb.ui.Routes
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
 
 import com.example.summit_climb.ui.lightRed
 import com.example.summit_climb.ui.lightBlue
@@ -54,7 +60,16 @@ import com.example.summit_climb.ui.greyBlue
 import com.example.summit_climb.ui.charcoal
 import com.example.summit_climb.ui.sonicSilver
 
-// Displays the User Profile to allow user to view and edit their personal information
+/**
+ * Purpose: the entrant's Profile Screen (US 01.07.03, US 01.08.01, US 01.08.02)
+ * Allows Users to Choose and Update Profile Photos
+ * Displays User's name, email, and phone number and allows users to update information
+ * Toggles Notifications for User
+ * Directs towards app policies and guidelines
+ * Opened from the bottom bar's Profile button
+ * @param navController: app's navigation controller, used to open other screens
+ * @param controller: obtains and updates information about the user
+ */
 @Composable
 fun ProfileScreen(
     navController: NavController,
@@ -62,6 +77,9 @@ fun ProfileScreen(
 ) {
 
     var error by remember { mutableStateOf<String?>(null) }
+    var message by remember { mutableStateOf<String?>(null) }
+    var showDeletePopup by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     /**
      * The following code for profile photo selection contains code
@@ -74,6 +92,22 @@ fun ProfileScreen(
                 controller.updateProfilePhoto(uri, onFailure = { error = it.message })
             }
         }
+
+    // display the error message in the snackbar
+    LaunchedEffect(error) {
+        error?.let {
+            snackbarHostState.showSnackbar(it)
+            error = null
+        }
+    }
+
+    // display the non-error message in the snackbar
+    LaunchedEffect(message) {
+        message?.let {
+            snackbarHostState.showSnackbar(it)
+            message = null
+        }
+    }
 
     Box(Modifier.fillMaxSize()) {
         ScreensBackground()
@@ -92,29 +126,17 @@ fun ProfileScreen(
                 text = "Profile",
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
-                    .fillMaxWidth(0.6f)
-                    .background(Color.White, RoundedCornerShape(20.dp))
-                    .padding(7.dp),
+                    .fillMaxWidth(0.3f)
+                    .background(Color.White, RoundedCornerShape(12.dp))
+                    .padding(2.dp),
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Bold,
-                fontSize = 28.sp,
+                fontSize = 22.sp,
                 color = Color.Black,
                 textAlign = TextAlign.Center
             )
 
             Spacer(Modifier.height(8.dp))
-
-            error?.let {
-                Text(
-                    text = it,
-                    color = Color(0xFFB96666),
-                    fontSize = 14.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp)
-                )
-            }
 
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -131,7 +153,7 @@ fun ProfileScreen(
                             shape = RoundedCornerShape(90.dp)
                         ),
                     contentAlignment = Alignment.Center
-                ) {
+                ) { // displays Modifiable Profile Image
                     if (controller.photoUrl.isNotBlank()) {
                         AsyncImage(
                             model = controller.photoUrl,
@@ -171,16 +193,17 @@ fun ProfileScreen(
 
             Spacer(Modifier.height(20.dp))
 
+            // displays User's Personal Information (name, email, phone number)
             Card(
-                shape = (RoundedCornerShape(24.dp)),
+                shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
                         text = "Personal Information",
@@ -190,11 +213,13 @@ fun ProfileScreen(
                         color = charcoal
                     )
 
+                    // allows users to modify personal information
                     OutlinedTextField(
                         value = controller.name,
                         onValueChange = { controller.name = it },
                         label = { Text(text = "Name", color = charcoal) },
                         shape = RoundedCornerShape(14.dp),
+                        singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Color.White,
                             unfocusedContainerColor = Color.White
@@ -207,6 +232,7 @@ fun ProfileScreen(
                         onValueChange = { controller.email = it },
                         label = { Text(text = "Email", color = charcoal) },
                         shape = RoundedCornerShape(14.dp),
+                        singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Color.White,
                             unfocusedContainerColor = Color.White
@@ -219,6 +245,7 @@ fun ProfileScreen(
                         onValueChange = { controller.phone = it },
                         label = { Text(text = "Phone Number", color = charcoal) },
                         shape = RoundedCornerShape(14.dp),
+                        singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Color.White,
                             unfocusedContainerColor = Color.White
@@ -226,15 +253,20 @@ fun ProfileScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
+                    // saves changes to personal information
                     Button(
                         onClick = {
                             error = null
-                            controller.saveProfile(onFailure = { error = it.message })
+                            message = null
+                            controller.saveProfile(
+                                onSuccess = { message = "Profile Saved!" },
+                                onFailure = { error = it.message }
+                            )
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(46.dp),
-                        shape = RoundedCornerShape(28.dp),
+                            .height(42.dp),
+                        shape = RoundedCornerShape(24.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = greyBlue,
                             contentColor = Color.White
@@ -242,6 +274,7 @@ fun ProfileScreen(
                     ) {
                         Text(
                             text = "Save Changes",
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = charcoal
                         )
@@ -251,12 +284,13 @@ fun ProfileScreen(
 
             Spacer(Modifier.height(20.dp))
 
+            // displays notifications switch and policies/guidelines buttons
             Card(
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column() {
+                Column {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -265,13 +299,14 @@ fun ProfileScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column() {
+                        Column {
                             Text(
                                 text = "Notifications",
                                 fontSize = 15.sp,
                                 color = charcoal
                             )
                         }
+                        // allows users to keep or remove notifications
                         Switch(
                             checked = controller.notificationsStatus,
                             onCheckedChange = { on ->
@@ -287,10 +322,12 @@ fun ProfileScreen(
                             )
                         )
                     }
+
+                    // allows users to view app policies and guidelines
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { navController.navigate("policies") }
+                            .clickable { navController.navigate(Routes.POLICIES) }
                             .height(56.dp)
                             .padding(horizontal = 20.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -307,14 +344,14 @@ fun ProfileScreen(
 
             Spacer(Modifier.height(20.dp))
 
+            // deletes the user's account
             Button(
                 onClick = {
-                    error = null
-                    controller.deleteProfile(onFailure = { error = it.message })
+                    showDeletePopup = true
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
+                    .height(44.dp),
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = lightRed,
@@ -329,7 +366,40 @@ fun ProfileScreen(
             }
 
             Spacer(Modifier.height(16.dp))
+
+            // displays a pop-up to confirm that the user wants to delete account
+            if (showDeletePopup) {
+                AlertDialog(
+                    onDismissRequest = { showDeletePopup = false },
+                    title = { Text("Delete Account?", fontSize = 20.sp) },
+                    text = { Text("Your account will be permanently deleted. This action cannot be undone.", fontSize = 14.sp) },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            showDeletePopup = false
+                            error = null
+                            // controller.deleteProfile(onFailure = { error = it.message })
+                        }) {
+                            Text("Delete", color = lightRed)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDeletePopup = false }) {
+                            Text("Cancel", color = charcoal)
+                        }
+                    },
+                    containerColor = Color.White
+                )
+            }
         }
+
+        // The implementation of the snackbar used code from Android Developers at
+        // https://developer.android.com/develop/ui/compose/components/snackbar 2026
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(16.dp)
+        )
     }
 }
 
