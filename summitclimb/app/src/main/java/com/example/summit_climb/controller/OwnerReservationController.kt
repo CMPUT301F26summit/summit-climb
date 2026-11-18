@@ -6,7 +6,6 @@ import com.example.summit_climb.model.Notification
 import com.example.summit_climb.model.NotificationType
 import com.example.summit_climb.data.ReservationRepository
 
-// Repositories are passed in so we can use fake ones for testing
 class OwnerReservationController(
     private val repository: ReservationRepository, 
     private val notificationRepository: NotificationRepository
@@ -52,7 +51,9 @@ class OwnerReservationController(
                 )
                 onSuccess()
             },
-            onFailure = onFailure
+            // Left expects the failure callback; 
+            // Right provides the one received by this controller
+            onFailure = onFailure 
         )
     }
 }
