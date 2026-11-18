@@ -35,6 +35,8 @@ import com.example.summit_climb.model.CampsiteFilter
 import com.example.summit_climb.ui.entrant.CampsiteDetailsScreen
 import com.example.summit_climb.ui.entrant.CampsiteListScreen
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.summit_climb.ui.entrant.ReservationContent
+import com.example.summit_climb.ui.entrant.ReservationUiInfo
 
 
 //testing (ignore, just to show ui)
@@ -50,6 +52,7 @@ import androidx.compose.runtime.setValue
 import com.example.summit_climb.controller.NotificationController
 import com.example.summit_climb.controller.OwnerLotteryController
 import com.example.summit_climb.ui.entrant.MyLotteriesContent
+import com.example.summit_climb.ui.entrant.MyReservationsText
 import com.example.summit_climb.model.WaitlistEntry
 import com.example.summit_climb.model.WaitlistResult
 import com.example.summit_climb.ui.entrant.NotificationsScreen
@@ -123,7 +126,32 @@ fun AppNavigation(
 
             composable(Routes.MANAGE_QR_CODE) { ManageQRCodeScreen(navController) }
 
-            composable(Routes.MY_RESERVATIONS) { ComingSoonScreen("My Reservations") }
+            // test
+            composable(Routes.MY_RESERVATIONS) {
+                var reservations by remember {
+                    mutableStateOf(
+                        listOf(
+                            MyReservationUiItem("sample-reservation-cedar-valley", "Cedar Valley", "Banff, AB", "Dec 12 – Dec 14, 2026", 2, "\$90", MyReservationsText.ACTIVE),
+                            MyReservationUiItem("sample-reservation-lakeside-camp", "Lakeside Camp", "Jasper, AB", "Aug 3 – Aug 6, 2026", 3, "\$135", MyReservationsText.COMPLETED),
+                            MyReservationUiItem("sample-reservation-summit-camp", "Summit Camp", "Hinton, AB", "Sep 18 – Sep 20, 2026", 2, "\$80", MyReservationsText.CANCELLED)
+                        )
+                    )
+                }
+                var message by remember { mutableStateOf("") }
+
+                MyReservationsContent(
+                    reservations = reservations,
+                    message = message,
+                    onMessageShown = { message = "" },
+                    onCancel = { id ->
+                        val name = reservations.find { it.reservationId == id }?.campsiteName ?: ""
+                        reservations = reservations.map {
+                            if (it.reservationId == id) it.copy(status = MyReservationsText.CANCELLED) else it
+                        }
+                        message = MyReservationsText.cancelled(name)
+                    }
+                )
+            }
 
             // test
             composable(Routes.MY_LOTTERIES) {
@@ -165,7 +193,7 @@ fun AppNavigation(
                         lotteries = lotteries.filter { it.lotteryId != id }
                         message = MyLotteriesText.left(name)
                     },
-                    onConfirmReservation = { navController.navigate(Routes.MY_RESERVATIONS) }
+                    onConfirmReservation = { navController.navigate(Routes.RESERVATION) }
                 )
             }
 
@@ -342,6 +370,29 @@ fun AppNavigation(
                         }
                     )
                 }
+            }
+            // test
+            composable(Routes.RESERVATION) {
+                ReservationContent(
+                    info = ReservationUiInfo(
+                        lotteryId = "sample-lottery-lakeside-camp",
+                        campsiteName = "Lakeside Camp",
+                        location = "Jasper, AB",
+                        bookingStart = LocalDate.of(2026, 12, 1),
+                        bookingEnd = LocalDate.of(2026, 12, 20),
+                        bookedDates = setOf(
+                            LocalDate.of(2026, 12, 5),
+                            LocalDate.of(2026, 12, 6),
+                            LocalDate.of(2026, 12, 12)
+                        ),
+                        reserved = false
+                    ),
+                    message = "",
+                    onBackClick = { navController.popBackStack() },
+                    onConfirm = { _, _ -> navController.popBackStack() },
+                    onDecline = { navController.popBackStack() },
+                    onGuidelinesClick = { navController.navigate(Routes.POLICIES) }
+                )
             }
             //composable(Routes.OWNER_SENT_NOTIFICATIONS) { ... }
         }
