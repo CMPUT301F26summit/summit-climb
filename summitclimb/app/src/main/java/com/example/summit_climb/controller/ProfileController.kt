@@ -7,104 +7,22 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
-import com.google.firebase.firestore.firestore
 import com.example.summit_climb.model.User
 import com.example.summit_climb.data.UserRepository
 import com.example.summit_climb.service.ImageService
 
-/*Interfaces to improve access and communication with other files for ProfileControllerTest */
-interface UserDataSource {
-    fun getUser(uid: String, onFailure: (Exception) -> Unit = {}, onResult: (User) -> Unit)
-    fun saveProfile(user: User, onFailure: (Exception) -> Unit = {}, onSuccess: () -> Unit = {})
-    fun updateNotificationOpt(userId: String, optOut: Boolean, onFailure: (Exception) -> Unit = {})
-    fun deleteUser(user: User)
-}
-
-interface ImageUploader {
-    fun upload(imageUri: Uri, folder: String, onDone: (String?) -> Unit)
-
-    fun delete(imageUrl: String, onDone: (Boolean) -> Unit = {})
-}
-
-
-interface AccountService {
-    val currentUserId: String?
-
-    fun deleteAccount(onSuccess: () -> Unit, onFailure: (Exception) -> Unit)
-}
-
-class UserRepositoryAdapter(
-    private val repository: UserRepository = UserRepository()
-) : UserDataSource {
-
-    override fun getUser(uid: String, onFailure: (Exception) -> Unit, onResult: (User) -> Unit) {
-        repository.getUser(uid) { onResult(it) }
-    }
-
-    override fun saveProfile(user: User, onFailure: (Exception) -> Unit, onSuccess: () -> Unit) {
-        repository.saveProfile(user)
-        onSuccess()
-    }
-
-    override fun updateNotificationOpt(userId: String, optOut: Boolean, onFailure: (Exception) -> Unit) {
-        repository.updateNotificationOpt(userId, optOut)
-    }
-
-    override fun deleteUser(user: User) {
-        Firebase.firestore.collection("users").document(user.userId).delete()
-    }
-}
-
-class ImageServiceAdapter(
-    private val service: ImageService = ImageService()
-) : ImageUploader {
-
-    override fun upload(imageUri: Uri, folder: String, onDone: (String?) -> Unit) {
-        service.upload(imageUri, folder) { onDone(it) }
-    }
-
-    override fun delete(imageUrl: String, onDone: (Boolean) -> Unit) {
-        service.delete(imageUrl) { onDone(it) }
-    }
-}
-
-class FirebaseAccountService : AccountService {
-    override val currentUserId: String?
-        get() = Firebase.auth.currentUser?.uid
-
-    override fun deleteAccount(onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
-        val account = Firebase.auth.currentUser
-        if (account == null) {
-            onFailure(Exception("Nobody is signed in"))
-            return
-        }
-        account.delete()
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { onFailure(it) }
-    }
-}
-
 /**
  * Controls the actions that a user can perform on their profile
- * Lets users view and edit information, toggle notifications, change their photo,
- * and delete their account
- * Actions that can fail take an onFailure callback, called with a message to show the user.
- *
- * Example:
- * val controller = ProfileController()
- * controller.name = "Mila"
- * controller.saveProfile()
+ * Lets users view and edit information, toggle notifications, change their photo, and delete their account
+ * Actions that can fail return a message to show the user.
  *
  * @param repository: where user information is read and saved
  * @param imageService: uploads and deletes profile photos
- * @param account: the signed-in account
  * @constructor Creates a controller for the signed-in user's profile.
- * With no arguments it uses the real Firebase versions. Tests pass fakes.
  */
 class ProfileController(
-    private val repository: UserDataSource = UserRepositoryAdapter(),
-    private val imageService: ImageUploader = ImageServiceAdapter(),
-    private val account: AccountService = FirebaseAccountService()
+    private val repository: UserRepository = UserRepository(),
+    private val imageService: ImageService = ImageService(),
 ) : ViewModel() {
 
     var currentUser by mutableStateOf<User?>(null)
@@ -143,31 +61,55 @@ class ProfileController(
      * @param onFailure: provides message if loading fails
      */
     fun loadProfile(onFailure: (Exception) -> Unit = {}) {
-        val uid = account.currentUserId ?: return
-        repository.getUser(uid, onFailure = {
-            onFailure(Exception("Unable to load profile", it))
-        }) { user ->
+        val uid = Firebase.auth.currentUser?.uid ?: return
+        repository.getUser(uid) { user ->
             currentUser = user
             fillDetails(user)
         }
     }
 
     /**
-     * Updates the user's name, email, and/or phone number.
+     * Saves the changes to user's name, email, and/or phone number
      * Does nothing if the profile has not loaded.
      *
+     * @param onSuccess: provides message if saving works
      * @param onFailure: provides message if saving fails
      */
-    fun saveProfile(onFailure: (Exception) -> Unit = {}) {
-        val user = currentUser ?: return
-        user.name = name
-        user.email = email
-        user.phoneNumber = phone
-        repository.saveProfile(user, onFailure = {
-            onFailure(Exception("Unable to save profile", it))
-        })
+    fun saveProfile(onSuccess: () -> Unit, onFailure: (Exception) -> Unit = {}) {
+        val user = currentUser
+        if (user == null) {
+            onFailure(Exception("Your profile hasn't loaded yet. Please try again."))
+            return
+        }
+
+        val updatedUser = User(
+            name = name.trim(),
+            email = email.trim(),
+            phoneNumber = phone.trim()
+        )
+
+        if (!updatedUser.validName()) {
+            onFailure(Exception("Please enter a name"))
+            return
+        }
+        if (!updatedUser.validEmail()) {
+            onFailure(Exception("Please enter a valid email"))
+            return
+        }
+        if (!updatedUser.validPhone()) {
+            onFailure(Exception("Please enter a valid 10 digit phone number"))
+            return
+        }
+
+        user.name = updatedUser.name
+        user.email = updatedUser.email
+        user.phoneNumber = updatedUser.phoneNumber
+
+        repository.saveProfile(user)
+        onSuccess()
     }
 
+    /*
     /**
      * Deletes the signed-in user's profile and account.
      * Does nothing if the profile has not loaded or nobody is signed in.
@@ -175,20 +117,21 @@ class ProfileController(
      * @param onFailure: provides message if deletion fails
      */
     fun deleteProfile(onFailure: (Exception) -> Unit = {}) {
-        val user = currentUser ?: return
-        if (account.currentUserId == null) return
+        val user = currentUser
+        if (user == null) {
+            onFailure(Exception("There was an error"))
+            return
+        }
 
-        account.deleteAccount(
-            onSuccess = {
-                repository.deleteUser(user)
-                currentUser = null
-                deleteStatus = true
-            },
-            onFailure = {
-                onFailure(Exception("Unable to delete account", it))
-            }
-        )
+        repository.deleteUser(user)
+        currentUser = null
+        name = ""
+        email = ""
+        phone = ""
+        photoUrl = ""
+        deleteStatus = true
     }
+     */
 
     /**
      * Toggles notifications on and off for the user.
@@ -198,20 +141,26 @@ class ProfileController(
      * @param onFailure: provides a message if switching fails
      */
     fun setNotifications(on: Boolean, onFailure: (Exception) -> Unit = {}) {
-        val user = currentUser ?: return
+        val user = currentUser
+        if (user == null) {
+            onFailure(Exception("There was an error"))
+            return
+        }
         notificationsStatus = on
         user.notificationsOptedOut = !on
-        repository.updateNotificationOpt(
-            user.userId,
-            !on,
-            onFailure = {
-                notificationsStatus = !on
-                user.notificationsOptedOut = on
-                onFailure(Exception("Unable to update notifications", it))
-            }
-        )
+        repository.updateNotificationOpt(user.userId, !on)
     }
 
+    /**
+     * Ensures that the personal information fields are cleared upon account deletion
+     */
+    fun clearProfileFields() {
+        name = ""
+        email = ""
+        phone = ""
+        photoUrl = ""
+        deleteStatus = true
+    }
     /**
      * Uploads a new profile photo, saves its URL and deletes the old photo.
      * Keeps old photo if update fails
@@ -221,30 +170,24 @@ class ProfileController(
      * @param onFailure: provides a message if upload fails
      */
     fun updateProfilePhoto(uri: Uri, onFailure: (Exception) -> Unit = {}) {
-        val user = currentUser ?: return
+        val user = currentUser
+        if (user == null) {
+            onFailure(Exception("There was an error"))
+            return
+        }
         val oldUrl = user.profileImageUrl
         uploadPhoto = true
-        imageService.upload(uri, "profilePicture/${user.userId}") { url ->
+        imageService.upload(uri, "campsites") { url ->
+            uploadPhoto = false
             if (url == null) {
-                uploadPhoto = false
                 onFailure(Exception("Unable to upload photo"))
             } else {
                 user.profileImageUrl = url
-                repository.saveProfile(
-                    user,
-                    onFailure = {
-                        uploadPhoto = false
-                        user.profileImageUrl = oldUrl
-                        onFailure(Exception("Unable to save photo"))
-                    },
-                    onSuccess = {
-                        uploadPhoto = false
-                        photoUrl = url
-                        if (oldUrl.isNotBlank()) {
-                            imageService.delete(oldUrl)
-                        }
-                    }
-                )
+                photoUrl = url
+                repository.saveProfile(user)
+                if (oldUrl.isNotBlank()) {
+                    imageService.delete(oldUrl)
+                }
             }
         }
     }

@@ -1,89 +1,74 @@
 package com.example.summit_climb
 
-import android.graphics.Bitmap
-import android.graphics.Color
 import com.example.summit_climb.service.QRCodeService
 import com.google.zxing.BinaryBitmap
-import com.google.zxing.RGBLuminanceSource
+import com.google.zxing.PlanarYUVLuminanceSource
 import com.google.zxing.common.HybridBinarizer
 import com.google.zxing.qrcode.QRCodeReader
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
+import junit.framework.TestCase.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.google.zxing.common.BitMatrix
 
-class QRCodeGenerationTest {
-
+class QRCodeServiceTest {
+    private val dark = 0
+    private val light = 255
     private val service = QRCodeService()
 
-    private fun decode(bitmap: Bitmap): String {
-        val pixels = IntArray(bitmap.width * bitmap.height)
-        bitmap.getPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
-        val source = RGBLuminanceSource(bitmap.width, bitmap.height, pixels)
+    // The following function is from Claude, Anthropic,
+    // "How do I write a decoding function to test a qr code scanner?", 2026-11-06
+    private fun decode(matrix: BitMatrix): String {
+        val width = matrix.width
+        val height = matrix.height
+        val luminance = ByteArray(width * height)
+
+        for (y in 0 until height) {
+            for (x in 0 until width) {
+                if (matrix[x, y]) {
+                    luminance[y * width + x] = dark.toByte()
+                } else {
+                    luminance[y * width + x] = light.toByte()
+                }
+            }
+        }
+        val source = PlanarYUVLuminanceSource(luminance, width, height, 0, 0, width, height, false)
         return QRCodeReader().decode(BinaryBitmap(HybridBinarizer(source))).text
     }
 
     @Test
     fun returnsNullForBlankId() {
-        assertNull(service.generateQRCode( ""))
-        assertNull(service.generateQRCode(" "))
+        assertNull(service.generateQRMatrix(""))
+        assertNull(service.generateQRMatrix(" "))
     }
 
     @Test
-    fun returnsBitmapForValidId() {
-        assertNotNull(service.generateQRCode("abc123"))
+    fun returnsMatrixWithCorrectSize() {
+        val m = service.generateQRMatrix("123", size = 256)!!
+        assertEquals(256, m.width)
+        assertEquals(256, m.height)
     }
 
     @Test
-    fun defaultSizeIs512Square() {
-        val bitmap = service.generateQRCode("abc123")!!
-        assertEquals(512, bitmap.width)
-        assertEquals(512, bitmap.height)
+    fun differentIDsGenerateDifferentCodes() {
+        assertNotEquals(
+            service.generateQRMatrix("campA", 128),
+            service.generateQRMatrix("campB", 128)
+        )
     }
 
     @Test
-    fun customSizeIsRespected() {
-        val bitmap = service.generateQRCode("abc123", size = 256)!!
-        assertEquals(256, bitmap.width)
-        assertEquals(256, bitmap.height)
+    fun identicalIDsGenerateIdenticalCodes() {
+        assertEquals(
+            service.generateQRMatrix("campA", 128),
+            service.generateQRMatrix("campA", 128)
+        )
     }
 
     @Test
-    fun usesOnlyBlackAndWhitePixels() {
-        val bitmap = service.generateQRCode("abc123", size = 128)!!
-        val pixels = IntArray(128 * 128)
-        bitmap.getPixels(pixels, 0, 128, 0, 0, 128, 128)
-
-        assertTrue(pixels.all { it == Color.BLACK || it == Color.WHITE })
-        assertTrue("no black pixels", pixels.any { it == Color.BLACK })
-        assertTrue("no white pixels", pixels.any { it == Color.WHITE })
-    }
-
-
-
-    @Test
-    fun differentIdsMakeDifferentImages() {
-        val a = service.generateQRCode("campA", size = 128)!!
-        val b = service.generateQRCode("campB", size = 128)!!
-        assertFalse(a.sameAs(b))
-    }
-
-    @Test
-    fun sameIdMakesIdenticalImages() {
-        val a = service.generateQRCode("campA", size = 128)!!
-        val b = service.generateQRCode("campA", size = 128)!!
-        assertTrue(a.sameAs(b))
-    }
-
-    @Test
-    fun scanningTheGeneratedCodeGivesBackTheCampsiteId() {
-        val id = "Xk3pQ9mZaB7vL2nRtY8w"
-        val bitmap = service.generateQRCode("")!!
-
-        val text = decode(bitmap)
-
+    fun scanningCodeReturnsCampsiteID() {
+        val id = "abc123"
+        val text = decode(service.generateQRMatrix(id)!!)
         assertEquals("summitclimb://campsite/$id", text)
         assertEquals(id, service.campsiteIDFromQRText(text))
     }

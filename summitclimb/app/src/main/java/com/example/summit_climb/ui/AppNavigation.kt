@@ -71,6 +71,8 @@ import com.example.summit_climb.ui.entrant.MyReservationUiItem
 import com.example.summit_climb.ui.entrant.MyReservationsContent
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
+import com.example.summit_climb.ui.entrant.PoliciesScreen
+import com.example.summit_climb.ui.entrant.PolicyDetailsScreen
 
 val campsiteIdArgs = listOf(
     navArgument(Routes.CAMPSITE_ID_ARG) { type = NavType.StringType }
@@ -120,9 +122,6 @@ fun AppNavigation(
         ) {
 
             composable("homescreen") { HomeScreen(navController) }
-
-
-            composable(Routes.MANAGE_QR_CODE) { ManageQRCodeScreen(navController) }
 
             // test
             composable(Routes.MY_RESERVATIONS) {
@@ -197,6 +196,15 @@ fun AppNavigation(
 
             // test
             composable(Routes.PROFILE) { ProfileScreen(navController) }
+            composable(
+                route = Routes.MANAGE_QR_CODE,
+                arguments = campsiteIdArgs
+            ) { entry ->
+                ManageQRCodeScreen(
+                    navController = navController,
+                    campsiteID = entry.campsiteId()
+                )
+            }
 
             // ----- Entrant screens -------  //
             composable(Routes.NOTIFICATIONS) {
@@ -206,7 +214,13 @@ fun AppNavigation(
                 )
             }
             composable(Routes.QR_SCANNER) { ComingSoonScreen("QR Scanner") }
-            composable(Routes.POLICIES) { ComingSoonScreen("Policies & guidelines") }
+            composable(Routes.POLICIES) { PoliciesScreen(navController) }
+            composable("policy_details/{code}") { entry ->
+                PolicyDetailsScreen(
+                    policyCode = entry.arguments?.getString("code").orEmpty(),
+                    navController = navController
+                )
+            }
 
             // test
             composable(Routes.CAMPSITE_LIST) {
