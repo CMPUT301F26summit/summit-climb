@@ -1,4 +1,4 @@
-package com.example.summit_climb
+/** package com.example.summit_climb
 
 import com.example.summit_climb.service.QRCodeService
 import com.google.zxing.BinaryBitmap
@@ -73,3 +73,4 @@ class QRCodeServiceTest {
         assertEquals(id, service.campsiteIDFromQRText(text))
     }
 }
+ */

@@ -44,8 +44,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.summit_climb.data.NotificationRepository
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
+import com.example.summit_climb.ui.Routes
 import com.example.summit_climb.ui.ScreensBackground
 
 
@@ -64,7 +69,8 @@ import com.example.summit_climb.ui.ScreensBackground
 @Composable
 fun NotificationsScreen(
     controller: NotificationController,
-    navController: NavController
+    navController: NavController,
+    notificationsEnabled: Boolean
 ) {
     Box(
         modifier = Modifier.fillMaxSize()
@@ -128,6 +134,62 @@ fun NotificationsScreen(
                         .background(white, RoundedCornerShape(12.dp))
                         .padding(horizontal = 12.dp, vertical = 8.dp)
                 )
+            }
+
+            if (!notificationsEnabled) {
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.White
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                text = "Notifications Disabled",
+                                color = charcoal,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Text(
+                                text = "You have opted out of notifications. You will not receive new notifications.",
+                                color = charcoal,
+                                fontSize = 14.sp,
+                                textAlign = TextAlign.Center
+                            )
+
+                            Button(
+                                onClick = {
+                                    navController.navigate(Routes.PROFILE)
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(8.dp),
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = lightBlue
+                                )
+                            ) {
+                                Text(
+                                    text = "Turn notifications back on",
+                                    color = black,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
             }
 
             // the notifications
@@ -334,7 +396,8 @@ private fun NotificationsScreenPreview() {
 
     NotificationsScreen(
         controller = previewController,
-        navController = rememberNavController()
+        navController = rememberNavController(),
+        notificationsEnabled = false
     )
 }
 
