@@ -52,6 +52,12 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import com.example.summit_climb.ui.Routes
 import com.example.summit_climb.ui.ScreensBackground
+import com.example.summit_climb.ui.StatusBadge
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.ConfirmationNumber
+import androidx.compose.material.icons.filled.EventAvailable
+import androidx.compose.material.icons.filled.ChatBubbleOutline
+import com.example.summit_climb.ui.StatusBadge
 
 
 /**
@@ -111,29 +117,65 @@ fun NotificationsScreen(
 
             // heading and unread count
             item {
-                Text(
-                    text = "Notifications",
-                    fontFamily = FontFamily.Serif,
-                    fontSize = 35.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black,
-                    modifier = Modifier
-                        .background(white, RoundedCornerShape(12.dp))
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
-                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = white
+                    ),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 2.dp
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Text(
+                                text = "Notifications",
+                                fontSize = 35.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = FontFamily.Serif,
+                                color = black
+                            )
+
+                            Text(
+                                text = "Stay Updated on Your Activity",
+                                fontSize = 12.sp,
+                                color = charcoal.copy(alpha = 0.65f)
+                            )
+                        }
+
+                        StatusBadge(
+                            text = "${controller.unreadCount} unread",
+                            color = lightBlue
+                        )
+                    }
+                }
             }
 
-            item {
-                Text(
-                    text = "${controller.unreadCount} unread",
-                    fontFamily = FontFamily.Serif,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black,
-                    modifier = Modifier
-                        .background(white, RoundedCornerShape(12.dp))
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
-                )
+            item{
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Text(
+                        text = "Mark all as read",
+                        color = charcoal,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.clickable {
+                            controller.notifications
+                                .filter { !it.read }
+                                .forEach { controller.markRead(it.id) }
+                        }
+                    )
+                }
             }
 
             if (!notificationsEnabled) {
@@ -243,65 +285,84 @@ private fun NotificationCard(
         NotificationType.MESSAGE -> "New Message"
 
     }
+    // Notifications received within the last 24 hours are labelled NEW.
+    val isNew = System.currentTimeMillis() - notification.timestamp <
+            24 * 60 * 60 * 1000
+
+    val status = when {
+        notification.read -> "READ"
+        isNew -> "NEW"
+        else -> "UNREAD"
+    }
+
+    val icon = when (notification.type) {
+        NotificationType.LOTTERY_WIN -> Icons.Default.EmojiEvents
+        NotificationType.LOTTERY_LOSS -> Icons.Default.ConfirmationNumber
+        NotificationType.RESERVATION_UPDATE -> Icons.Default.EventAvailable
+        NotificationType.MESSAGE -> Icons.Default.ChatBubbleOutline
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (notification.read) {
-                greyBlue
-            } else {
-                lightBlue
-            }
+            containerColor = if (notification.read) greyBlue else lightBlue
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 1.dp
+            defaultElevation = 2.dp
         )
     ) {
         Column(
-            modifier = Modifier.padding(18.dp)
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = header,
-                    color = black,
-                    style = MaterialTheme.typography.titleMedium
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = charcoal
                 )
 
-                Spacer(modifier = Modifier.weight(1f))
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 10.dp)
+                ) {
+                    Text(
+                        text = header,
+                        color = black,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    Text(
+                        text = DateUtils.getRelativeTimeSpanString(
+                            notification.timestamp,
+                            System.currentTimeMillis(),
+                            DateUtils.MINUTE_IN_MILLIS
+                        ).toString(),
+                        color = charcoal,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
 
                 if (!notification.read) {
-                    Text(
-                        text = "NEW",
-                        color = charcoal,
-                        style = MaterialTheme.typography.labelMedium
+                    StatusBadge(
+                        text = status,
+                        color = charcoal
                     )
                 }
             }
 
-            // smaller notification message
             Text(
                 text = notification.text,
                 color = charcoal,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 10.dp)
-            )
-
-            // notification timestamp
-            Text(
-                text = DateUtils.getRelativeTimeSpanString(
-                    notification.timestamp,
-                    System.currentTimeMillis(),
-                    DateUtils.MINUTE_IN_MILLIS
-                ).toString(),
-                color = charcoal,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(top = 12.dp)
+                style = MaterialTheme.typography.bodyMedium
             )
         }
     }
@@ -397,7 +458,7 @@ private fun NotificationsScreenPreview() {
     NotificationsScreen(
         controller = previewController,
         navController = rememberNavController(),
-        notificationsEnabled = false
+        notificationsEnabled = true
     )
 }
 
