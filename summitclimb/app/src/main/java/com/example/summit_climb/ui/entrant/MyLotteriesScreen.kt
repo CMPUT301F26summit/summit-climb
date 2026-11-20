@@ -1,5 +1,6 @@
 package com.example.summit_climb.ui.entrant
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,6 +36,9 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import com.example.summit_climb.ui.ScreensBackground
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.example.summit_climb.R
 
 import com.example.summit_climb.ui.charcoal
 import com.example.summit_climb.ui.lightGreen
@@ -42,6 +46,7 @@ import com.example.summit_climb.ui.lightRed
 import com.example.summit_climb.ui.lightOrange
 import com.example.summit_climb.ui.greyBlue
 import com.example.summit_climb.ui.lightBlue
+import com.google.firebase.annotations.concurrent.Background
 
 /**
  * Purpose: the entrant's "My Lotteries" tab.
@@ -101,23 +106,33 @@ fun MyLotteriesContent(
         }
     }
 
-    Box(Modifier.fillMaxSize()) {
-        ScreensBackground()
+    Box(Modifier
+        .fillMaxSize()
+        .background(Color(0xD8D3E8F3))
+    ) {
+        Image(
+            painter = painterResource(R.drawable.mountain_header),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(150.dp) )
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
+
+            Spacer(modifier = Modifier.height(55.dp))
             //title
             Text(
                 text = MyLotteriesText.TITLE,
-                fontSize = 32.sp,
+                fontSize    = 30.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily.Serif,
-                color = charcoal,
+                color = Color(0xFF2C4352),
                 modifier = Modifier
-                    .background(Color.White, RoundedCornerShape(12.dp))
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
@@ -136,7 +151,7 @@ fun MyLotteriesContent(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(5.dp))
 
             if (lotteries.isEmpty()) {
                 Text(text = MyLotteriesText.NONE, color = charcoal, fontSize = 14.sp)
@@ -192,7 +207,10 @@ fun LotteryCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White, RoundedCornerShape(20.dp))
+            .background(
+                Color.White,
+                RoundedCornerShape(20.dp)
+            )
             .padding(16.dp)
     ) {
         //name on the left, status badge on the right
@@ -204,14 +222,15 @@ fun LotteryCard(
                 text = lottery.campsiteName,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily.Serif,
-                color = charcoal
+                fontFamily = FontFamily.SansSerif,
+                color = Color(0xFF2C4352)
             )
             Text(
                 text = lottery.status,
                 color = Color.White,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily.SansSerif,
                 modifier = Modifier
                     .background(statusColor(lottery.status), RoundedCornerShape(50))
                     .padding(horizontal = 12.dp, vertical = 4.dp)
@@ -226,10 +245,12 @@ fun LotteryCard(
             HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp), color = lightBlue)
             Button(
                 onClick = onLeave,
-                modifier = Modifier.testTag(MyLotteriesTags.leave(lottery.lotteryId)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(MyLotteriesTags.leave(lottery.lotteryId)),
                 colors = ButtonDefaults.buttonColors(containerColor = greyBlue)
             ) {
-                Text(text = MyLotteriesText.LEAVE, color = charcoal)
+                Text(text = MyLotteriesText.LEAVE, color = Color(0xFF2C4352))
             }
         }
 
@@ -243,7 +264,7 @@ fun LotteryCard(
                     .testTag(MyLotteriesTags.confirm(lottery.lotteryId)),
                 colors = ButtonDefaults.buttonColors(containerColor = greyBlue)
             ) {
-                Text(text = MyLotteriesText.CONFIRM_RESERVATION, color = charcoal)
+                Text(text = MyLotteriesText.CONFIRM_RESERVATION, color = Color(0xFF2C4352))
             }
         }
     }

@@ -57,6 +57,12 @@ import com.example.summit_climb.controller.CampsiteSearchController
 import com.example.summit_climb.ui.Routes
 import com.example.summit_climb.ui.charcoal
 import com.example.summit_climb.ui.greyBlue
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.example.summit_climb.R
 
 /**
  * The entrant's campsite list screen (Home).
@@ -146,14 +152,30 @@ fun CampsiteListContent(
         onSearchClick()
     }
 
-    Box(Modifier.fillMaxSize()) {
-        ScreensBackground()
+    Box(Modifier
+            .fillMaxSize()
+            .background(Color(0xD8D3E8F3))
+        ) {
+        Image(
+            painter = painterResource(R.drawable.mountain_header),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(150.dp) )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 35.dp,
+                    bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            Spacer(modifier = Modifier.height(20.dp))
+
             CampsiteListHeader(onNotificationsClick = onNotificationsClick)
 
             SearchRow(
@@ -189,21 +211,37 @@ fun CampsiteListContent(
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                campsite.name,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontFamily = FontFamily.Serif,
+                                text = campsite.name,
+                                fontSize = 19.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.Black
+                                fontFamily = FontFamily.SansSerif,
+                                color = Color(0xFF245C86)
                             )
-                            Text(
-                                campsite.location,
-                                fontSize = 12.sp)
-                            Text(
-                                "Up to ${campsite.maxOccupancy} guests",
-                                fontSize = 12.sp)
-                            Text(
-                                formatCampsiteRating(campsite),
-                                fontSize = 12.sp)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        campsite.location,
+                                        color = Color(0xFF597A94),
+                                        fontSize = 13.sp
+                                    )
+
+                                    Text(
+                                        "Up to ${campsite.maxOccupancy} guests",
+                                        fontSize = 12.sp
+                                    )
+                                }
+
+                                Text(
+                                    formatCampsiteRating(campsite),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color(0xFF245C86)
+                                )
+                            }
                         }
                     }
                 }
@@ -225,12 +263,11 @@ fun CampsiteListHeader(onNotificationsClick: () -> Unit) {
         Text(
             text = CampsiteListText.TITLE,
             fontFamily = FontFamily.Serif,
-            fontSize = 22.sp,
+            fontSize = 30.sp,
             style = MaterialTheme.typography.headlineSmall,
-            color = Color.Black,
+            color = Color(0xFF1C3348),
             fontWeight = FontWeight.Bold,
             modifier = Modifier.weight(1f)
-                .background(Color.White, RoundedCornerShape(12.dp))
                 .padding(12.dp)
         )
         IconButton(

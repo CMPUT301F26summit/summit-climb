@@ -16,10 +16,8 @@ class ReservationController(
         repository.getBookedDates(campsiteId, onSuccess, onFailure)
     }
 
-    /** Checks if a campsite is booked for a given date range
-     * Makes sure dates don't overlap
-     */
-
+    // Companion object to make the function static
+    // and accessible without creating an instance of the class
     companion object{
         fun datesOverlap(
             start1: String,
@@ -27,7 +25,8 @@ class ReservationController(
             start2: String,
             end2: String
         ): Boolean {
-            return start1 < end2 && start2 < end1
+            return start1 < end2 && start2 < end1 // If start1 is before end2 and start2 is before end1,
+                                                 // they overlap
         }
     }
 
@@ -58,6 +57,6 @@ class ReservationController(
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
     ) {
-        repository.cancelReservation(reservationId, onSuccess, onFailure)
+        repository.cancelReservation(reservationId, onSuccess, onFailure) // Calls the repository's cancelReservation function
     }
 }

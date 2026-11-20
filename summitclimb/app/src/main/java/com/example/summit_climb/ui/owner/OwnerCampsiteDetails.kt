@@ -98,6 +98,8 @@ fun OwnerCampsiteDetails(
         }
     }
 
+    Spacer(modifier = Modifier.height(5.dp))
+
     Scaffold(modifier = modifier) { padding ->
         Column(Modifier
             .padding(padding)

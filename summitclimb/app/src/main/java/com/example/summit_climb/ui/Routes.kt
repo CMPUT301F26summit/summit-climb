@@ -6,6 +6,7 @@ package com.example.summit_climb.ui
  */
 object Routes {
     const val HOME_SCREEN = "homeScreen"
+
     /** Entrant home: the campsite list.*/
     const val CAMPSITE_LIST = "entrantCampsiteList"
 
@@ -66,6 +67,9 @@ object Routes {
 
     /** Owner's active reservations (opened from the manage menu).*/
     const val OWNER_ACTIVE_RESERVATIONS = "ownerActiveReserve/{$CAMPSITE_ID_ARG}"
+
+    /** Owner's details for one reservation. */
+    const val OWNER_RESERVATION_DETAILS = "ownerReservationDetails/{reservationId}"
 
     /** Notifications the owner has sent (opened from the manage menu).*/
     const val OWNER_SENT_NOTIFICATIONS = "ownerSentNotifications"
@@ -136,7 +140,17 @@ object Routes {
         )
     }
 
+    fun ownerReservationDetails(reservationId: String): String {
+        return OWNER_RESERVATION_DETAILS.replace(
+            "{reservationId}",
+            reservationId
+        )
+    }
+
     fun manageQRCode(campsiteId: String): String {
-        return MANAGE_QR_CODE.replace("{$CAMPSITE_ID_ARG}", campsiteId)
+        return MANAGE_QR_CODE.replace(
+            "{$CAMPSITE_ID_ARG}",
+            campsiteId
+        )
     }
 }
