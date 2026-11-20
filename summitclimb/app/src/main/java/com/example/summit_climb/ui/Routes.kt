@@ -7,6 +7,8 @@ package com.example.summit_climb.ui
 object Routes {
     const val HOME_SCREEN = "homeScreen"
 
+    const val SIGNUP_PAGE = "signUpPage"
+
     /** Entrant home: the campsite list.*/
     const val CAMPSITE_LIST = "entrantCampsiteList"
 
