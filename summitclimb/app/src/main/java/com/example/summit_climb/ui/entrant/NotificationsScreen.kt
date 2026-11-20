@@ -48,11 +48,15 @@ import com.example.summit_climb.data.NotificationRepository
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import com.example.summit_climb.R
+import androidx.compose.ui.text.style.TextAlign
+import com.example.summit_climb.ui.Routes
 import com.example.summit_climb.ui.ScreensBackground
 
 
@@ -71,7 +75,8 @@ import com.example.summit_climb.ui.ScreensBackground
 @Composable
 fun NotificationsScreen(
     controller: NotificationController,
-    navController: NavController
+    navController: NavController,
+    notificationsEnabled: Boolean
 ) {
     Column(
         modifier = Modifier
@@ -130,16 +135,71 @@ fun NotificationsScreen(
                 )
             }
         }
-
-        // the whole screen is one list, so everything scrolls together
+        // The header stays fixed while notification cards scroll
         LazyColumn(
             modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
+                .weight(1f)
+                .fillMaxWidth()
                 .navigationBarsPadding(),
-            contentPadding = PaddingValues(start = 10.dp, end = 20.dp, bottom = 24.dp),
+            contentPadding = PaddingValues(start = 10.dp, end = 20.dp, top = 16.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            if (!notificationsEnabled) {
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.White
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                text = "Notifications Disabled",
+                                color = charcoal,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Text(
+                                text = "You have opted out of notifications. You will not receive new notifications.",
+                                color = charcoal,
+                                fontSize = 14.sp,
+                                textAlign = TextAlign.Center
+                            )
+
+                            Button(
+                                onClick = {
+                                    navController.navigate(Routes.PROFILE)
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(8.dp),
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = lightBlue
+                                )
+                            ) {
+                                Text(
+                                    text = "Turn notifications back on",
+                                    color = black,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             // the notifications
             if (controller.notifications.isEmpty()) {
                 item {
@@ -346,7 +406,8 @@ private fun NotificationsScreenPreview() {
 
     NotificationsScreen(
         controller = previewController,
-        navController = rememberNavController()
+        navController = rememberNavController(),
+        notificationsEnabled = false
     )
 }
 

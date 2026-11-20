@@ -18,12 +18,11 @@ import com.google.firebase.firestore.FirebaseFirestore
  * Known Issues:
  * - The initial snapshot listener loads all notifications into the local list.
  * - The initial snapshot listener is not removed automatically.
- * - User notification preferences are not checked yet.
  *
  * @param db Firestore database used to access notification documents.
  */
 class FirestoreNotificationRepository(
-    db: FirebaseFirestore
+    private val db: FirebaseFirestore
 ) : NotificationRepository {
 
     /** Reference to the notifications collection in Firestore. */
@@ -76,8 +75,24 @@ class FirestoreNotificationRepository(
      * @param notification The notification to save.
      */
     override fun send(notification: Notification) {
-        val doc = notificationsRef.document()
-        doc.set(notification.copy(id = doc.id))
+        db.collection("users")
+            .document(notification.recipientId)
+            .get()
+            .addOnSuccessListener { userDocument ->
+
+                val optedOut = userDocument.getBoolean("notificationsOptedOut") ?: false
+
+                if (optedOut) {
+                    Log.d("NotificationRepo", "Notification skipped: recipient opted out")
+                    return@addOnSuccessListener
+                }
+
+                val doc = notificationsRef.document()
+                doc.set(notification.copy(id = doc.id))
+            }
+            .addOnFailureListener { error ->
+                Log.e("NotificationRepo", "Could not check notification preferences", error)
+            }
     }
 
     /**

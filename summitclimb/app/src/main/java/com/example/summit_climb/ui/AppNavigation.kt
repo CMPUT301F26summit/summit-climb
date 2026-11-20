@@ -49,6 +49,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.summit_climb.controller.NotificationController
 import com.example.summit_climb.controller.OwnerLotteryController
 import com.example.summit_climb.ui.entrant.MyLotteriesContent
@@ -59,6 +60,7 @@ import com.example.summit_climb.ui.entrant.NotificationsScreen
 import com.example.summit_climb.ui.owner.WaitlistScreen
 import com.example.summit_climb.ui.owner.OwnerReservationsFromFirestore
 import com.example.summit_climb.controller.OwnerReservationController
+import com.example.summit_climb.controller.ProfileController
 import com.example.summit_climb.model.LotteryStatus
 import com.example.summit_climb.ui.owner.Entrant
 import com.google.firebase.firestore.FirebaseFirestore
@@ -73,6 +75,7 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import com.example.summit_climb.ui.entrant.PoliciesScreen
 import com.example.summit_climb.ui.entrant.PolicyDetailsScreen
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 val campsiteIdArgs = listOf(
     navArgument(Routes.CAMPSITE_ID_ARG) { type = NavType.StringType }
@@ -102,6 +105,7 @@ fun AppNavigation(
     ownerLotteryController: OwnerLotteryController
 ){
     val navController = rememberNavController()
+    val profileController: ProfileController = viewModel()
 
 
     Scaffold(
@@ -122,9 +126,6 @@ fun AppNavigation(
         ) {
 
             composable("homescreen") { HomeScreen(navController) }
-
-
-            composable(Routes.MANAGE_QR_CODE) { ManageQRCodeScreen(navController) }
 
             // test
             composable(Routes.MY_RESERVATIONS) {
@@ -198,20 +199,37 @@ fun AppNavigation(
             }
 
             // test
-            composable(Routes.PROFILE) { ProfileScreen(navController) }
+            composable(Routes.PROFILE) {
+                ProfileScreen(
+                    navController = navController,
+                    controller = profileController
+                )
+            }
+
+            composable(
+                route = Routes.MANAGE_QR_CODE,
+                arguments = campsiteIdArgs
+            ) { entry ->
+                ManageQRCodeScreen(
+                    navController = navController,
+                    campsiteID = entry.campsiteId()
+                )
+            }
 
             // ----- Entrant screens -------  //
             composable(Routes.NOTIFICATIONS) {
                 NotificationsScreen(
                     controller = notificationController,
-                    navController = navController
+                    navController = navController,
+                    notificationsEnabled = profileController.notificationsStatus
                 )
             }
+
             composable(Routes.QR_SCANNER) { ComingSoonScreen("QR Scanner") }
             composable(Routes.POLICIES) { PoliciesScreen(navController) }
-            composable("policy_details/{code}") { backStackEntry ->
+            composable("policy_details/{code}") { entry ->
                 PolicyDetailsScreen(
-                    policyCode = backStackEntry.arguments?.getString("code").orEmpty(),
+                    policyCode = entry.arguments?.getString("code").orEmpty(),
                     navController = navController
                 )
             }

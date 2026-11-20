@@ -1,12 +1,9 @@
 package com.example.summit_climb.ui.owner
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
+
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,13 +11,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -35,59 +29,72 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.summit_climb.service.QRCodeService
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.LaunchedEffect
 import com.example.summit_climb.ui.ScreensBackground
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
+import com.example.summit_climb.service.saveQRCodeToGallery
 
 import com.example.summit_climb.ui.charcoal
+import com.example.summit_climb.ui.entrant.BackRow
 import com.example.summit_climb.ui.greyBlue
-import com.example.summit_climb.ui.lightBlue
+
+
+/**
+ * Purpose: displays the unique QR code for each campsite
+ * Allows users to save QR code to device gallery
+ * @param navController: app's navigation controller, used to open other screens
+ * @param campsiteID: the selected campsite's ID
+ */
 
 @Composable
-fun ManageQRCodeScreen (
+fun ManageQRCodeScreen(
     navController: NavController,
-    campsiteName: String = "Campsite",
-    campsiteID: String = "sample-id"
+    campsiteID: String = ""
 ) {
+    val context = LocalContext.current
     val qrService = remember { QRCodeService() }
     val qrCode = remember(campsiteID) {
         qrService.generateQRCode(campsiteID)
     }
-    val backButton = { navController.popBackStack(); Unit }
+    var message by remember { mutableStateOf("") }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(message) {
+        if (message.isNotBlank()) {
+            snackbarHostState.showSnackbar(message)
+            message = ""
+        }
+    }
 
     Box(modifier = Modifier.fillMaxWidth()) {
         ScreensBackground()
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(start = 10.dp, top = 10.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color.White)
+                .padding(horizontal = 4.dp)
+        ) {
+            BackRow(onBackClick = { navController.popBackStack() })
+        }
+
+        Spacer(Modifier.height(8.dp))
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp, vertical = 16.dp)
+                .padding(start = 24.dp, end = 24.dp, top = 58.dp, bottom = 36.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Row(
-                Modifier
-                    .clickable(onClick = backButton)
-                    .background(Color.White, RoundedCornerShape(20.dp))
-                    .padding(horizontal = 6.dp, vertical = 1.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back Button",
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .size(15.dp),
-                    tint = charcoal
-                )
-
-                Text(
-                    text = "Back",
-                    color = charcoal,
-                    fontSize = 15.sp,
-                    lineHeight = 22.sp,
-                    modifier = Modifier
-                        .padding(horizontal = 8.dp)
-                )
-            }
-
-            Spacer(Modifier.height(8.dp))
 
             Text(
                 text = "QR Code",
@@ -106,17 +113,22 @@ fun ManageQRCodeScreen (
             Card(
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth(0.75f)
+                    .align(Alignment.CenterHorizontally)
             ) {
                 Column(
-                    modifier = Modifier.fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 36.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+
+                    // displays the QR code
                     if (qrCode != null) {
                         Image(
                             bitmap = qrCode.asImageBitmap(),
-                            contentDescription = "QR code for $campsiteName",
+                            contentDescription = "QR code",
                             modifier = Modifier.size(200.dp)
                         )
                     } else {
@@ -126,17 +138,7 @@ fun ManageQRCodeScreen (
                         )
                     }
 
-                    Spacer(Modifier.height(16.dp))
-
-                    Text(
-                        text = campsiteName,
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        color = Color.Black
-                    )
-
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(6.dp))
 
                     Text(
                         text = "Campsite ID: $campsiteID",
@@ -150,56 +152,53 @@ fun ManageQRCodeScreen (
 
             Text(
                 text = "Your guests can scan this QR Code to see campsite details.",
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+                color = charcoal,
+                textAlign = TextAlign.Center,
                 fontFamily = FontFamily.Serif,
-                fontWeight = FontWeight.Bold,
-                fontSize = 10.sp,
-                color = Color.Black,
                 modifier = Modifier
-                    .background(Color.White, RoundedCornerShape(12.dp))
-                    .padding(horizontal = 11.dp, vertical = 4.dp)
+                    .fillMaxWidth(0.75f)
+                    .background(Color.White, RoundedCornerShape(16.dp))
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
                     .align(Alignment.CenterHorizontally)
             )
+
             Spacer(Modifier.height(25.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            // save QR code button
+            Button(
+                onClick = {
+                    if (qrCode == null) {
+                        message = "QR Code is not available"
+                    } else {
+                        saveQRCodeToGallery(context, qrCode, "QR_$campsiteID")
+                        message = "QR Code saved to gallery"
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth(0.6f)
+                    .height(48.dp),
+                shape = RoundedCornerShape(28.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = greyBlue
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
             ) {
-                Button(
-                    onClick = { /* WIP: save image function */ },
-                    modifier = Modifier.weight(1f)
-                        .height(56.dp),
-                    shape = RoundedCornerShape(28.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = greyBlue
-                    )
-                ) {
-                    Text(
-                        text = "Save",
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 18.sp,
-                        color = charcoal
-                    )
-                }
-
-                Button(
-                    onClick = { /* WIP: share image function */ },
-                    modifier = Modifier.weight(1f)
-                        .height(56.dp),
-                    shape = RoundedCornerShape(28.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = lightBlue
-                    )
-                ) {
-                    Text(
-                        text = "Share",
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 20.sp,
-                        color = Color.White
-                    )
-                }
+                Text(
+                    text = "Save",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 24.sp,
+                    color = charcoal
+                )
             }
         }
 
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(16.dp)
+        )
     }
 }

@@ -53,6 +53,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
+import android.net.Uri
 
 import com.example.summit_climb.ui.lightRed
 import com.example.summit_climb.ui.lightBlue
@@ -75,11 +76,11 @@ fun ProfileScreen(
     navController: NavController,
     controller: ProfileController = viewModel()
 ) {
-
     var error by remember { mutableStateOf<String?>(null) }
     var message by remember { mutableStateOf<String?>(null) }
     var showDeletePopup by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
 
     /**
      * The following code for profile photo selection contains code
@@ -88,8 +89,7 @@ fun ProfileScreen(
     val photoSelector =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             if (uri != null) {
-                error = null
-                controller.updateProfilePhoto(uri, onFailure = { error = it.message })
+                imageUri = uri
             }
         }
 
@@ -156,9 +156,9 @@ fun ProfileScreen(
                         ),
                     contentAlignment = Alignment.Center
                 ) { // displays Modifiable Profile Image
-                    if (controller.photoUrl.isNotBlank()) {
+                    if (imageUri != null) {
                         AsyncImage(
-                            model = controller.photoUrl,
+                            model = imageUri,
                             contentDescription = "Profile Photo",
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxSize()
@@ -379,6 +379,8 @@ fun ProfileScreen(
                         TextButton(onClick = {
                             showDeletePopup = false
                             error = null
+                            controller.clearProfileFields()
+                            imageUri = null
                             // controller.deleteProfile(onFailure = { error = it.message })
                         }) {
                             Text("Delete", color = lightRed)
