@@ -290,7 +290,26 @@ fun AppNavigation(
                 if (campsite == null) {
                     Text("Loading...", modifier = Modifier.padding(16.dp))
                 } else {
-                    OwnerEditCampsite(navController = navController, campsite = campsite)
+                    OwnerEditCampsite(
+                        navController = navController,
+                        campsite = campsite,
+                        saveCampsite = { updated ->
+                            ownerCampsiteController.editCampsite(
+                                ownerId = currentUserId,
+                                editCampsite = updated,
+                                onSuccess = { Log.d("EditCampsite", "saved") },
+                                onFailure = { error -> Log.e("EditCampsite", error.message ?: "failed save") }
+                            )
+                        },
+                        deleteCampsite = { toDelete ->
+                            ownerCampsiteController.deleteCampsite(
+                                ownerId = currentUserId,
+                                campsiteId = toDelete.id,
+                                onSuccess = { Log.d("EditCampsite", "deleted") },
+                                onFailure = { error -> Log.e("EditCampsite", error.message ?: "failed delete") }
+                            )
+                        }
+                    )
                 }
             }
 
