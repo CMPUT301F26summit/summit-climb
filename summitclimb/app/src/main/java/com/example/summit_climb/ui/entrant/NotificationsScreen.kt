@@ -1,6 +1,8 @@
 package com.example.summit_climb.ui.entrant
 
 import android.text.format.DateUtils
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -44,8 +46,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.summit_climb.data.NotificationRepository
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
+import com.example.summit_climb.R
 import com.example.summit_climb.ui.ScreensBackground
 
 
@@ -66,10 +73,63 @@ fun NotificationsScreen(
     controller: NotificationController,
     navController: NavController
 ) {
-    Box(
-        modifier = Modifier.fillMaxSize()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
     ) {
-        ScreensBackground()
+        // Keep the header separate so notification cards scroll beneath it
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFCFE7F5))
+                .statusBarsPadding()
+                .padding(horizontal = 20.dp)
+        ) {
+            // back button
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.offset(x=(-12).dp)
+            ) {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back"
+                    )
+                }
+                Text(
+                    text = "Back",
+                    color = black,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.clickable { navController.popBackStack() }
+                )
+            }
+            // heading and unread count
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 5.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Notifications",
+                    fontFamily = FontFamily.SansSerif,
+                    fontSize = 30.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF233B4D),
+                )
+                Text(
+                    text = "${controller.unreadCount} unread",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF245C86),
+                    modifier = Modifier
+                        .background(Color.White,RoundedCornerShape(50))
+                        .padding(horizontal = 12.dp, vertical = 2.dp),
+                )
+            }
+        }
 
         // the whole screen is one list, so everything scrolls together
         LazyColumn(
@@ -77,66 +137,16 @@ fun NotificationsScreen(
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding(),
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            contentPadding = PaddingValues(start = 10.dp, end = 20.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-
-            // back button
-            item {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(top = 8.dp)
-                ) {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = black
-                        )
-                    }
-                    Text(
-                        text = "Back",
-                        color = black,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.clickable { navController.popBackStack() }
-                    )
-                }
-            }
-
-            // heading and unread count
-            item {
-                Text(
-                    text = "Notifications",
-                    fontFamily = FontFamily.Serif,
-                    fontSize = 35.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black,
-                    modifier = Modifier
-                        .background(white, RoundedCornerShape(12.dp))
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
-                )
-            }
-
-            item {
-                Text(
-                    text = "${controller.unreadCount} unread",
-                    fontFamily = FontFamily.Serif,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black,
-                    modifier = Modifier
-                        .background(white, RoundedCornerShape(12.dp))
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
-                )
-            }
-
             // the notifications
             if (controller.notifications.isEmpty()) {
                 item {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 12.dp),
+                            .padding(top = 150.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -186,11 +196,12 @@ private fun NotificationCard(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
+        border = BorderStroke(1.dp, Color(0xFFCFE7F5)),
         colors = CardDefaults.cardColors(
             containerColor = if (notification.read) {
-                greyBlue
+                Color.White
             } else {
-                lightBlue
+                Color(0xFFCFE7F5)
             }
         ),
         elevation = CardDefaults.cardElevation(
@@ -207,8 +218,9 @@ private fun NotificationCard(
             ) {
                 Text(
                     text = header,
-                    color = black,
-                    style = MaterialTheme.typography.titleMedium
+                    color = Color(0xFF233B4D),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
                 )
 
                 Spacer(modifier = Modifier.weight(1f))

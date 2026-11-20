@@ -67,6 +67,9 @@ object Routes {
     /** Owner's active reservations (opened from the manage menu).*/
     const val OWNER_ACTIVE_RESERVATIONS = "ownerActiveReserve/{$CAMPSITE_ID_ARG}"
 
+    /** Owner's details for one reservation. */
+    const val OWNER_RESERVATION_DETAILS = "ownerReservationDetails/{reservationId}"
+
     /** Notifications the owner has sent (opened from the manage menu).*/
     const val OWNER_SENT_NOTIFICATIONS = "ownerSentNotifications"
 
@@ -133,6 +136,13 @@ object Routes {
         return OWNER_ACTIVE_RESERVATIONS.replace(
             "{$CAMPSITE_ID_ARG}",
             campsiteId
+        )
+    }
+
+    fun ownerReservationDetails(reservationId: String): String {
+        return OWNER_RESERVATION_DETAILS.replace(
+            "{reservationId}",
+            reservationId
         )
     }
 }

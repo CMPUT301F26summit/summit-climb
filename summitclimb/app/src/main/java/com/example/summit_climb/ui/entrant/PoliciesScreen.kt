@@ -39,8 +39,11 @@ import com.example.summit_climb.ui.greyBlue
 fun PoliciesScreen(
     navController: NavController
 ) {
-    Box(Modifier.fillMaxSize()) {
-        ScreensBackground()
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .background(Color(0xFFF4F8FB))
+    ) {
+
         Column(
             modifier = Modifier
                 .fillMaxSize()

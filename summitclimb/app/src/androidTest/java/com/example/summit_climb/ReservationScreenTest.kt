@@ -6,6 +6,10 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.example.summit_climb.ui.entrant.ReservationContent
+import com.example.summit_climb.ui.entrant.ReservationTags
+import com.example.summit_climb.ui.entrant.ReservationText
+import com.example.summit_climb.ui.entrant.ReservationUiInfo
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule

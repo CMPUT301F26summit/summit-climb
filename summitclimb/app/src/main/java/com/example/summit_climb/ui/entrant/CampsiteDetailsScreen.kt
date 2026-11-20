@@ -186,6 +186,7 @@ fun CampsiteDetailsContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color(0xFFF4F8FB))
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp)
             .padding(bottom = 24.dp)

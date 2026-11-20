@@ -109,8 +109,11 @@ fun ProfileScreen(
         }
     }
 
-    Box(Modifier.fillMaxSize()) {
-        ScreensBackground()
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF4F8FB))
+    ){
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -127,12 +130,11 @@ fun ProfileScreen(
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .fillMaxWidth(0.3f)
-                    .background(Color.White, RoundedCornerShape(12.dp))
                     .padding(2.dp),
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Bold,
                 fontSize = 22.sp,
-                color = Color.Black,
+                color = Color(0xFF204F62),
                 textAlign = TextAlign.Center
             )
 

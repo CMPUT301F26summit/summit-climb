@@ -105,7 +105,7 @@ fun AppNavigation(
 
 
     Scaffold(
-        containerColor = Color.White,
+        containerColor = Color(0xFFCFE7F5),
         bottomBar = {
             if (navController.currentBackStackEntryAsState().value?.destination?.route
                 != "homescreen") {
@@ -366,7 +366,10 @@ fun AppNavigation(
                         campsiteId = id,
                         controller = reservationController,
                         onReservationClick = { reservationId ->
-                            // reservations details navigation connected later
+                            navController.navigate(Routes.OWNER_RESERVATION_DETAILS + "/$reservationId")
+                        },
+                        onBackClick = {
+                            navController.popBackStack()
                         }
                     )
                 }

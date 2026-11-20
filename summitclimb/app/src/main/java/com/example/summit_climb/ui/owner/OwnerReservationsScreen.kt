@@ -20,6 +20,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
 
@@ -38,7 +40,8 @@ data class ReservationUiItem(
 fun OwnerReservationsFromFirestore(
     campsiteId: String,
     controller: OwnerReservationController,
-    onReservationClick: (String) -> Unit
+    onReservationClick: (String) -> Unit,
+    onBackClick: () -> Unit
 ) {
     var reservations by remember { mutableStateOf(emptyList<ReservationUiItem>()) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -95,6 +98,7 @@ fun OwnerReservationsFromFirestore(
             OwnerReservationsScreen(
                 reservations = reservations,
                 onReservationClick = onReservationClick,
+                onBackClick = onBackClick,
                 onRejectClick = { reservation ->
                     controller.rejectReservation(
                         reservationId = reservation.id,
@@ -115,7 +119,8 @@ fun OwnerReservationsFromFirestore(
 fun OwnerReservationsScreen(
     reservations: List<ReservationUiItem>,
     onReservationClick: (String) -> Unit,
-    onRejectClick: (ReservationUiItem) -> Unit
+    onRejectClick: (ReservationUiItem) -> Unit,
+    onBackClick: () -> Unit = {}
 ) {
     val tabs = listOf("Active", "Past", "Cancelled")
 
@@ -149,7 +154,29 @@ fun OwnerReservationsScreen(
             .padding(16.dp)
     ) {
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Row(
+            modifier = Modifier
+                .clickable(onClick = onBackClick)
+                .padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back",
+                tint = Color(0xFF233B4D),
+                modifier = Modifier.size(20.dp)
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Text(
+                text = "Back",
+                fontSize = 15.sp,
+                color = Color(0xFF233B4D)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
 
         // Screen title
         Text(
