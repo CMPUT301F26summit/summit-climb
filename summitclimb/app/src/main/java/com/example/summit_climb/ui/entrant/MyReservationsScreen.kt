@@ -132,13 +132,13 @@ fun MyReservationsContent(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(55.dp))
             //title
             Text(
                 text = MyReservationsText.TITLE,
                 fontSize = 30.sp,
                 fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily.SansSerif,
+                fontFamily = FontFamily.Serif,
                 color = Color(0xFF2C4352),
                 modifier = Modifier.padding(vertical = 8.dp)
             )
@@ -159,7 +159,7 @@ fun MyReservationsContent(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(5.dp))
 
             //Active, Past, Cancelled tabs
             TabRow(
