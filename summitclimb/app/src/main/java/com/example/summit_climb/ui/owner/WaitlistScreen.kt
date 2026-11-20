@@ -1,27 +1,41 @@
 
 package com.example.summit_climb.ui.owner
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.filled.Send
+import androidx.navigation.NavController
 
 import com.example.summit_climb.controller.CampsiteSearchController
 import com.example.summit_climb.controller.OwnerLotteryController
 import com.example.summit_climb.model.CampsiteFilter
 import com.example.summit_climb.model.LotteryStatus
 import com.example.summit_climb.model.WaitlistEntry
-import com.example.summit_climb.ui.ScreensBackground
+import com.example.summit_climb.R
+import com.example.summit_climb.ui.StatusBadge
 
 import com.example.summit_climb.ui.charcoal
 import com.example.summit_climb.ui.lightGreen
@@ -144,10 +158,9 @@ fun WaitlistScreen(
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        ScreensBackground()
-
         WaitlistContent(
             campsiteName = campsite?.name ?: "Campsite",
+            location = campsite?.location ?: "Location unavailable",
             entrants = entrants,
             lotteryStatus = when (selectedLottery?.status) {
                 LotteryStatus.OPEN -> "Lottery Open"
@@ -168,313 +181,376 @@ fun WaitlistScreen(
 
 @Composable
 fun WaitlistContent(
-    campsiteName: String,
-    entrants: List<Entrant>,
-    lotteryStatus: String,
-    entrantCount: Int,
-    winnersDrawnDate: String,
-    maxEntrants: Int?,
-    onBack: () -> Unit,
-    onNotifyEntrants: () -> Unit
-) {
-    Column(
+        campsiteName: String,
+        location: String,
+        entrants: List<Entrant>,
+        lotteryStatus: String,
+        entrantCount: Int,
+        winnersDrawnDate: String,
+        maxEntrants: Int?,
+        onBack: () -> Unit,
+        onNotifyEntrants: () -> Unit
+    ) {
+    // Colour depends on the lottery status
+    val statusColor = when (lotteryStatus) {
+        "Open", "Lottery Open" -> lightGreen
+        "Drawn", "Winners Drawn" -> lightOrange
+        "Closed", "Lottery Closed" -> lightRed
+        else -> charcoal
+    }
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(20.dp)
+            .background(Color(0xFFD8E8F3))
     ) {
-        // Back button.
-        TextButton(
-            onClick = onBack,
-            contentPadding = PaddingValues(0.dp)
-        ) {
-            Text(
-                text = "← Back",
-                color = black,
-                fontSize = 16.sp
-            )
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Waitlist title in a white box.
-        Surface(
-            color = androidx.compose.ui.graphics.Color.White,
-            shape = RoundedCornerShape(10.dp)
-        ) {
-            Text(
-                text = "Waitlist",
-                modifier = Modifier.padding(
-                    horizontal = 16.dp,
-                    vertical = 8.dp
-                ),
-                color = black,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Campsite information box.
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = androidx.compose.ui.graphics.Color.White
-            )
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = campsiteName,
-                    color = black,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                val statusColor = when (lotteryStatus) {
-                    "Lottery Open" -> lightGreen
-                    "Lottery Closed" -> lightRed
-                    "Winners Drawn" -> lightOrange
-                    else -> greyBlue
-                }
-
-                Surface(
-                    color = statusColor,
-                    shape = RoundedCornerShape(20.dp)
-                ) {
-                    Text(
-                        text = lotteryStatus,
-                        modifier = Modifier.padding(
-                            horizontal = 12.dp,
-                            vertical = 6.dp
-                        ),
-                        color = black,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                if (lotteryStatus == "Winners Drawn") {
-                    Text(
-                        text = "Winners drawn: $winnersDrawnDate",
-                        color = charcoal,
-                        fontSize = 13.sp
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Statistics box.
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = androidx.compose.ui.graphics.Color.White
-            )
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = entrantCount.toString(),
-                        color = charcoal,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Text(
-                        text = "Entrants",
-                        color = charcoal,
-                        fontSize = 13.sp
-                    )
-                }
-
-                VerticalDivider(
-                    modifier = Modifier.height(45.dp),
-                    color = greyBlue,
-                    thickness = 1.dp
-                )
-
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = maxEntrants?.toString() ?: "—",
-                        color = charcoal,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Text(
-                        text = "Maximum Entrants",
-                        color = charcoal,
-                        fontSize = 13.sp
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = "Entrants",
-            color = black,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // One white box containing every entrant.
-        // If the list is empty, show an empty-state message.
-        Card(
+        Column(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = androidx.compose.ui.graphics.Color.White
-            ),
-            shape = RoundedCornerShape(12.dp)
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .verticalScroll(rememberScrollState())
         ) {
-            if (entrants.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "No entrants yet",
-                        color = charcoal,
-                        fontSize = 14.sp
-                    )
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(12.dp)
-                ) {
-                    itemsIndexed(entrants) { index, entrant ->
-                        EntrantRow(entrant = entrant)
+            // Mountain header
+            Box(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.mountain_header),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(190.dp)
+                )
 
-                        if (index < entrants.lastIndex) {
-                            HorizontalDivider(
-                                color = greyBlue,
-                                thickness = 1.dp
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                )
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(
+                            horizontal = 20.dp,
+                            vertical = 14.dp
+                        ),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    // Back button
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.offset(x = (-12).dp)
+                    ) {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back"
                             )
                         }
+
+                        Text(
+                            text = "Back",
+                            color = black,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.clickable { onBack() }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "Waitlist",
+                        fontFamily = FontFamily.SansSerif,
+                        fontSize = 34.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF233B4D)
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = campsiteName,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF6B8FA8),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        Text(
+                            text = " • ",
+                            fontSize = 15.sp,
+                            color = Color(0xFF36454F)
+                        )
+
+                        Text(
+                            text = location,
+                            modifier = Modifier.weight(1f),
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF6B8FA8),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        StatusBadge(
+                            text = lotteryStatus,
+                            color = statusColor
+                        )
+                    }
+                }
+            }
+
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // FIRST BOX: Entrants Joined and Winners Drawn
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = entrantCount.toString(),
+                                color = Color(0xFF496B83),
+                                fontSize = 26.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Text(
+                                text = " / ${maxEntrants ?: "—"}",
+                                color = Color(0xFF9AABB7),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+
+                        Text(
+                            text = "Entrants Joined",
+                            color = charcoal,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+
+                    VerticalDivider(
+                        modifier = Modifier.height(48.dp),
+                        color = greyBlue,
+                        thickness = 1.dp
+                    )
+
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "—",
+                            color = Color(0xFF496B83),
+                            fontSize = 26.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Text(
+                            text = "Winners Drawn",
+                            color = charcoal,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // SECOND BOX: Entrants and Notify Entrants
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .weight(1f),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "Entrants",
+                        color = Color(0xFF233B4D),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    if (entrants.isEmpty()) {
+                        Box(
+                            modifier = Modifier.weight(1f).fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No entrants yet",
+                                color = charcoal,
+                                fontSize = 14.sp
+                            )
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                        ) {
+                            itemsIndexed(entrants) { index, entrant ->
+                                EntrantRow(entrant = entrant)
+
+                                if (index < entrants.lastIndex) {
+                                    HorizontalDivider(
+                                        color = greyBlue,
+                                        thickness = 1.dp
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    HorizontalDivider(
+                        color = greyBlue,
+                        thickness = 1.dp
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Notify Entrants button
+                    Button(
+                        onClick = onNotifyEntrants,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = lightBlue
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Send,
+                            contentDescription = null,
+                            tint = black
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Text(
+                            text = "Notify Entrants",
+                            color = black,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Notify Entrants section at the bottom.
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = greyBlue
-            )
+    }
+}
+@Composable
+    fun EntrantRow(
+            entrant: Entrant
         ) {
-            Button(
-                onClick = onNotifyEntrants,
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Entrant initials.
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = lightBlue
-                )
+                    .size(42.dp)
+                    .background(
+                        color = lightBlue,
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
             ) {
+                val initials = entrant.name
+                    .split(" ")
+                    .filter { it.isNotBlank() }
+                    .take(2)
+                    .joinToString("") {
+                        it.first().uppercase()
+                    }
+
                 Text(
-                    text = "Notify Entrants",
+                    text = initials,
                     color = black,
-                    fontSize = 15.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column {
+                Text(
+                    text = entrant.name,
+                    color = charcoal,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                Text(
+                    text = "Joined ${entrant.joinedDate}",
+                    color = charcoal,
+                    fontSize = 12.sp
                 )
             }
         }
     }
-}
-
-@Composable
-fun EntrantRow(
-    entrant: Entrant
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Entrant initials.
-        Box(
-            modifier = Modifier
-                .size(42.dp)
-                .background(
-                    color = lightBlue,
-                    shape = CircleShape
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            val initials = entrant.name
-                .split(" ")
-                .filter { it.isNotBlank() }
-                .take(2)
-                .joinToString("") {
-                    it.first().uppercase()
-                }
-
-            Text(
-                text = initials,
-                color = black,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        Spacer(modifier = Modifier.width(12.dp))
-
-        Column {
-            Text(
-                text = entrant.name,
-                color = charcoal,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Text(
-                text = "Joined ${entrant.joinedDate}",
-                color = charcoal,
-                fontSize = 12.sp
-            )
-        }
-    }
-}
 
 @Preview(showBackground = true)
 @Composable
 fun WaitlistScreenPreview() {
     WaitlistContent(
-        campsiteName = "Mountain View Campsite",
-        entrants = emptyList(),
+        campsiteName = "Summit Camp",
+        location = "Banff, AB",
+        entrants = listOf(
+            Entrant("1", "Alex Morgan", "Joined Nov 18, 2026"),
+            Entrant("2", "Jamie Wilson", "Joined Nov 17, 2026"),
+            Entrant("3", "Taylor Smith", "Joined Nov 16, 2026"),
+            Entrant("4", "Jordan Lee", "Joined Nov 15, 2026"),
+            Entrant("5", "Casey Brown", "Joined Nov 14, 2026")
+        ),
         lotteryStatus = "Lottery Open",
-        entrantCount = 0,
+        entrantCount = 12,
         winnersDrawnDate = "—",
-        maxEntrants = 10,
+        maxEntrants = 50,
         onBack = {},
-        onNotifyEntrants = {}
+        onNotifyEntrants = {},
     )
 }
+
