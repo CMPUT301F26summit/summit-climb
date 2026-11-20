@@ -113,7 +113,7 @@ fun NotificationsScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 5.dp),
+                    .padding(vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -122,19 +122,40 @@ fun NotificationsScreen(
                     fontFamily = FontFamily.SansSerif,
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF233B4D),
+                    color = Color(0xFF233B4D)
                 )
-                Text(
-                    text = "${controller.unreadCount} unread",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color(0xFF245C86),
-                    modifier = Modifier
-                        .background(Color.White,RoundedCornerShape(50))
-                        .padding(horizontal = 12.dp, vertical = 2.dp),
-                )
+
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "${controller.unreadCount} unread",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF245C86),
+                        modifier = Modifier
+                            .background(Color.White, RoundedCornerShape(50))
+                            .padding(horizontal = 12.dp, vertical = 2.dp)
+                    )
+
+                    Text(
+                        text = "Mark all as read",
+                        color = Color(0xFF245C86),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.clickable {
+                            controller.notifications
+                                .filter { !it.read }
+                                .forEach { notification ->
+                                    controller.markRead(notification.id)
+                                }
+                        }
+                    )
+                }
             }
         }
+
         // The header stays fixed while notification cards scroll
         LazyColumn(
             modifier = Modifier
