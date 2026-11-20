@@ -25,6 +25,7 @@ import com.example.summit_climb.model.LotteryStatus
 import com.example.summit_climb.ui.ScreensBackground
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 
@@ -104,9 +105,11 @@ fun OwnerCampsites(
                     .padding(padding)
                     .padding(horizontal = 16.dp)
             ) {
+                Spacer(modifier = Modifier.height(55.dp))
+
                 Text(
                     text = "My Campsites",
-                    fontFamily = FontFamily.SansSerif,
+                    fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
                     fontSize = 30.sp,
                     color = Color(0xFF2C4352),
