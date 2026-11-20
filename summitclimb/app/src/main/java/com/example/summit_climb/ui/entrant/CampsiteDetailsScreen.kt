@@ -308,7 +308,7 @@ fun CampsiteHeader(campsite: Campsite, lottery: Lottery?) {
             }
             Spacer(Modifier.height(6.dp))
             Row(verticalAlignment = Alignment.Bottom) {
-                Text("$${campsite.price.toInt()}", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text("$${"%.2f".format(campsite.price)}", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 Text(
                     text = " / night (up to ${campsite.maxOccupancy} guests)",
                     fontSize = 15.sp,

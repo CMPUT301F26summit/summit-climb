@@ -179,7 +179,7 @@ fun OwnerCampsiteDetails(
 
                         Row(verticalAlignment = Alignment.Bottom) {
                             Text(
-                                text = "$${campsite.price.toInt()}",
+                                text = "$${"%.2f".format(campsite.price)}",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp
                             )

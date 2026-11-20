@@ -75,6 +75,7 @@ import android.net.Uri
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.PickVisualMediaRequest
 import com.example.summit_climb.model.Campsite
+import android.util.Log
 
 
 /** Holds the amenities for editing */
@@ -172,7 +173,7 @@ fun OwnerEditCampsite(
     // copy of fields for saved changes
     var name by remember(campsite.id) { mutableStateOf(campsite.name) }
     var location by remember(campsite.id) { mutableStateOf(campsite.location) }
-    var price by remember(campsite.id) { mutableStateOf(campsite.price.toInt().toString()) }
+    var price by remember(campsite.id) { mutableStateOf("%.2f".format(campsite.price)) }
     var occupancy by remember(campsite.id) { mutableIntStateOf(campsite.maxOccupancy) }
     var description by remember(campsite.id) { mutableStateOf(campsite.description) }
     var amenities by remember(campsite.id) { mutableStateOf(campsite.amenities.toSet()) }
@@ -351,13 +352,13 @@ fun OwnerEditCampsite(
 
                     OutlinedTextField(
                         value = price,
-                        onValueChange = { price = it.filter { c -> c.isDigit() } },
+                        onValueChange = { price = it },
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("pricePerNight"),
                         singleLine = true,
                         shape = RoundedCornerShape(14.dp),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         colors =
                             OutlinedTextFieldDefaults.colors(
                                 focusedTextColor = charcoal,

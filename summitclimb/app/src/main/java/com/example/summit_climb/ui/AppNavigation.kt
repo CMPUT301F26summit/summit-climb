@@ -294,8 +294,9 @@ fun AppNavigation(
                         navController = navController,
                         campsite = campsite,
                         saveCampsite = { updated ->
+                            Log.d("PriceDebug", "currentUserId='$currentUserId' stored ownerId='${campsite.ownerId}'")
                             ownerCampsiteController.editCampsite(
-                                ownerId = currentUserId,
+                                ownerId = campsite.ownerId,
                                 editCampsite = updated,
                                 onSuccess = { Log.d("EditCampsite", "saved") },
                                 onFailure = { error -> Log.e("EditCampsite", error.message ?: "failed save") }
@@ -303,7 +304,7 @@ fun AppNavigation(
                         },
                         deleteCampsite = { toDelete ->
                             ownerCampsiteController.deleteCampsite(
-                                ownerId = currentUserId,
+                                ownerId = campsite.ownerId,
                                 campsiteId = toDelete.id,
                                 onSuccess = { Log.d("EditCampsite", "deleted") },
                                 onFailure = { error -> Log.e("EditCampsite", error.message ?: "failed delete") }
