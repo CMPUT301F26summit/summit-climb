@@ -46,23 +46,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.summit_climb.data.NotificationRepository
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
-import com.example.summit_climb.R
 import androidx.compose.ui.text.style.TextAlign
 import com.example.summit_climb.ui.Routes
-import com.example.summit_climb.ui.ScreensBackground
 
 
 /**
@@ -92,9 +85,37 @@ fun NotificationsScreen(
                 .navigationBarsPadding(),
             contentAlignment = Alignment.Center
         ) {
+            // Back button
+            Row(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(start = 8.dp, top = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = { navController.popBackStack() }
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = black
+                    )
+                }
+
+                Text(
+                    text = "Back",
+                    color = black,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.clickable {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .align(Alignment.Center)
                     .padding(horizontal = 28.dp),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(

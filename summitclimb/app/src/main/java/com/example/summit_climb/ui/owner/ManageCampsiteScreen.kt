@@ -129,6 +129,14 @@ fun ManageCampsiteScreen(
         }
     }
 
+    fun openSentNotifications() {
+        if (navController.graph.findNode(Routes.OWNER_SENT_NOTIFICATIONS) != null) {
+            navController.navigate(Routes.ownerSentNotifications(campsiteId))
+        } else {
+            Toast.makeText(context, "Coming soon", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     fun openReservations() {
         if (navController.graph.findNode(Routes.OWNER_ACTIVE_RESERVATIONS) != null) {
             navController.navigate(Routes.ownerActiveReservations(campsiteId))
@@ -297,7 +305,7 @@ fun ManageCampsiteScreen(
                         subtitle = "Messages sent to entrants",
                         icon = Icons.Filled.Notifications
                     ) {
-                        open("ownerSentNotifications")
+                        openSentNotifications()
                     }
 
                     HorizontalDivider(

@@ -37,6 +37,7 @@ import com.example.summit_climb.ui.entrant.CampsiteListScreen
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.summit_climb.ui.entrant.ReservationContent
 import com.example.summit_climb.ui.entrant.ReservationUiInfo
+import com.example.summit_climb.ui.owner.SentNotificationsScreen
 
 
 //testing (ignore, just to show ui)
@@ -49,6 +50,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.summit_climb.controller.NotificationController
 import com.example.summit_climb.controller.OwnerLotteryController
@@ -76,6 +78,8 @@ import java.time.temporal.ChronoUnit
 import com.example.summit_climb.ui.entrant.PoliciesScreen
 import com.example.summit_climb.ui.entrant.PolicyDetailsScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.summit_climb.model.Notification
+import com.example.summit_climb.model.NotificationType
 
 val campsiteIdArgs = listOf(
     navArgument(Routes.CAMPSITE_ID_ARG) { type = NavType.StringType }
@@ -370,10 +374,42 @@ fun AppNavigation(
                     currentUserId = currentUserId,
                     searchController = searchController,
                     ownerLotteryController = ownerLotteryController,
+                    notificationController = notificationController,
                     onBack = {
                         navController.popBackStack()
                     }
                 )
+            }
+
+            composable(
+                route = Routes.OWNER_SENT_NOTIFICATIONS,
+                arguments = campsiteIdArgs
+            ) { backStackEntry ->
+
+                val id = backStackEntry.campsiteId()
+
+                val campsite = searchController.campsiteDetails(id)
+                    ?: searchController.search("", CampsiteFilter())
+                        .find { it.id == id }
+
+                if (campsite == null) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Loading...")
+                    }
+                } else {
+                    SentNotificationsScreen(
+                        campsiteId = id,
+                        campsiteName = campsite.name,
+                        currentUserId = currentUserId,
+                        notifications = notificationController.notifications,
+                        onBack = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
             }
 
             composable(
@@ -450,3 +486,4 @@ private fun ComingSoonScreen(title: String) {
         Text("$title — coming soon", style = MaterialTheme.typography.titleMedium)
     }
 }
+
