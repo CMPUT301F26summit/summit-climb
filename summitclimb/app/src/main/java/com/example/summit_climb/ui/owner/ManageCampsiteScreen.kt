@@ -71,10 +71,7 @@ import com.example.summit_climb.ui.entrant.statusColor
 // waitlist, sent notifications, and QR code options.
 //
 // Known Issues:
-//      - Displays values provided through function parameters rather than loading them directly.
 //      - Some menu options may show "Coming soon" if their navigation routes are unavailable.
-
-
 
 /**
  * Displays the management menu for a selected campsite.
@@ -89,7 +86,6 @@ import com.example.summit_climb.ui.entrant.statusColor
  * @param lotteryStatus current lottery status
  * @param activeReservations number of active reservations
  * @param entrantCount number of people on the waitlist
- * @param sentCount number of notifications sent
  */
 @Composable
 fun ManageCampsiteScreen(
@@ -99,8 +95,7 @@ fun ManageCampsiteScreen(
     location: String,
     lotteryStatus: String,
     activeReservations: Int,
-    entrantCount: Int,
-    sentCount: Int
+    entrantCount: Int
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
 
@@ -423,62 +418,6 @@ private fun MenuOption(
 }
 
 
-/**
- * Displays a clickable menu card with a title, subtitle, optional count,
- * and navigation arrow.
- *
- * @param title title displayed on the card
- * @param subtitle short description displayed below the title
- * @param count optional count displayed on the card
- * @param onClick action performed when the card is clicked
- */
-@Composable
-private fun MenuCard(
-    title: String,
-    subtitle: String,
-    count: String?,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(18.dp)
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    color = black,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = subtitle,
-                    color = charcoal,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
-            if (count != null) {
-                Text(
-                    text = count,
-                    color = black,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(end = 12.dp)
-                )
-            }
-            Text(text = "›", color = charcoal, fontSize = 28.sp)
-        }
-    }
-}
-
-
 @Preview(showBackground = true)
 @Composable
 private fun ManageCampsitePreview() {
@@ -489,7 +428,6 @@ private fun ManageCampsitePreview() {
         location = "Banff, AB",
         lotteryStatus = "Winners Drawn",
         activeReservations = 3,
-        entrantCount = 12,
-        sentCount = 29
+        entrantCount = 12
     )
 }

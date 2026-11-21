@@ -48,6 +48,7 @@ import com.example.summit_climb.ui.entrant.LotteryUiItem
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.summit_climb.controller.NotificationController
@@ -75,7 +76,6 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import com.example.summit_climb.ui.entrant.PoliciesScreen
 import com.example.summit_climb.ui.entrant.PolicyDetailsScreen
-import androidx.lifecycle.viewmodel.compose.viewModel
 
 val campsiteIdArgs = listOf(
     navArgument(Routes.CAMPSITE_ID_ARG) { type = NavType.StringType }
@@ -132,9 +132,33 @@ fun AppNavigation(
                 var reservations by remember {
                     mutableStateOf(
                         listOf(
-                            MyReservationUiItem("sample-reservation-cedar-valley", "Cedar Valley", "Banff, AB", "Dec 12 – Dec 14, 2026", 2, "\$90", MyReservationsText.ACTIVE),
-                            MyReservationUiItem("sample-reservation-lakeside-camp", "Lakeside Camp", "Jasper, AB", "Aug 3 – Aug 6, 2026", 3, "\$135", MyReservationsText.COMPLETED),
-                            MyReservationUiItem("sample-reservation-summit-camp", "Summit Camp", "Hinton, AB", "Sep 18 – Sep 20, 2026", 2, "\$80", MyReservationsText.CANCELLED)
+                            MyReservationUiItem(
+                                "sample-reservation-cedar-valley",
+                                "Cedar Valley",
+                                "Banff, AB",
+                                "Dec 12 – Dec 14, 2026",
+                                2,
+                                "\$90",
+                                MyReservationsText.ACTIVE
+                            ),
+                            MyReservationUiItem(
+                                "sample-reservation-lakeside-camp",
+                                "Lakeside Camp",
+                                "Jasper, AB",
+                                "Aug 3 – Aug 6, 2026",
+                                3,
+                                "\$135",
+                                MyReservationsText.COMPLETED
+                            ),
+                            MyReservationUiItem(
+                                "sample-reservation-summit-camp",
+                                "Summit Camp",
+                                "Hinton, AB",
+                                "Sep 18 – Sep 20, 2026",
+                                2,
+                                "\$80",
+                                MyReservationsText.CANCELLED
+                            )
                         )
                     )
                 }
@@ -268,7 +292,7 @@ fun AppNavigation(
             ) { backStackEntry ->
                 val id = backStackEntry.campsiteId()
 
-                val campsite = searchController.campsiteDetails(id)
+                val campsite = searchController.campsiteDetails(backStackEntry.campsiteId())
                     ?: searchController.search("", CampsiteFilter()).find { it.id == id }
 
                 if (campsite == null) {
@@ -294,12 +318,20 @@ fun AppNavigation(
                         navController = navController,
                         campsite = campsite,
                         saveCampsite = { updated ->
-                            Log.d("PriceDebug", "currentUserId='$currentUserId' stored ownerId='${campsite.ownerId}'")
+                            Log.d(
+                                "PriceDebug",
+                                "currentUserId='$currentUserId' stored ownerId='${campsite.ownerId}'"
+                            )
                             ownerCampsiteController.editCampsite(
                                 ownerId = campsite.ownerId,
                                 editCampsite = updated,
                                 onSuccess = { Log.d("EditCampsite", "saved") },
-                                onFailure = { error -> Log.e("EditCampsite", error.message ?: "failed save") }
+                                onFailure = { error ->
+                                    Log.e(
+                                        "EditCampsite",
+                                        error.message ?: "failed save"
+                                    )
+                                }
                             )
                         },
                         deleteCampsite = { toDelete ->
@@ -307,7 +339,12 @@ fun AppNavigation(
                                 ownerId = campsite.ownerId,
                                 campsiteId = toDelete.id,
                                 onSuccess = { Log.d("EditCampsite", "deleted") },
-                                onFailure = { error -> Log.e("EditCampsite", error.message ?: "failed delete") }
+                                onFailure = { error ->
+                                    Log.e(
+                                        "EditCampsite",
+                                        error.message ?: "failed delete"
+                                    )
+                                }
                             )
                         }
                     )
@@ -339,22 +376,58 @@ fun AppNavigation(
                 route = Routes.OWNER_MANAGE_CAMPSITE,
                 arguments = campsiteIdArgs
             ) { backStackEntry ->
+
                 val campsite = searchController.campsiteDetails(backStackEntry.campsiteId())
+
                 if (campsite == null) {
                     Text("Loading...", modifier = Modifier.padding(16.dp))
                 } else {
+                    val lottery = ownerLotteryController.lotteryForCampsite(
+                        ownerId = currentUserId,
+                        campsiteId = campsite.id
+                    )
+
+                    val lotteryStatus = when (lottery?.status) {
+                        LotteryStatus.OPEN -> ownerLotteryController.statusLabel(lottery)
+                        LotteryStatus.DRAWN -> "Winners Drawn"
+                        LotteryStatus.CLOSED -> "Closed"
+                        null -> "No Lottery"
+                    }
+
+                    val entrantCount = lottery?.entrantCount ?: 0
+
+                    var activeReservations by remember(campsite.id) {
+                        mutableIntStateOf(0)
+                    }
+                    LaunchedEffect(campsite.id) {
+                        reservationController.getReservationsByCampsite(
+                            campsiteId = campsite.id,
+                            onSuccess = { reservations ->
+                                activeReservations = reservations.count {
+                                    it.status == "ACTIVE"
+                                }
+                            },
+                            onFailure = { error ->
+                                Log.e(
+                                    "AppNavigation",
+                                    "Failed to load campsite reservations",
+                                    error
+                                )
+                            }
+                        )
+                    }
                     ManageCampsiteScreen(
                         navController = navController,
                         campsiteId = campsite.id,
                         campsiteName = campsite.name,
                         location = campsite.location,
-                        lotteryStatus = "No Lottery",
-                        activeReservations = 0,
-                        entrantCount = 0,
-                        sentCount = 0
+                        lotteryStatus = lotteryStatus,
+                        activeReservations = activeReservations,
+                        entrantCount = entrantCount
                     )
                 }
             }
+
 
             composable(
                 route = Routes.OWNER_LIST_LOTTERY,
