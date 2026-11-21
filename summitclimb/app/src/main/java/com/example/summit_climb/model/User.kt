@@ -18,6 +18,7 @@ package com.example.summit_climb.model
  * @property phoneNumber: user's phone number. (Optional)
  * @property profileImageUrl: download URL of user's profile image
  * @property notificationsOptedOut: `true` if user has opted out of notifications
+ * @property installationId: used to identify the app installation for push notification delivery
  * @property roles: user's roles. (Defaults to only [UserRole.ENTRANT])
  * @property accountStatus: whether account is active or deactivated.
  * @property flagged: `true` if user has been flagged for an admin to review.
@@ -30,6 +31,7 @@ class User(
     var phoneNumber: String = "",
     var profileImageUrl: String = "",
     var notificationsOptedOut: Boolean = false,
+    var installationId: String = "",
     var roles: List<UserRole> = listOf(UserRole.ENTRANT),
     var accountStatus: AccountStatus = AccountStatus.ACTIVE,
     var flagged: Boolean = false
