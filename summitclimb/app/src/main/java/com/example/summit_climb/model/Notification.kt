@@ -41,7 +41,7 @@ data class Notification(
     val relatedId: String = "",
     val batchId: String = "",
     val timestamp: Long = System.currentTimeMillis(),
-    val read: Boolean = false
+    val read: Boolean = false,
 )
 
 /** The different kinds of notifications supported by the app.  */
