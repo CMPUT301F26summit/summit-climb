@@ -5,6 +5,7 @@ import com.example.summit_climb.model.AccountStatus
 import com.example.summit_climb.model.User
 import com.google.firebase.firestore.FirebaseFirestore
 
+
 /**
  * Handles the Firestore operations for user profiles.
  * Firestore stores users in a `users` collection.
@@ -143,23 +144,6 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
         status: AccountStatus
     ) {
         userRef.document(userId).update("accountStatus", status.name)
-    }
-
-    /**
-     * Saves the Firebase Installation ID for this user's device.
-     * @param userId Firebase Authentication UID of the user.
-     * @param installationId Firebase Installation ID of the device.
-     */
-    fun saveDeviceInstallationId(
-        userId: String,
-        installationId: String,
-        onComplete: (Exception?) -> Unit = {}
-    ) {
-        userRef.document(userId)
-            .update("installationId", installationId)
-            .addOnCompleteListener { task ->
-                onComplete(task.exception)
-            }
     }
 }
 

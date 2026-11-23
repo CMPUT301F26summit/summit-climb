@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 
@@ -16,29 +17,32 @@ import com.google.firebase.messaging.RemoteMessage
  * This service receives push notifications sent to the app
  * and displays them as Android system notifications.
  *
- * It also receives the Firebase Installation ID
- * when the app installation is registered.
- *
  * @constructor Creates the Firebase messaging service
  */
 class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     /**
-     * Called when Firebase registers the app installation.
+     * Called when Firebase generates a new FCM registration token
+     * or refreshed an existing token
      *
-     * The installation ID can later be assocated with the
-     * authenticated user's Firestore profile to identify
-     * the device that should receive push notifications.
+     * Saves the new token to the authenticated user's Firestore
+     * document so that the backend can use it to deliver push
+     * notifications to this app installation
      *
-     * @param installationId Firebase Installation ID assigned
-     * to this app installation.
+     *
      */
-    override fun onRegistered(installationId: String) {
-        super.onRegistered(installationId)
+    override fun onNewToken(token: String) {
+        super.onNewToken(token)
 
-        Log.d("FCM", "Firebase Installation ID registered")
+        Log.d("FCM", "New FCM token generated")
 
-        // TODO: associate this ID with the signed-in user later
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+
+        if (userId != null) {
+            FcmTokenManager().saveToken(userId, token)
+        } else {
+            Log.d("FCM", "No authenticated user. Token not saved.")
+        }
     }
 
     /**
