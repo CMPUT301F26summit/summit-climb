@@ -49,6 +49,7 @@ import com.example.summit_climb.ui.entrant.LotteryUiItem
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -298,9 +299,8 @@ fun AppNavigation(
                         navController = navController,
                         campsite = campsite,
                         saveCampsite = { updated ->
-                            Log.d("PriceDebug", "currentUserId='$currentUserId' stored ownerId='${campsite.ownerId}'")
                             ownerCampsiteController.editCampsite(
-                                ownerId = campsite.ownerId,
+                                ownerId = currentUserId,
                                 editCampsite = updated,
                                 onSuccess = { Log.d("EditCampsite", "saved") },
                                 onFailure = { error -> Log.e("EditCampsite", error.message ?: "failed save") }
@@ -308,7 +308,7 @@ fun AppNavigation(
                         },
                         deleteCampsite = { toDelete ->
                             ownerCampsiteController.deleteCampsite(
-                                ownerId = campsite.ownerId,
+                                ownerId = currentUserId,
                                 campsiteId = toDelete.id,
                                 onSuccess = { Log.d("EditCampsite", "deleted") },
                                 onFailure = { error -> Log.e("EditCampsite", error.message ?: "failed delete") }
@@ -339,23 +339,61 @@ fun AppNavigation(
             }
 
             // test
+
             composable(
                 route = Routes.OWNER_MANAGE_CAMPSITE,
                 arguments = campsiteIdArgs
             ) { backStackEntry ->
+
                 val campsite = searchController.campsiteDetails(backStackEntry.campsiteId())
+
                 if (campsite == null) {
                     Text("Loading...", modifier = Modifier.padding(16.dp))
                 } else {
+                    val lottery = ownerLotteryController.lotteryForCampsite(
+                        ownerId = currentUserId,
+                        campsiteId = campsite.id
+                    )
+
+                    val lotteryStatus = when (lottery?.status) {
+                        LotteryStatus.OPEN -> ownerLotteryController.statusLabel(lottery)
+                        LotteryStatus.DRAWN -> "Winners Drawn"
+                        LotteryStatus.CLOSED -> "Closed"
+                        null -> "No Lottery"
+                    }
+
+                    val entrantCount = lottery?.entrantCount ?: 0
+
+                    var activeReservations by remember(campsite.id) {
+                        mutableIntStateOf(0)
+                    }
+
+                    LaunchedEffect(campsite.id) {
+                        reservationController.getReservationsByCampsite(
+                            campsiteId = campsite.id,
+                            onSuccess = { reservations ->
+                                activeReservations = reservations.count {
+                                    it.status == "ACTIVE"
+                                }
+                            },
+                            onFailure = { error ->
+                                Log.e(
+                                    "AppNavigation",
+                                    "Failed to load campsite reservations",
+                                    error
+                                )
+                            }
+                        )
+                    }
+
                     ManageCampsiteScreen(
                         navController = navController,
                         campsiteId = campsite.id,
                         campsiteName = campsite.name,
                         location = campsite.location,
-                        lotteryStatus = "No Lottery",
-                        activeReservations = 0,
-                        entrantCount = 0,
-                        sentCount = 0
+                        lotteryStatus = lotteryStatus,
+                        activeReservations = activeReservations,
+                        entrantCount = entrantCount
                     )
                 }
             }

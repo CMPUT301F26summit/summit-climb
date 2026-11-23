@@ -89,7 +89,6 @@ import com.example.summit_climb.ui.entrant.statusColor
  * @param lotteryStatus current lottery status
  * @param activeReservations number of active reservations
  * @param entrantCount number of people on the waitlist
- * @param sentCount number of notifications sent
  */
 @Composable
 fun ManageCampsiteScreen(
@@ -99,8 +98,7 @@ fun ManageCampsiteScreen(
     location: String,
     lotteryStatus: String,
     activeReservations: Int,
-    entrantCount: Int,
-    sentCount: Int
+    entrantCount: Int
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
 
@@ -497,7 +495,6 @@ private fun ManageCampsitePreview() {
         location = "Banff, AB",
         lotteryStatus = "Winners Drawn",
         activeReservations = 3,
-        entrantCount = 12,
-        sentCount = 29
+        entrantCount = 12
     )
 }
