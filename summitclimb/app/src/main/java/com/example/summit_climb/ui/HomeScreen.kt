@@ -26,7 +26,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Spacer
+import com.example.summit_climb.FcmTokenManager
 import com.example.summit_climb.R
+import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.messaging.FirebaseMessagingService
 
 @Composable
 fun ScreensBackground() {
@@ -37,6 +40,28 @@ fun ScreensBackground() {
         contentScale = ContentScale.Crop
     )
 }
+
+
+/**
+ * Retrieves the current FCM registration token and saves it to the
+ * authenticated user's Firestore document.
+ *
+ * @param userId Firebase Authentication UID od the signed-in user
+ */
+private fun registerFcmToken(userId: String) {
+    FirebaseMessaging.getInstance().token
+        .addOnSuccessListener { token ->
+            FcmTokenManager().saveToken(userId, token)
+        }
+        .addOnFailureListener { exception ->
+            android.util.Log.e(
+                "FCM",
+                "Failed to retrieve FCM token",
+                exception
+            )
+        }
+}
+
 @Composable
 fun HomeScreen(navController: NavController) {
     var errorMessage by remember { mutableStateOf("") }
@@ -65,7 +90,15 @@ fun HomeScreen(navController: NavController) {
             Button(
                 onClick = {
                     auth.signInAnonymously()
-                        .addOnSuccessListener { navController.navigate(Routes.CAMPSITE_LIST) }
+                        .addOnSuccessListener {  result ->
+                            val userId = result.user?.uid
+
+                            if (userId != null) {
+                                registerFcmToken(userId)
+                            }
+
+                            navController.navigate(Routes.CAMPSITE_LIST) }
+
                         .addOnFailureListener { errorMessage = "login failed" }
                 },
                 modifier = Modifier
@@ -85,7 +118,14 @@ fun HomeScreen(navController: NavController) {
             Button(
                 onClick = {
                     auth.signInAnonymously()
-                        .addOnSuccessListener { navController.navigate(Routes.SIGNUP_PAGE) }
+                        .addOnSuccessListener { result ->
+                            val userId = result.user?.uid
+
+                            if (userId != null) {
+                                registerFcmToken(userId)
+                            }
+                            navController.navigate(Routes.SIGNUP_PAGE)
+                        }
                         .addOnFailureListener { errorMessage = "login failed" }
                 },
                 modifier = Modifier
