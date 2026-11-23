@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,7 +28,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.ui.draw.innerShadow
 import androidx.navigation.NavController
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material3.ModalBottomSheet
 
 import com.example.summit_climb.controller.CampsiteSearchController
 import com.example.summit_climb.controller.OwnerLotteryController
@@ -35,6 +39,7 @@ import com.example.summit_climb.model.CampsiteFilter
 import com.example.summit_climb.model.LotteryStatus
 import com.example.summit_climb.model.WaitlistEntry
 import com.example.summit_climb.R
+import com.example.summit_climb.controller.NotificationController
 import com.example.summit_climb.ui.StatusBadge
 
 import com.example.summit_climb.ui.charcoal
@@ -62,6 +67,7 @@ fun WaitlistScreen(
     currentUserId: String,
     searchController: CampsiteSearchController,
     ownerLotteryController: OwnerLotteryController,
+    notificationController: NotificationController,
     onBack: () -> Unit
 ) {
     // Find the lotteries belonging to this campsite.
@@ -172,13 +178,19 @@ fun WaitlistScreen(
             winnersDrawnDate = "—",
             maxEntrants = selectedLottery?.waitlistCap,
             onBack = onBack,
-            onNotifyEntrants = {
-                // TODO: Connect notification functionality.
+            onSendNotification = { title, message ->
+                notificationController.sendToEntrants(
+                    campsiteId = campsiteId,
+                    recipientIds = waitlistEntries.map { it.entrantId },
+                    title = title,
+                    message = message
+                )
             }
         )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WaitlistContent(
         campsiteName: String,
@@ -189,8 +201,15 @@ fun WaitlistContent(
         winnersDrawnDate: String,
         maxEntrants: Int?,
         onBack: () -> Unit,
-        onNotifyEntrants: () -> Unit
+        onSendNotification: (String, String) -> Unit
     ) {
+    // Controls whether the notification panel is visible
+    var showNotifySheet by remember { mutableStateOf(false) }
+
+    // Stores the title and message entered by the owner
+    var notificationTitle by remember { mutableStateOf("") }
+    var notificationMessage by remember { mutableStateOf("") }
+
     // Colour depends on the lottery status
     val statusColor = when (lotteryStatus) {
         "Open", "Lottery Open" -> lightGreen
@@ -227,6 +246,7 @@ fun WaitlistContent(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .background(Color(0x660F2938))
                 )
 
                 Column(
@@ -450,16 +470,26 @@ fun WaitlistContent(
 
                     // Notify Entrants button
                     Button(
-                        onClick = onNotifyEntrants,
-                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            notificationTitle = ""
+                            notificationMessage = ""
+                            showNotifySheet = true
+                        },
+                        enabled = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = lightBlue
+                            containerColor = lightBlue,
+                            contentColor = black,
+                            disabledContainerColor = greyBlue,
+                            disabledContentColor = charcoal
                         )
                     ) {
                         Icon(
                             imageVector = Icons.Default.Send,
-                            contentDescription = null,
+                            contentDescription = "Notify entrants",
                             tint = black
                         )
 
@@ -472,6 +502,203 @@ fun WaitlistContent(
                             fontWeight = FontWeight.Bold
                         )
                     }
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        // Notification pull-up panel
+        if (showNotifySheet) {
+            ModalBottomSheet(
+                onDismissRequest = {
+                    showNotifySheet = false
+                },
+                containerColor = Color(0xFFD8E8F3),
+                dragHandle = {
+                    BottomSheetDefaults.DragHandle(
+                        color = Color(0xFF6B8FA8)
+                    )
+                }
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            horizontal = 20.dp,
+                            vertical = 8.dp
+                        )
+                        .navigationBarsPadding(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // panel heading
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Notify Entrants",
+                            color = Color(0xFF233B4D),
+                            fontSize = 23.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        IconButton(
+                            onClick = {
+                                showNotifySheet = false
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close",
+                                tint = charcoal
+                            )
+                        }
+                    }
+                    // White form card.
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.White
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            // Recipient row: To + icon + entrant count.
+                            Text(
+                                text = "To:",
+                                color = charcoal,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(
+                                        color = Color(0xFFEAF4FC),
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+                                    .padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.People,
+                                    contentDescription = "Entrants",
+                                    tint = Color(0xFF245C86)
+                                )
+
+                                Text(
+                                    text = "All $entrantCount entrants",
+                                    color = Color(0xFF233B4D),
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            // Notification title.
+                            Text(
+                                text = "Title",
+                                color = charcoal,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            OutlinedTextField(
+                                value = notificationTitle,
+                                onValueChange = {
+                                    notificationTitle = it
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                placeholder = {
+                                    Text("Enter notification title")
+                                },
+                                singleLine = true,
+                                shape = RoundedCornerShape(12.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFF6B8FA8),
+                                    unfocusedBorderColor = greyBlue,
+                                    focusedTextColor = charcoal,
+                                    unfocusedTextColor = charcoal
+                                )
+                            )
+
+                            // Notification message.
+                            Text(
+                                text = "Message",
+                                color = charcoal,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            OutlinedTextField(
+                                value = notificationMessage,
+                                onValueChange = {
+                                    notificationMessage = it
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 120.dp),
+                                placeholder = {
+                                    Text("Write your message to the entrants...")
+                                },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFF6B8FA8),
+                                    unfocusedBorderColor = greyBlue,
+                                    focusedTextColor = charcoal,
+                                    unfocusedTextColor = charcoal
+                                )
+                            )
+
+                            // Send notification button.
+                            Button(
+                                onClick = {
+                                    onSendNotification(
+                                        notificationTitle.trim(),
+                                        notificationMessage.trim()
+                                    )
+                                    showNotifySheet = false
+                                },
+                                enabled = notificationTitle.isNotBlank() &&
+                                        notificationMessage.isNotBlank() &&
+                                        entrantCount > 0,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(54.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = lightBlue,
+                                    contentColor = black,
+                                    disabledContainerColor = greyBlue,
+                                    disabledContentColor = charcoal
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Send,
+                                    contentDescription = "Send notification",
+                                    tint = black
+                                )
+
+                                Spacer(modifier = Modifier.width(8.dp))
+
+                                Text(
+                                    text = "Send to $entrantCount entrants",
+                                    color = black,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
         }
@@ -539,18 +766,18 @@ fun WaitlistScreenPreview() {
         campsiteName = "Summit Camp",
         location = "Banff, AB",
         entrants = listOf(
-            Entrant("1", "Alex Morgan", "Joined Nov 18, 2026"),
-            Entrant("2", "Jamie Wilson", "Joined Nov 17, 2026"),
-            Entrant("3", "Taylor Smith", "Joined Nov 16, 2026"),
-            Entrant("4", "Jordan Lee", "Joined Nov 15, 2026"),
-            Entrant("5", "Casey Brown", "Joined Nov 14, 2026")
+            Entrant("1", "Alex Morgan", " Nov 18, 2026"),
+            Entrant("2", "Jamie Wilson", " Nov 17, 2026"),
+            Entrant("3", "Taylor Smith", " Nov 16, 2026"),
+            Entrant("4", "Jordan Lee", " Nov 15, 2026"),
+            Entrant("5", "Casey Brown", " Nov 14, 2026")
         ),
         lotteryStatus = "Lottery Open",
         entrantCount = 12,
         winnersDrawnDate = "—",
         maxEntrants = 50,
         onBack = {},
-        onNotifyEntrants = {},
+        onSendNotification = { _, _ -> }
     )
 }
 
