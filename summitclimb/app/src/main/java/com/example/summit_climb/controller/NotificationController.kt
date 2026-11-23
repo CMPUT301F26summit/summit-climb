@@ -18,7 +18,7 @@ import com.example.summit_climb.ui.Routes
  *
  * Known Issues:
  *  - Notifications are not displayed yet in the phone's notification bar
- *  - User preferences are not yet checked.
+ *
  */
 
 /**
@@ -92,6 +92,14 @@ class NotificationController(
      * @param notificationId ID of the notification to mark as read.
     */
     fun markRead(notificationId: String) {
+        // update the local notification immediately
+        val index = notifications.indexOfFirst { it.id == notificationId }
+
+        if (index >= 0 && !notifications[index].read) {
+            notifications[index] = notifications[index].copy(read = true)
+        }
+
+        // save the change to the repo
         repository.markRead(notificationId)
     }
 
@@ -131,7 +139,7 @@ class NotificationController(
             NotificationType.LOTTERY_LOSS -> Routes.MY_LOTTERIES
 
             NotificationType.RESERVATION_UPDATE -> Routes.MY_RESERVATIONS
-            // NotificationType.RATING_REQUEST -> null
-            NotificationType.MESSAGE -> null   // TO BE DONE
+            NotificationType.RATING_REQUEST -> null
+            NotificationType.MESSAGE -> null
         }
 }
