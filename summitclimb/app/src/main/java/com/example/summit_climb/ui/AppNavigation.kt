@@ -110,6 +110,20 @@ fun AppNavigation(
     val navController = rememberNavController()
     val profileController: ProfileController = viewModel()
 
+    DisposableEffect(
+        profileController.profileLoaded,
+        profileController.notificationsStatus
+    ) {
+        if (profileController.profileLoaded && profileController.notificationsStatus) {
+            notificationController.startListening()
+        } else {
+            notificationController.stopListening()
+        }
+
+        onDispose {
+            notificationController.stopListening()
+        }
+    }
 
     Scaffold(
         containerColor = Color(0xFFCFE7F5),
