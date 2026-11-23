@@ -3,6 +3,11 @@ package com.example.summit_climb
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import com.example.summit_climb.controller.CampsiteSearchController
 import com.example.summit_climb.controller.EntrantLotteryController
 import com.example.summit_climb.controller.NotificationController
@@ -18,6 +23,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.example.summit_climb.controller.OwnerReservationController
 import com.example.summit_climb.data.FirestoreReservationRepository
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,7 +53,14 @@ class MainActivity : ComponentActivity() {
             notificationRepository = notificationRepository
         )
 
+        window.statusBarColor = android.graphics.Color.rgb(225, 241, 250)
+
         setContent {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFFCFE7F5))
+            )
             SummitclimbTheme {
                 AppNavigation(
                     searchController = searchController,

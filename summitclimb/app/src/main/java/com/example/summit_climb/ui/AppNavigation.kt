@@ -37,6 +37,7 @@ import com.example.summit_climb.ui.entrant.CampsiteListScreen
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.summit_climb.ui.entrant.ReservationContent
 import com.example.summit_climb.ui.entrant.ReservationUiInfo
+import com.example.summit_climb.ui.owner.SentNotificationsScreen
 
 
 //testing (ignore, just to show ui)
@@ -48,7 +49,9 @@ import com.example.summit_climb.ui.entrant.LotteryUiItem
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.summit_climb.controller.NotificationController
 import com.example.summit_climb.controller.OwnerLotteryController
@@ -75,8 +78,8 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import com.example.summit_climb.ui.entrant.PoliciesScreen
 import com.example.summit_climb.ui.entrant.PolicyDetailsScreen
-import androidx.lifecycle.viewmodel.compose.viewModel
-
+import com.example.summit_climb.model.Notification
+import com.example.summit_climb.model.NotificationType
 val campsiteIdArgs = listOf(
     navArgument(Routes.CAMPSITE_ID_ARG) { type = NavType.StringType }
 )
@@ -109,7 +112,7 @@ fun AppNavigation(
 
 
     Scaffold(
-        containerColor = Color.White,
+        containerColor = Color(0xFFCFE7F5),
         bottomBar = {
             if (navController.currentBackStackEntryAsState().value?.destination?.route
                 != "homescreen") {
@@ -132,9 +135,33 @@ fun AppNavigation(
                 var reservations by remember {
                     mutableStateOf(
                         listOf(
-                            MyReservationUiItem("sample-reservation-cedar-valley", "Cedar Valley", "Banff, AB", "Dec 12 – Dec 14, 2026", 2, "\$90", MyReservationsText.ACTIVE),
-                            MyReservationUiItem("sample-reservation-lakeside-camp", "Lakeside Camp", "Jasper, AB", "Aug 3 – Aug 6, 2026", 3, "\$135", MyReservationsText.COMPLETED),
-                            MyReservationUiItem("sample-reservation-summit-camp", "Summit Camp", "Hinton, AB", "Sep 18 – Sep 20, 2026", 2, "\$80", MyReservationsText.CANCELLED)
+                            MyReservationUiItem(
+                                "sample-reservation-cedar-valley",
+                                "Cedar Valley",
+                                "Banff, AB",
+                                "Dec 12 – Dec 14, 2026",
+                                2,
+                                "\$90",
+                                MyReservationsText.ACTIVE
+                            ),
+                            MyReservationUiItem(
+                                "sample-reservation-lakeside-camp",
+                                "Lakeside Camp",
+                                "Jasper, AB",
+                                "Aug 3 – Aug 6, 2026",
+                                3,
+                                "\$135",
+                                MyReservationsText.COMPLETED
+                            ),
+                            MyReservationUiItem(
+                                "sample-reservation-summit-camp",
+                                "Summit Camp",
+                                "Hinton, AB",
+                                "Sep 18 – Sep 20, 2026",
+                                2,
+                                "\$80",
+                                MyReservationsText.CANCELLED
+                            )
                         )
                     )
                 }
@@ -268,7 +295,7 @@ fun AppNavigation(
             ) { backStackEntry ->
                 val id = backStackEntry.campsiteId()
 
-                val campsite = searchController.campsiteDetails(id)
+                val campsite = searchController.campsiteDetails(backStackEntry.campsiteId())
                     ?: searchController.search("", CampsiteFilter()).find { it.id == id }
 
                 if (campsite == null) {
@@ -290,7 +317,40 @@ fun AppNavigation(
                 if (campsite == null) {
                     Text("Loading...", modifier = Modifier.padding(16.dp))
                 } else {
-                    OwnerEditCampsite(navController = navController, campsite = campsite)
+                    OwnerEditCampsite(
+                        navController = navController,
+                        campsite = campsite,
+                        saveCampsite = { updated ->
+                            Log.d(
+                                "PriceDebug",
+                                "currentUserId='$currentUserId' stored ownerId='${campsite.ownerId}'"
+                            )
+                            ownerCampsiteController.editCampsite(
+                                ownerId = campsite.ownerId,
+                                editCampsite = updated,
+                                onSuccess = { Log.d("EditCampsite", "saved") },
+                                onFailure = { error ->
+                                    Log.e(
+                                        "EditCampsite",
+                                        error.message ?: "failed save"
+                                    )
+                                }
+                            )
+                        },
+                        deleteCampsite = { toDelete ->
+                            ownerCampsiteController.deleteCampsite(
+                                ownerId = currentUserId,
+                                campsiteId = toDelete.id,
+                                onSuccess = { Log.d("EditCampsite", "deleted") },
+                                onFailure = { error ->
+                                    Log.e(
+                                        "EditCampsite",
+                                        error.message ?: "failed delete"
+                                    )
+                                }
+                            )
+                        }
+                    )
                 }
             }
 
@@ -315,26 +375,63 @@ fun AppNavigation(
             }
 
             // test
+
             composable(
                 route = Routes.OWNER_MANAGE_CAMPSITE,
                 arguments = campsiteIdArgs
             ) { backStackEntry ->
+
                 val campsite = searchController.campsiteDetails(backStackEntry.campsiteId())
+
                 if (campsite == null) {
                     Text("Loading...", modifier = Modifier.padding(16.dp))
                 } else {
+                    val lottery = ownerLotteryController.lotteryForCampsite(
+                        ownerId = currentUserId,
+                        campsiteId = campsite.id
+                    )
+
+                    val lotteryStatus = when (lottery?.status) {
+                        LotteryStatus.OPEN -> ownerLotteryController.statusLabel(lottery)
+                        LotteryStatus.DRAWN -> "Winners Drawn"
+                        LotteryStatus.CLOSED -> "Closed"
+                        null -> "No Lottery"
+                    }
+
+                    val entrantCount = lottery?.entrantCount ?: 0
+
+                    var activeReservations by remember(campsite.id) {
+                        mutableIntStateOf(0)
+                    }
+                    LaunchedEffect(campsite.id) {
+                        reservationController.getReservationsByCampsite(
+                            campsiteId = campsite.id,
+                            onSuccess = { reservations ->
+                                activeReservations = reservations.count {
+                                    it.status == "ACTIVE"
+                                }
+                            },
+                            onFailure = { error ->
+                                Log.e(
+                                    "AppNavigation",
+                                    "Failed to load campsite reservations",
+                                    error
+                                )
+                            }
+                        )
+                    }
                     ManageCampsiteScreen(
                         navController = navController,
                         campsiteId = campsite.id,
                         campsiteName = campsite.name,
                         location = campsite.location,
-                        lotteryStatus = "No Lottery",
-                        activeReservations = 0,
-                        entrantCount = 0,
-                        sentCount = 0
+                        lotteryStatus = lotteryStatus,
+                        activeReservations = activeReservations,
+                        entrantCount = entrantCount
                     )
                 }
             }
+
 
             composable(
                 route = Routes.OWNER_LIST_LOTTERY,
@@ -351,10 +448,42 @@ fun AppNavigation(
                     currentUserId = currentUserId,
                     searchController = searchController,
                     ownerLotteryController = ownerLotteryController,
+                    notificationController = notificationController,
                     onBack = {
                         navController.popBackStack()
                     }
                 )
+            }
+
+            composable(
+                route = Routes.OWNER_SENT_NOTIFICATIONS,
+                arguments = campsiteIdArgs
+            ) { backStackEntry ->
+
+                val id = backStackEntry.campsiteId()
+
+                val campsite = searchController.campsiteDetails(id)
+                    ?: searchController.search("", CampsiteFilter())
+                        .find { it.id == id }
+
+                if (campsite == null) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Loading...")
+                    }
+                } else {
+                    SentNotificationsScreen(
+                        campsiteId = id,
+                        campsiteName = campsite.name,
+                        currentUserId = currentUserId,
+                        notifications = notificationController.notifications,
+                        onBack = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
             }
 
             composable(
@@ -384,7 +513,10 @@ fun AppNavigation(
                         campsiteId = id,
                         controller = reservationController,
                         onReservationClick = { reservationId ->
-                            // reservations details navigation connected later
+                            navController.navigate(Routes.OWNER_RESERVATION_DETAILS + "/$reservationId")
+                        },
+                        onBackClick = {
+                            navController.popBackStack()
                         }
                     )
                 }
@@ -428,3 +560,4 @@ private fun ComingSoonScreen(title: String) {
         Text("$title — coming soon", style = MaterialTheme.typography.titleMedium)
     }
 }
+

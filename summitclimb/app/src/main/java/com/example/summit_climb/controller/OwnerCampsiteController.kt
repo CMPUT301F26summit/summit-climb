@@ -19,7 +19,6 @@ class OwnerCampsiteController(private val campsiteRepository: CampsiteRepository
     private val qrService = QRCodeService()
     private val imageService = ImageService()
 
-
     /**
      * Checks that a campsite's details are valid.
      *
@@ -95,6 +94,35 @@ class OwnerCampsiteController(private val campsiteRepository: CampsiteRepository
                 }
             }
             .addOnFailureListener { onFailure(Exception("Unable to save the campsite")) }
+    }
+
+    /**
+     * Deletes a campsite for the owner
+     *
+     * @param ownerId: ID of the owner making the deletion
+     * @param campsiteId: campsite that will be deleted
+     * @param onSuccess: decides outcome if changes are deleted successfully
+     * @param onFailure: appears on failure to delete
+     * @return a message if something failed or null
+     */
+    fun deleteCampsite(
+        ownerId: String,
+        campsiteId: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        val storedCampsite = campsiteRepository.getCampsite(campsiteId)
+        if (storedCampsite == null) {
+            onFailure(Exception("Campsite not found"))
+            return
+        }
+
+        currentCamp.document(campsiteId).delete()
+            .addOnSuccessListener {
+                imageService.delete(storedCampsite.promoImageUrl)
+                onSuccess()
+            }
+            .addOnFailureListener { onFailure(Exception("Unable to delete campsite")) }
     }
 
     /**

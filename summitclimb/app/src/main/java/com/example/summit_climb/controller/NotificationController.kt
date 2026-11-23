@@ -95,6 +95,30 @@ class NotificationController(
         repository.markRead(notificationId)
     }
 
+    fun sendToEntrants(
+        campsiteId: String,
+        recipientIds: List<String>,
+        title: String,
+        message: String
+    ) {
+        val senderId = currentUserId() ?: return
+        val batchId = java.util.UUID.randomUUID().toString()
+
+        recipientIds.distinct().forEach { entrantId ->
+            repository.send(
+                Notification(
+                    senderId = senderId,
+                    recipientId = entrantId,
+                    type = NotificationType.MESSAGE,
+                    title = title,
+                    text = message,
+                    campsiteId = campsiteId,
+                    batchId = batchId
+                )
+            )
+        }
+    }
+
     /**
      * Determines which screen should open when a notification is selected
      *
@@ -107,6 +131,7 @@ class NotificationController(
             NotificationType.LOTTERY_LOSS -> Routes.MY_LOTTERIES
 
             NotificationType.RESERVATION_UPDATE -> Routes.MY_RESERVATIONS
+            // NotificationType.RATING_REQUEST -> null
             NotificationType.MESSAGE -> null   // TO BE DONE
         }
 }

@@ -1,11 +1,16 @@
 package com.example.summit_climb.ui
 
+import com.example.summit_climb.model.Campsite
+
 /**
  * Every navigation route in the app.
  * I think this will reduce crash risk caused by typo in filename
  */
 object Routes {
     const val HOME_SCREEN = "homeScreen"
+
+    const val SIGNUP_PAGE = "signUpPage"
+
     /** Entrant home: the campsite list.*/
     const val CAMPSITE_LIST = "entrantCampsiteList"
 
@@ -67,8 +72,11 @@ object Routes {
     /** Owner's active reservations (opened from the manage menu).*/
     const val OWNER_ACTIVE_RESERVATIONS = "ownerActiveReserve/{$CAMPSITE_ID_ARG}"
 
+    /** Owner's details for one reservation. */
+    const val OWNER_RESERVATION_DETAILS = "ownerReservationDetails/{reservationId}"
+
     /** Notifications the owner has sent (opened from the manage menu).*/
-    const val OWNER_SENT_NOTIFICATIONS = "ownerSentNotifications"
+    const val OWNER_SENT_NOTIFICATIONS = "ownerSentNotifications/{$CAMPSITE_ID_ARG}"
 
     /** Owner's QR code screen (opened from the manage menu).*/
     const val MANAGE_QR_CODE = "manageQRCode/{$CAMPSITE_ID_ARG}"
@@ -136,7 +144,24 @@ object Routes {
         )
     }
 
+    fun ownerReservationDetails(reservationId: String): String {
+        return OWNER_RESERVATION_DETAILS.replace(
+            "{reservationId}",
+            reservationId
+        )
+    }
+
+    fun ownerSentNotifications(campsiteId: String): String {
+        return OWNER_SENT_NOTIFICATIONS.replace(
+            "{$CAMPSITE_ID_ARG}",
+            campsiteId
+        )
+    }
+
     fun manageQRCode(campsiteId: String): String {
-        return MANAGE_QR_CODE.replace("{$CAMPSITE_ID_ARG}", campsiteId)
+        return MANAGE_QR_CODE.replace(
+            "{$CAMPSITE_ID_ARG}",
+            campsiteId
+        )
     }
 }

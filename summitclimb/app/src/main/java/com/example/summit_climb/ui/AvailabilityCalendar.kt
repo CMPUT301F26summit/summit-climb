@@ -57,7 +57,7 @@ fun AvailabilityCalendar(
         modifier = Modifier
             .padding(12.dp)
             .background(
-                lightBlue,
+                Color(0xFFE5F0F8),
                 RoundedCornerShape(16.dp))
             .padding(12.dp)
     ){
@@ -153,15 +153,12 @@ fun AvailabilityCalendar(
                                 .height(40.dp)
                                 .padding(2.dp)
                                 .background(
-                                    if (selected)
-                                        darkGreen
-
-                                    else if (booked)
-                                        lightGreen
-
+                                    if (booked)
+                                        Color(0xFF96B38E)
+                                    else if (selected)
+                                        Color(0xFF245C86)
                                     else if (inRange)
-                                        darkGreen.copy(alpha = 0.5f)
-
+                                        Color(0xFF8FB9DE)
                                     else
                                         Color.Transparent,
                                     RoundedCornerShape(8.dp)

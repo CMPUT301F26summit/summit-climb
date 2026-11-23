@@ -98,6 +98,8 @@ fun OwnerCampsiteDetails(
         }
     }
 
+    Spacer(modifier = Modifier.height(5.dp))
+
     Scaffold(modifier = modifier) { padding ->
         Column(Modifier
             .padding(padding)
@@ -177,7 +179,7 @@ fun OwnerCampsiteDetails(
 
                         Row(verticalAlignment = Alignment.Bottom) {
                             Text(
-                                text = "$${campsite.price.toInt()}",
+                                text = "$${"%.2f".format(campsite.price)}",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp
                             )

@@ -158,7 +158,7 @@ fun ReservationContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(Color(0xFFF4F8FB))
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
@@ -179,7 +179,7 @@ fun ReservationContent(
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily.Serif,
-            color = Color.Black,
+            color = Color(0xFF0A3141),
             modifier = Modifier.testTag(ReservationTags.TITLE)
         )
 
@@ -214,25 +214,27 @@ fun ReservationContent(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(ReservationColors.greyBlue, RoundedCornerShape(20.dp))
+                .background(
+                    Color.White,
+                    RoundedCornerShape(20.dp))
                 .padding(16.dp)
         ) {
             Text(
                 text = info.campsiteName,
-                fontSize = 22.sp,
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily.Serif,
-                color = Color.Black
+                fontFamily = FontFamily.SansSerif,
+                color = Color(0xFF245C86)
             )
             Text(text = info.location, fontSize = 14.sp, color = ReservationColors.charcoal)
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp), color = ReservationColors.lightBlue)
+            HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp), color = Color(0xFFDFE8EF))
 
             if (info.reserved) {
                 // view only
                 Text(text = ReservationText.VIEW_ONLY, fontSize = 14.sp, color = ReservationColors.charcoal)
             } else {
-                Text(text = ReservationText.SELECT_DATES, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text(text = ReservationText.SELECT_DATES, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFF245C86))
                 Text(text = ReservationText.HOW_TO_PICK, fontSize = 12.sp, color = ReservationColors.charcoal)
 
                 // the dates they're allowed to book
@@ -311,9 +313,16 @@ fun ReservationContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag(ReservationTags.CONFIRM),
-                    colors = ButtonDefaults.buttonColors(containerColor = ReservationColors.lightBlue)
-                ) {
-                    Text(text = ReservationText.CONFIRM_BUTTON, color = Color.Black)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF245C86),
+                        disabledContainerColor = Color(0xFFC9DEF3)
+                ))
+                    {
+                    Text(
+                        text = ReservationText.CONFIRM_BUTTON,
+                        color = if (problem == null) Color.White
+                        else Color(0xFF597A94)
+                    )
                 }
 
                 TextButton(

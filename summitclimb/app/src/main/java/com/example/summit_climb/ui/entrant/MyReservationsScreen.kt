@@ -1,5 +1,6 @@
 package com.example.summit_climb.ui.entrant
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -34,7 +35,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import com.example.summit_climb.ui.ScreensBackground
+import com.example.summit_climb.R
+import androidx.compose.ui.Alignment
 
 /**
  * Purpose: the entrant's "My Reservations" tab (US 01.06.01, 01.06.02, 01.07.01).
@@ -109,24 +115,32 @@ fun MyReservationsContent(
     // only the reservations for the chosen tab
     val shown = reservations.filter { reservation -> isInTab(reservation.status, selectedTab) }
 
-    Box(Modifier.fillMaxSize()) {
-        ScreensBackground()
-
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(Color(0xD8D3E8F3))
+    ) {
+        Image(
+            painter = painterResource(R.drawable.mountain_header),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(150.dp) )
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
+            Spacer(modifier = Modifier.height(55.dp))
             //title
             Text(
                 text = MyReservationsText.TITLE,
-                fontSize = 32.sp,
+                fontSize = 30.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily.Serif,
-                color = ReservationListColors.charcoal,
-                modifier = Modifier
-                    .background(Color.White, RoundedCornerShape(12.dp))
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                color = Color(0xFF2C4352),
+                modifier = Modifier.padding(vertical = 8.dp)
             )
 
             //short message (e.g. after cancelling)
@@ -135,6 +149,7 @@ fun MyReservationsContent(
                 Text(
                     text = message,
                     color = ReservationListColors.charcoal,
+                    fontFamily = FontFamily.SansSerif,
                     fontSize = 14.sp,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -144,21 +159,40 @@ fun MyReservationsContent(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(5.dp))
 
             //Active, Past, Cancelled tabs
             TabRow(
                 selectedTabIndex = tabs.indexOf(selectedTab),
-                containerColor = Color.White
+                containerColor = Color(0xFFE4EDF5),
+                contentColor = Color(0xFF245C86),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp)),
+                indicator = {},
+                divider = {}
             ) {
                 for (tab in tabs) {
                     Tab(
                         selected = selectedTab == tab,
                         onClick = { selectedTab = tab },
-                        text = { Text(tab) },
-                        selectedContentColor = ReservationListColors.charcoal,
-                        unselectedContentColor = ReservationListColors.charcoal,
-                        modifier = Modifier.testTag(MyReservationsTags.tab(tab)),
+                        text = {
+                            Text(
+                                text = tab,
+                                fontWeight = if (selectedTab == tab)
+                                    FontWeight.Bold else FontWeight.Normal,
+                                fontSize = 16.sp)
+                               },
+                        selectedContentColor = Color(0xFF245C86),
+                        unselectedContentColor = Color(0xFF597A94),
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(
+                                if (selectedTab == tab) Color.White
+                                else Color.Transparent
+                            )
+                            .testTag(MyReservationsTags.tab(tab)),
                     )
                 }
             }
@@ -168,7 +202,7 @@ fun MyReservationsContent(
             if (shown.isEmpty()) {
                 Text(
                     text = "No ${selectedTab.lowercase()} reservations.",
-                    color = ReservationListColors.charcoal,
+                    color = Color(0xFF2C4352),
                     fontSize = 14.sp
                 )
             }
@@ -191,7 +225,15 @@ fun MyReservationsContent(
     if (cancelling != null) {
         AlertDialog(
             onDismissRequest = { toCancel = null },
-            title = { Text(MyReservationsText.CANCEL_TITLE) },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(20.dp),
+            titleContentColor = Color(0xFF233B4D),
+            textContentColor = Color(0xFF597A94),
+            title = {
+                Text(
+                    MyReservationsText.CANCEL_TITLE,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,) },
             text = {
                 Column {
                     Text(MyReservationsText.ARE_YOU_SURE)
@@ -200,30 +242,55 @@ fun MyReservationsContent(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(ReservationListColors.lightGrey, RoundedCornerShape(8.dp))
+                            .background(
+                                Color(0xFFEDF4F8),
+                                RoundedCornerShape(10.dp)
+                            )
                             .padding(8.dp)
                     ) {
-                        Text(cancelling.campsiteName, fontWeight = FontWeight.Bold)
-                        Text("${cancelling.dates} | ${cancelling.nights} nights", fontSize = 13.sp)
+                        Text(
+                            cancelling.campsiteName,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF245C86)
+                        )
+                        Text("${cancelling.dates} | ${cancelling.nights} nights",
+                            fontSize = 13.sp,
+                            color = Color(0xFF597A94))
                     }
                 }
             },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        onCancel(cancelling.reservationId)
-                        toCancel = null
-                    },
-                    modifier = Modifier.testTag(MyReservationsTags.CONFIRM_CANCEL)
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Text(MyReservationsText.CONFIRM_CANCEL, color = ReservationListColors.lightRed)
+                    TextButton(
+                        onClick = {
+                            onCancel(cancelling.reservationId)
+                            toCancel = null
+                        }
+                    ) {
+                        Text(
+                            "Yes, cancel reservation",
+                            color = Color(0xFFC45050),
+                            fontSize = 14.sp
+                        )
+                    }
+
+                    TextButton(
+                        onClick = { toCancel = null }
+                    ) {
+                        Text(
+                            "Keep reservation",
+                            color = Color(0xFF245C86),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { toCancel = null }) {
-                    Text(MyReservationsText.KEEP, color = ReservationListColors.charcoal)
-                }
-            }
+            dismissButton = {}
         )
     }
 }
@@ -249,8 +316,8 @@ fun ReservationCard(
                 text = reservation.campsiteName,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily.Serif,
-                color = Color.Black
+                fontFamily = FontFamily.SansSerif,
+                color = Color(0xFF2C4352)
             )
             Text(
                 text = badgeText(reservation.status),
@@ -266,7 +333,7 @@ fun ReservationCard(
         Text(text = reservation.location, fontSize = 14.sp, color = ReservationListColors.charcoal)
         Text(
             text = "${reservation.dates} | ${reservation.nights} nights",
-            fontSize = 13.sp,
+            fontSize = 14.sp,
             color = ReservationListColors.charcoal
         )
 
@@ -279,9 +346,9 @@ fun ReservationCard(
             ) {
                 Text(
                     text = "${reservation.total} total",
-                    fontSize = 15.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color.Black
+                    color = Color(0xFF2C4352)
                 )
 
                 //Active: Cancel Reservation
@@ -290,7 +357,11 @@ fun ReservationCard(
                         onClick = onCancel,
                         modifier = Modifier.testTag(MyReservationsTags.cancel(reservation.reservationId))
                     ) {
-                        Text(text = MyReservationsText.CANCEL_BUTTON, color = ReservationListColors.lightRed)
+                        Text(
+                            text = MyReservationsText.CANCEL_BUTTON,
+                            color = ReservationListColors.lightRed,
+                            fontSize = 16.sp
+                        )
                     }
                 }
             }

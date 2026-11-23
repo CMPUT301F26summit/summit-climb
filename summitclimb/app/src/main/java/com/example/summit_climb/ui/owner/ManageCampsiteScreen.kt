@@ -1,6 +1,8 @@
 package com.example.summit_climb.ui.owner
 
+import android.service.autofill.OnClickAction
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,7 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -25,7 +27,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -36,13 +37,33 @@ import com.example.summit_climb.ui.Routes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.ui.graphics.Color
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.QrCode2
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextOverflow
+import com.example.summit_climb.R
 
 import com.example.summit_climb.ui.charcoal
 import com.example.summit_climb.ui.greyBlue
 import com.example.summit_climb.ui.white
 import com.example.summit_climb.ui.black
 import com.example.summit_climb.ui.*
+import com.example.summit_climb.ui.entrant.statusColor
 
 
 // Displays the owner's management menu for a selected campsite.
@@ -50,10 +71,7 @@ import com.example.summit_climb.ui.*
 // waitlist, sent notifications, and QR code options.
 //
 // Known Issues:
-//      - Displays values provided through function parameters rather than loading them directly.
 //      - Some menu options may show "Coming soon" if their navigation routes are unavailable.
-
-
 
 /**
  * Displays the management menu for a selected campsite.
@@ -68,7 +86,6 @@ import com.example.summit_climb.ui.*
  * @param lotteryStatus current lottery status
  * @param activeReservations number of active reservations
  * @param entrantCount number of people on the waitlist
- * @param sentCount number of notifications sent
  */
 @Composable
 fun ManageCampsiteScreen(
@@ -78,10 +95,9 @@ fun ManageCampsiteScreen(
     location: String,
     lotteryStatus: String,
     activeReservations: Int,
-    entrantCount: Int,
-    sentCount: Int
+    entrantCount: Int
 ) {
-    val context = LocalContext.current
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     // opens a screen if its route exists, otherwise tells the user it is coming
     fun open(route: String) {
@@ -108,6 +124,14 @@ fun ManageCampsiteScreen(
         }
     }
 
+    fun openSentNotifications() {
+        if (navController.graph.findNode(Routes.OWNER_SENT_NOTIFICATIONS) != null) {
+            navController.navigate(Routes.ownerSentNotifications(campsiteId))
+        } else {
+            Toast.makeText(context, "Coming soon", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     fun openReservations() {
         if (navController.graph.findNode(Routes.OWNER_ACTIVE_RESERVATIONS) != null) {
             navController.navigate(Routes.ownerActiveReservations(campsiteId))
@@ -117,7 +141,6 @@ fun ManageCampsiteScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        ScreensBackground()
 
         Column(
             modifier = Modifier
@@ -125,148 +148,280 @@ fun ManageCampsiteScreen(
                 .statusBarsPadding()
                 .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-
-            // Back button
-            val backButton = {
-                navController.popBackStack()
-                Unit
-            }
-
-            Row(
+            // Mountain header
+            Box(
                 modifier = Modifier
-                    .clickable(onClick = backButton)
-                    .background(Color.White, RoundedCornerShape(20.dp))
-                    .padding(horizontal = 6.dp, vertical = 1.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .fillMaxWidth()
             ) {
-                Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back Button",
-                    modifier = Modifier.size(20.dp),
-                    tint = charcoal
+                Image(
+                    painter = painterResource(R.drawable.mountain_header),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(190.dp)
                 )
 
-                Text(
-                    text = "Back",
-                    color = charcoal,
-                    fontSize = 15.sp,
-                    lineHeight = 22.sp,
-                    modifier = Modifier.padding(horizontal = 8.dp)
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0x660F2938))
                 )
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(
+                            horizontal = 20.dp,
+                            vertical = 14.dp
+                        ),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+
+                    // back button
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.offset(x=(-12).dp)
+                    ) {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back"
+                            )
+                        }
+                        Text(
+                            text = "Back",
+                            color = black,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.clickable { navController.popBackStack() }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // Same title style as Notifications.
+                    Text(
+                        text = "Manage",
+                        fontFamily = FontFamily.SansSerif,
+                        fontSize = 34.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF233B4D)
+                    )
+
+                    // Campsite name, location, and lottery
+                    // status displayed beside one another.
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = campsiteName,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF6B8FA8),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+
+                        Text(
+                            text = " • ",
+                            fontSize = 15.sp,
+                            color = Color(0xFF36454F)
+                        )
+
+                        Text(
+                            text = location,
+                            modifier = Modifier.weight(1f),
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF6B8FA8),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                       StatusBadge(
+                           text = lotteryStatus,
+                           color = statusColor
+                       )
+                    }
+                }
             }
 
-            // Heading, campsite name and location, and lottery status
-            Column {
-                Text(
-                    text = "Manage",
-                    style = MaterialTheme.typography.headlineLarge.copy(
-                        fontSize = 42.sp,
-                        fontWeight = FontWeight.ExtraBold
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = 20.dp,
+                        vertical = 18.dp
                     ),
-                    color = black,
-                    modifier = Modifier
-                        .background(Color.White, RoundedCornerShape(20.dp))
-                        .padding(horizontal = 20.dp, vertical = 8.dp)
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 1.dp
                 )
+            ) {
+                Column {
 
-                Spacer(Modifier.height(8.dp))
+                    // Reservations
+                    MenuOption(
+                        title = "Reservations",
+                        subtitle = "Active, past & cancelled",
+                        icon = Icons.Filled.CalendarMonth,
+                        count = "$activeReservations active"
+                    ) {
+                        openReservations()
+                    }
 
-                Text(
-                    text = "$campsiteName · $location",
-                    color = charcoal,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier
-                        .background(Color.White, RoundedCornerShape(20.dp))
-                        .padding(horizontal = 10.dp, vertical = 1.dp)
-                )
+                    HorizontalDivider(
+                        color = Color(0xFFE1EAF0)
+                    )
 
-                Text(
-                    text = lotteryStatus,
-                    color = white,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .padding(top = 12.dp)
-                        .background(statusColor, RoundedCornerShape(50))
-                        .padding(horizontal = 12.dp, vertical = 4.dp)
-                )
-            }
+                    // Waitlist
+                    MenuOption(
+                        title = "Waitlist",
+                        subtitle = "Entrants in your lottery",
+                        icon = Icons.Filled.Groups,
+                        count = "$entrantCount entrants",
+                        countPill = true
+                    ) {
+                        openWaitlist()
+                    }
 
-            // Menu
-            MenuCard("Reservations", "Active, past & cancelled", "$activeReservations active") {
-                openReservations()
-            }
+                    HorizontalDivider(
+                        color = Color(0xFFE1EAF0)
+                    )
 
-            MenuCard("Waitlist", "Entrants in your lottery", "$entrantCount") {
-                openWaitlist()
-            }
+                    // Sent notifications
+                    MenuOption(
+                        title = "Sent notifications",
+                        subtitle = "Messages sent to entrants",
+                        icon = Icons.Filled.Notifications
+                    ) {
+                        openSentNotifications()
+                    }
 
-            MenuCard("Sent notifications", "Messages sent to entrants", "$sentCount") {
-                open("ownerSentNotifications")
-            }
+                    HorizontalDivider(
+                        color = Color(0xFFE1EAF0)
+                    )
 
-            MenuCard("QR code", "Share a link to your campsite", null) {
-                navController.navigate(Routes.manageQRCode(campsiteId))
+                    // QR code
+                    MenuOption(
+                        title = "QR code",
+                        subtitle = "Share a link to your campsite",
+                        icon = Icons.Filled.QrCode2
+                    ) {
+                        navController.navigate(
+                            Routes.manageQRCode(campsiteId)
+                        )
+                    }
+                }
             }
         }
     }
 }
 
-/**
- * Displays a clickable menu card with a title, subtitle, optional count,
- * and navigation arrow.
- *
- * @param title title displayed on the card
- * @param subtitle short description displayed below the title
- * @param count optional count displayed on the card
- * @param onClick action performed when the card is clicked
- */
 @Composable
-private fun MenuCard(
+private fun MenuOption(
     title: String,
     subtitle: String,
-    count: String?,
+    icon: ImageVector,
+    count: String ? = null,
+    countPill: Boolean = false,
     onClick: () -> Unit
 ) {
-    Card(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            .clickable(onClick = onClick)
+            .padding(
+                horizontal = 16.dp,
+                vertical = 18.dp
+            ),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(18.dp)
+
+        // Icon inside a light-blue pill.
+        Box(
+            modifier = Modifier
+                .size(42.dp)
+                .background(
+                    Color(0xFFCFE7F5),
+                    RoundedCornerShape(12.dp)
+                ),
+            contentAlignment = Alignment.Center
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    color = black,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = subtitle,
-                    color = charcoal,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
-            if (count != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = Color(0xFF245C86),
+                modifier = Modifier.size(23.dp)
+            )
+        }
+
+        // Option title and subtitle.
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 14.dp)
+        ) {
+            Text(
+                text = title,
+                fontFamily = FontFamily.SansSerif,
+                color = Color(0xFF233B4D),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = subtitle,
+                fontFamily = FontFamily.SansSerif,
+                color = Color(0xFF36454F),
+                fontSize = 13.sp,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+
+        // Optional count.
+        if (count != null) {
+            if (countPill) {
                 Text(
                     text = count,
-                    color = black,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(end = 12.dp)
+                    color = Color(0xFF245C86),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .background(
+                            Color(0xFFCFE7F5),
+                            RoundedCornerShape(50)
+                        )
+                        .padding(
+                            horizontal = 10.dp,
+                            vertical = 5.dp
+                        )
+                )
+            } else {
+                Text(
+                    text = count,
+                    color = Color(0xFF233B4D),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
-            Text(text = "›", color = charcoal, fontSize = 28.sp)
         }
+
+        Spacer(modifier = Modifier.width(10.dp))
+
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+            contentDescription = "Open",
+            tint = Color(0xFF536775),
+            modifier = Modifier
+                .size(18.dp)
+                .background(Color.Transparent)
+        )
     }
 }
 
@@ -279,9 +434,8 @@ private fun ManageCampsitePreview() {
         campsiteId = "preview-campsite-id",
         campsiteName = "Mt. Green Camp",
         location = "Banff, AB",
-        lotteryStatus = "No Lottery",
+        lotteryStatus = "Winners Drawn",
         activeReservations = 3,
-        entrantCount = 12,
-        sentCount = 29
+        entrantCount = 12
     )
 }

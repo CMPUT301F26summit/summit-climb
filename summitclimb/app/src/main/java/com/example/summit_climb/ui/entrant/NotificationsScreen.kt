@@ -1,6 +1,8 @@
 package com.example.summit_climb.ui.entrant
 
 import android.text.format.DateUtils
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -44,20 +46,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.summit_climb.data.NotificationRepository
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import com.example.summit_climb.ui.Routes
-import com.example.summit_climb.ui.ScreensBackground
-import com.example.summit_climb.ui.StatusBadge
-import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.ConfirmationNumber
-import androidx.compose.material.icons.filled.EventAvailable
-import androidx.compose.material.icons.filled.ChatBubbleOutline
-import com.example.summit_climb.ui.StatusBadge
 
 
 /**
@@ -78,32 +76,145 @@ fun NotificationsScreen(
     navController: NavController,
     notificationsEnabled: Boolean
 ) {
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        ScreensBackground()
-
-        // the whole screen is one list, so everything scrolls together
-        LazyColumn(
+    if (!notificationsEnabled && controller.notifications.isEmpty()) {
+        Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(Color(0xFFCFE7F5))
                 .statusBarsPadding()
                 .navigationBarsPadding(),
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            contentAlignment = Alignment.Center
         ) {
+            // Back button
+            Row(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(start = 8.dp, top = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = { navController.popBackStack() }
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = black
+                    )
+                }
 
-            // back button
-            item {
+                Text(
+                    text = "Back",
+                    color = black,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.clickable {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.Center)
+                    .padding(horizontal = 28.dp),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 4.dp
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 28.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Smaller notification icon
+                    Box(
+                        modifier = Modifier
+                            .size(46.dp)
+                            .background(
+                                Color(0xFFCFE7F5),
+                                RoundedCornerShape(14.dp)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.NotificationsOff,
+                            contentDescription = "Notifications disabled",
+                            tint = Color(0xFF245C86),
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+
+                    Text(
+                        text = "Notifications Disabled",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF233B4D),
+                        textAlign = TextAlign.Center
+                    )
+
+                    Text(
+                        text = "You have opted out of notifications. You will not receive new notifications.",
+                        fontSize = 14.sp,
+                        color = Color(0xFF526675),
+                        textAlign = TextAlign.Center,
+                        lineHeight = 21.sp
+                    )
+
+                    HorizontalDivider(
+                        color = Color(0xFFE5EDF3),
+                        thickness = 1.dp
+                    )
+
+                    Button(
+                        onClick = {
+                            navController.navigate(Routes.PROFILE)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = lightBlue
+                        ),
+                        contentPadding = PaddingValues(vertical = 13.dp)
+                    ) {
+                        Text(
+                            text = "Turn notifications back on",
+                            color = Color.White,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+            }
+        }
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)
+        ) {
+            // Keep the header separate so notification cards scroll beneath it
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFCFE7F5))
+                    .statusBarsPadding()
+                    .padding(horizontal = 20.dp)
+            ) {
+                // back button
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(top = 8.dp)
+                    modifier = Modifier.offset(x = (-12).dp)
                 ) {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = black
+                            contentDescription = "Back"
                         )
                     }
                     Text(
@@ -113,159 +224,156 @@ fun NotificationsScreen(
                         modifier = Modifier.clickable { navController.popBackStack() }
                     )
                 }
-            }
-
-            // heading and unread count
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = white
-                    ),
-                    elevation = CardDefaults.cardElevation(
-                        defaultElevation = 2.dp
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(2.dp)
-                        ) {
-                            Text(
-                                text = "Notifications",
-                                fontSize = 35.sp,
-                                fontWeight = FontWeight.Bold,
-                                fontFamily = FontFamily.Serif,
-                                color = black
-                            )
-
-                            Text(
-                                text = "Stay Updated on Your Activity",
-                                fontSize = 12.sp,
-                                color = charcoal.copy(alpha = 0.65f)
-                            )
-                        }
-
-                        StatusBadge(
-                            text = "${controller.unreadCount} unread",
-                            color = lightBlue
-                        )
-                    }
-                }
-            }
-
-            item{
+                // heading and unread count
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "Mark all as read",
-                        color = charcoal,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.clickable {
-                            controller.notifications
-                                .filter { !it.read }
-                                .forEach { controller.markRead(it.id) }
-                        }
+                        text = "Notifications",
+                        fontFamily = FontFamily.SansSerif,
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF233B4D)
                     )
-                }
-            }
 
-            if (!notificationsEnabled) {
-                item {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color.White
-                        )
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Text(
-                                text = "Notifications Disabled",
-                                color = charcoal,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-
-                            Text(
-                                text = "You have opted out of notifications. You will not receive new notifications.",
-                                color = charcoal,
-                                fontSize = 14.sp,
-                                textAlign = TextAlign.Center
-                            )
-
-                            Button(
-                                onClick = {
-                                    navController.navigate(Routes.PROFILE)
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(8.dp),
-                                shape = RoundedCornerShape(10.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = lightBlue
-                                )
-                            ) {
-                                Text(
-                                    text = "Turn notifications back on",
-                                    color = black,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // the notifications
-            if (controller.notifications.isEmpty()) {
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 12.dp),
-                        contentAlignment = Alignment.Center
+                    Column(
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = "No notifications yet",
-                            color = black
+                            text = "${controller.unreadCount} unread",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF245C86),
+                            modifier = Modifier
+                                .background(Color.White, RoundedCornerShape(50))
+                                .padding(horizontal = 12.dp, vertical = 2.dp)
+                        )
+
+                        Text(
+                            text = "Mark all as read",
+                            color = Color(0xFF245C86),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.clickable {
+                                controller.notifications
+                                    .filter { !it.read }
+                                    .forEach { notification ->
+                                        controller.markRead(notification.id)
+                                    }
+                            }
                         )
                     }
                 }
-            } else {
-                items(
-                    items = controller.notifications,
-                    key = { it.id }
-                ) { notification ->
-                    NotificationCard(
-                        notification = notification,
-                        onClick = {
-                            if (!notification.read) controller.markRead(notification.id)
-                            controller.destinationFor(notification)?.let { route ->
-                                // only go if that screen exists yet; otherwise the app would crash
-                                if (navController.graph.findNode(route) != null) {
-                                    navController.navigate(route)
+            }
+
+            // The header stays fixed while notification cards scroll
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .navigationBarsPadding(),
+                contentPadding = PaddingValues(
+                    start = 10.dp,
+                    end = 20.dp,
+                    top = 16.dp,
+                    bottom = 24.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (!notificationsEnabled) {
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color.White
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Text(
+                                    text = "Notifications Disabled",
+                                    color = charcoal,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+
+                                Text(
+                                    text = "You have opted out of notifications. You will not receive new notifications.",
+                                    color = charcoal,
+                                    fontSize = 14.sp,
+                                    textAlign = TextAlign.Center
+                                )
+
+                                Button(
+                                    onClick = {
+                                        navController.navigate(Routes.PROFILE)
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(8.dp),
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = lightBlue
+                                    )
+                                ) {
+                                    Text(
+                                        text = "Turn notifications back on",
+                                        color = black,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
                             }
                         }
-                    )
+                    }
+                }
+
+                // the notifications
+                if (controller.notifications.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 150.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No notifications yet",
+                                color = black
+                            )
+                        }
+                    }
+                } else {
+                    items(
+                        items = controller.notifications,
+                        key = { it.id }
+                    ) { notification ->
+                        NotificationCard(
+                            notification = notification,
+                            onClick = {
+                                if (!notification.read) controller.markRead(notification.id)
+                                controller.destinationFor(notification)?.let { route ->
+                                    // only go if that screen exists yet; otherwise the app would crash
+                                    if (navController.graph.findNode(route) != null) {
+                                        navController.navigate(route)
+                                    }
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -285,84 +393,67 @@ private fun NotificationCard(
         NotificationType.MESSAGE -> "New Message"
 
     }
-    // Notifications received within the last 24 hours are labelled NEW.
-    val isNew = System.currentTimeMillis() - notification.timestamp <
-            24 * 60 * 60 * 1000
-
-    val status = when {
-        notification.read -> "READ"
-        isNew -> "NEW"
-        else -> "UNREAD"
-    }
-
-    val icon = when (notification.type) {
-        NotificationType.LOTTERY_WIN -> Icons.Default.EmojiEvents
-        NotificationType.LOTTERY_LOSS -> Icons.Default.ConfirmationNumber
-        NotificationType.RESERVATION_UPDATE -> Icons.Default.EventAvailable
-        NotificationType.MESSAGE -> Icons.Default.ChatBubbleOutline
-    }
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
+        border = BorderStroke(1.dp, Color(0xFFCFE7F5)),
         colors = CardDefaults.cardColors(
-            containerColor = if (notification.read) greyBlue else lightBlue
+            containerColor = if (notification.read) {
+                Color.White
+            } else {
+                Color(0xFFCFE7F5)
+            }
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
+            defaultElevation = 1.dp
         )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            modifier = Modifier.padding(18.dp)
         ) {
+
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = charcoal
+                Text(
+                    text = header,
+                    color = Color(0xFF233B4D),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
                 )
 
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(start = 10.dp)
-                ) {
-                    Text(
-                        text = header,
-                        color = black,
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.titleMedium
-                    )
-
-                    Text(
-                        text = DateUtils.getRelativeTimeSpanString(
-                            notification.timestamp,
-                            System.currentTimeMillis(),
-                            DateUtils.MINUTE_IN_MILLIS
-                        ).toString(),
-                        color = charcoal,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
+                Spacer(modifier = Modifier.weight(1f))
 
                 if (!notification.read) {
-                    StatusBadge(
-                        text = status,
-                        color = charcoal
+                    Text(
+                        text = "NEW",
+                        color = charcoal,
+                        style = MaterialTheme.typography.labelMedium
                     )
                 }
             }
 
+            // smaller notification message
             Text(
                 text = notification.text,
                 color = charcoal,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 10.dp)
+            )
+
+            // notification timestamp
+            Text(
+                text = DateUtils.getRelativeTimeSpanString(
+                    notification.timestamp,
+                    System.currentTimeMillis(),
+                    DateUtils.MINUTE_IN_MILLIS
+                ).toString(),
+                color = charcoal,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 12.dp)
             )
         }
     }
@@ -458,7 +549,7 @@ private fun NotificationsScreenPreview() {
     NotificationsScreen(
         controller = previewController,
         navController = rememberNavController(),
-        notificationsEnabled = true
+        notificationsEnabled = false
     )
 }
 

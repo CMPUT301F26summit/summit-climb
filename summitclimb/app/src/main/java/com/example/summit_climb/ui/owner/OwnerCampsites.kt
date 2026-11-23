@@ -1,4 +1,5 @@
 package com.example.summit_climb.ui.owner
+import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.material3.Scaffold
@@ -24,6 +25,9 @@ import com.example.summit_climb.model.LotteryStatus
 import com.example.summit_climb.ui.ScreensBackground
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 
 import androidx.compose.foundation.lazy.items
 import com.example.summit_climb.ui.charcoal
@@ -33,6 +37,9 @@ import com.example.summit_climb.ui.sonicSilver
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.example.summit_climb.R
 import com.example.summit_climb.ui.Routes
 import com.example.summit_climb.model.Campsite
 
@@ -82,24 +89,32 @@ fun OwnerCampsites(
         }
 
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            ScreensBackground()
+        Box(Modifier
+                .fillMaxSize()
+                .background(Color(0xD8D3E8F3))
+            ) {
+            Image(
+                painter = painterResource(R.drawable.mountain_header),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(150.dp) )
             Column(
                 Modifier
                     .padding(padding)
                     .padding(horizontal = 16.dp)
-            )
+            ) {
+                Spacer(modifier = Modifier.height(55.dp))
 
-            {
                 Text(
                     text = "My Campsites",
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 26.sp,
-                    color = charcoal,
+                    fontSize = 30.sp,
+                    color = Color(0xFF2C4352),
                     modifier = Modifier
                         .padding(top = 24.dp, bottom = 12.dp)
-                        .background(Color.White, RoundedCornerShape(12.dp))
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 )
 
@@ -119,7 +134,7 @@ fun OwnerCampsites(
                 } else {
                     LazyColumn(
                         contentPadding = PaddingValues(bottom = 88.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
                     ) {
                         items(campsites, key = { it.id }) { c ->
                             CampsiteRow(
