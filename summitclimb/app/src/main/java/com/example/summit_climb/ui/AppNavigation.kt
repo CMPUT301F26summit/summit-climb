@@ -248,7 +248,10 @@ fun AppNavigation(
                 NotificationsScreen(
                     controller = notificationController,
                     navController = navController,
-                    notificationsEnabled = profileController.notificationsStatus
+                    notificationsEnabled = profileController.notificationsStatus,
+                    onEnableNotifications = {
+                        profileController.setNotifications(true)
+                    }
                 )
             }
 
