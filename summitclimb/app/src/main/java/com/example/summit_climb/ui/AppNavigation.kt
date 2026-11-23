@@ -282,10 +282,18 @@ fun AppNavigation(
 
             // test
             composable(Routes.OWNER_CAMPSITES) {
+                var myCampsites by remember { mutableStateOf<List<Campsite>>(emptyList()) }
                 val user = searchController
                     .search("", CampsiteFilter())
                     .filter { it.ownerId == currentUserId || it.id.startsWith("sample-") }
-                OwnerCampsites(navController = navController, campsites = user)
+                LaunchedEffect(currentUserId) {
+                    ownerCampsiteController.listCampsites(
+                        currentUserId,
+                        onSuccess = { myCampsites = it },
+                        onFailure = { error -> Log.e("OwnerCampsites", error.message ?: "failed") }
+                    )
+                }
+                OwnerCampsites(navController = navController, campsites = user + myCampsites)
             }
 
             // test

@@ -9,6 +9,7 @@ import com.example.summit_climb.model.ListingStatus
 import com.example.summit_climb.service.ImageService
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
+import com.google.firebase.firestore.toObjects
 
 /**
  * Handles the registation, validation, and editing of campsites
@@ -209,10 +210,25 @@ class OwnerCampsiteController(private val campsiteRepository: CampsiteRepository
      * Lists the campsites that belong to an owner.
      *
      * @param ownerId: ID of the owner
+     * @param onSuccess: decides the outcome when the campsite is listed
+     * @param onFailure: provides a message if unable to list campsite
      * @return the owner's campsites
      */
-    fun listCampsites(ownerId: String): List<Campsite> {
-        return campsiteRepository.searchCampsites("", null).filter { it.ownerId == ownerId }
+    fun listCampsites(
+        ownerId: String,
+        onSuccess: (List<Campsite>) -> Unit,
+        onFailure: (Exception) -> Unit = {}
+    ){
+        currentCamp
+            .whereEqualTo("ownerId", ownerId)
+            .get()
+            .addOnSuccessListener { snapshot ->
+            val campsiteItems = snapshot.toObjects<Campsite>()
+            for (i in campsiteItems.indices)
+                campsiteItems[i].id = snapshot.documents[i].id
+            onSuccess(campsiteItems)
+        }
+            .addOnFailureListener { onFailure(Exception("Unable to list campsites")) }
     }
 
     /**

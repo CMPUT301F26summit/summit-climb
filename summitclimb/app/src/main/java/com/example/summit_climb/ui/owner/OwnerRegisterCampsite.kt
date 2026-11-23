@@ -67,8 +67,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.PickVisualMediaRequest
 import com.example.summit_climb.model.Campsite
 
-// Color Palette
-
 /**
  * Amenity border for an amenity icon.
  *
@@ -148,7 +146,7 @@ fun OwnerRegisterCampsite(
 
     var name by remember { mutableStateOf(campsite.name) }
     var location by remember { mutableStateOf(campsite.location) }
-    var price by remember(campsite.id) { mutableStateOf(campsite.price.toInt().toString()) }
+    var price by remember(campsite.id) { mutableStateOf(campsite.price.toString()) }
     var occupancy by remember { mutableIntStateOf(maxOf(campsite.maxOccupancy, 1)) }
     var description by remember { mutableStateOf(campsite.description) }
     var amenities by remember { mutableStateOf(campsite.amenities.toSet()) }
