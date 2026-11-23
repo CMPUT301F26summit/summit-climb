@@ -55,7 +55,9 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
+import com.example.summit_climb.controller.ProfileController
 import com.example.summit_climb.ui.Routes
+
 
 
 /**
@@ -66,7 +68,6 @@ import com.example.summit_climb.ui.Routes
  * related screens
  *
  * Known Issues:
- *  - Some notifications types do not have navigation destination yet.
  *  - Notifications are not displayed in the phone's notification bar.
  */
 
@@ -74,7 +75,8 @@ import com.example.summit_climb.ui.Routes
 fun NotificationsScreen(
     controller: NotificationController,
     navController: NavController,
-    notificationsEnabled: Boolean
+    notificationsEnabled: Boolean,
+    onEnableNotifications: () -> Unit
 ) {
     if (!notificationsEnabled && controller.notifications.isEmpty()) {
         Box(
@@ -172,9 +174,7 @@ fun NotificationsScreen(
                     )
 
                     Button(
-                        onClick = {
-                            navController.navigate(Routes.PROFILE)
-                        },
+                        onClick = onEnableNotifications,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
@@ -318,9 +318,7 @@ fun NotificationsScreen(
                                 )
 
                                 Button(
-                                    onClick = {
-                                        navController.navigate(Routes.PROFILE)
-                                    },
+                                    onClick = onEnableNotifications,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(8.dp),
@@ -549,7 +547,8 @@ private fun NotificationsScreenPreview() {
     NotificationsScreen(
         controller = previewController,
         navController = rememberNavController(),
-        notificationsEnabled = false
+        notificationsEnabled = false,
+        onEnableNotifications = {}
     )
 }
 

@@ -110,6 +110,20 @@ fun AppNavigation(
     val navController = rememberNavController()
     val profileController: ProfileController = viewModel()
 
+    DisposableEffect(
+        profileController.profileLoaded,
+        profileController.notificationsStatus
+    ) {
+        if (profileController.profileLoaded && profileController.notificationsStatus) {
+            notificationController.startListening()
+        } else {
+            notificationController.stopListening()
+        }
+
+        onDispose {
+            notificationController.stopListening()
+        }
+    }
 
     Scaffold(
         containerColor = Color(0xFFCFE7F5),
@@ -248,7 +262,10 @@ fun AppNavigation(
                 NotificationsScreen(
                     controller = notificationController,
                     navController = navController,
-                    notificationsEnabled = profileController.notificationsStatus
+                    notificationsEnabled = profileController.notificationsStatus,
+                    onEnableNotifications = {
+                        profileController.setNotifications(true)
+                    }
                 )
             }
 
@@ -282,10 +299,18 @@ fun AppNavigation(
 
             // test
             composable(Routes.OWNER_CAMPSITES) {
+                var myCampsites by remember { mutableStateOf<List<Campsite>>(emptyList()) }
                 val user = searchController
                     .search("", CampsiteFilter())
                     .filter { it.ownerId == currentUserId || it.id.startsWith("sample-") }
-                OwnerCampsites(navController = navController, campsites = user)
+                LaunchedEffect(currentUserId) {
+                    ownerCampsiteController.listCampsites(
+                        currentUserId,
+                        onSuccess = { myCampsites = it },
+                        onFailure = { error -> Log.e("OwnerCampsites", error.message ?: "failed") }
+                    )
+                }
+                OwnerCampsites(navController = navController, campsites = user + myCampsites)
             }
 
             // test

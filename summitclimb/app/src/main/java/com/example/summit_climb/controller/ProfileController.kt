@@ -35,6 +35,8 @@ class ProfileController(
     var uploadPhoto by mutableStateOf(false)
 
     var notificationsStatus by mutableStateOf(true)
+
+    var profileLoaded by mutableStateOf(false)
     var deleteStatus by mutableStateOf(false)
 
     init {
@@ -51,6 +53,8 @@ class ProfileController(
         phone = user.phoneNumber
         photoUrl = user.profileImageUrl
         notificationsStatus = !user.notificationsOptedOut
+        profileLoaded = true
+
     }
 
     /**

@@ -81,7 +81,7 @@ fun HomeScreen(navController: NavController) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        ){
 
             Text(
                 text = errorMessage
@@ -107,7 +107,7 @@ fun HomeScreen(navController: NavController) {
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFFE3963E)
                 )
-            ) {
+            ){
                 Text(
                     text = "Login",
                     fontSize = 16.sp)
@@ -134,7 +134,7 @@ fun HomeScreen(navController: NavController) {
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFFE3963E)
                 )
-            ) {
+            ){
                 Text(
                     text = "Sign Up",
                     fontSize = 16.sp)
