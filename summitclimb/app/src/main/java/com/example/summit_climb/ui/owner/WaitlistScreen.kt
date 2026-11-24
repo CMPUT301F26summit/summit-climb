@@ -1,20 +1,30 @@
 
 package com.example.summit_climb.ui.owner
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.summit_climb.R
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 
 import com.example.summit_climb.controller.CampsiteSearchController
 import com.example.summit_climb.controller.OwnerLotteryController
@@ -30,6 +40,7 @@ import com.example.summit_climb.ui.lightOrange
 import com.example.summit_climb.ui.greyBlue
 import com.example.summit_climb.ui.lightBlue
 import com.example.summit_climb.ui.black
+import com.example.summit_climb.ui.theme.screenBackground
 import com.google.firebase.firestore.FirebaseFirestore
 
 import java.text.SimpleDateFormat
@@ -48,7 +59,8 @@ fun WaitlistScreen(
     currentUserId: String,
     searchController: CampsiteSearchController,
     ownerLotteryController: OwnerLotteryController,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    navController: NavController
 ) {
     // Find the lotteries belonging to this campsite.
     val campsiteLotteries = ownerLotteryController
@@ -141,10 +153,17 @@ fun WaitlistScreen(
             .find { it.id == campsiteId }
 
     // Display the screen.
-    Box(
-        modifier = Modifier.fillMaxSize()
+    Box(modifier = Modifier
+            .fillMaxSize()
+            .background(screenBackground)
     ) {
-        ScreensBackground()
+        Image(
+            painter = painterResource(R.drawable.mountain_header),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(150.dp) )
 
         WaitlistContent(
             campsiteName = campsite?.name ?: "Campsite",
@@ -158,6 +177,7 @@ fun WaitlistScreen(
             entrantCount = waitlistEntries.size,
             winnersDrawnDate = "—",
             maxEntrants = selectedLottery?.waitlistCap,
+            navController = navController,
             onBack = onBack,
             onNotifyEntrants = {
                 // TODO: Connect notification functionality.
@@ -173,6 +193,7 @@ fun WaitlistContent(
     lotteryStatus: String,
     entrantCount: Int,
     winnersDrawnDate: String,
+    navController: NavController,
     maxEntrants: Int?,
     onBack: () -> Unit,
     onNotifyEntrants: () -> Unit
@@ -183,44 +204,44 @@ fun WaitlistContent(
             .padding(20.dp)
     ) {
         // Back button.
-        TextButton(
-            onClick = onBack,
-            contentPadding = PaddingValues(0.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.offset(x=(-12).dp)
         ) {
+            IconButton(onClick = { navController.popBackStack() }) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back"
+                )
+            }
             Text(
-                text = "← Back",
+                text = "Back",
+                fontSize = 15.sp,
                 color = black,
-                fontSize = 16.sp
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.clickable { navController.popBackStack() }
             )
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
 
         // Waitlist title in a white box.
-        Surface(
-            color = androidx.compose.ui.graphics.Color.White,
-            shape = RoundedCornerShape(10.dp)
-        ) {
-            Text(
-                text = "Waitlist",
-                modifier = Modifier.padding(
-                    horizontal = 16.dp,
-                    vertical = 8.dp
-                ),
-                color = black,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
+        Text(
+            text = "Waitlist",
+            modifier = Modifier.padding(
+                horizontal = 10.dp,
+                vertical = 8.dp
+            ),
+            color = black,
+            fontSize = 35.sp,
+            fontWeight = FontWeight.Bold
+        )
 
-        Spacer(modifier = Modifier.height(16.dp))
 
         // Campsite information box.
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(
-                containerColor = androidx.compose.ui.graphics.Color.White
+                containerColor = Color.White
             )
         ) {
             Column(
@@ -475,6 +496,7 @@ fun WaitlistScreenPreview() {
         winnersDrawnDate = "—",
         maxEntrants = 10,
         onBack = {},
+        navController = rememberNavController(),
         onNotifyEntrants = {}
     )
 }

@@ -351,9 +351,8 @@ fun AppNavigation(
                     currentUserId = currentUserId,
                     searchController = searchController,
                     ownerLotteryController = ownerLotteryController,
-                    onBack = {
-                        navController.popBackStack()
-                    }
+                    onBack = { navController.popBackStack() },
+                    navController = navController
                 )
             }
 

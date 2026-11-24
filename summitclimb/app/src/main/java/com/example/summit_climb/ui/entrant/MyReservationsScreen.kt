@@ -41,6 +41,7 @@ import androidx.compose.ui.res.painterResource
 import com.example.summit_climb.ui.ScreensBackground
 import com.example.summit_climb.R
 import androidx.compose.ui.Alignment
+import com.example.summit_climb.ui.theme.screenBackground
 
 /**
  * Purpose: the entrant's "My Reservations" tab (US 01.06.01, 01.06.02, 01.07.01).
@@ -118,7 +119,7 @@ fun MyReservationsContent(
     Box(
         Modifier
             .fillMaxSize()
-            .background(Color(0xD8D3E8F3))
+            .background(screenBackground)
     ) {
         Image(
             painter = painterResource(R.drawable.mountain_header),

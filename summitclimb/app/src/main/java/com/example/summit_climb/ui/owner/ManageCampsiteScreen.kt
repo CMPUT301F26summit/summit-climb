@@ -1,6 +1,7 @@
 package com.example.summit_climb.ui.owner
 
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -37,12 +38,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
+import com.example.summit_climb.R
 
 import com.example.summit_climb.ui.charcoal
 import com.example.summit_climb.ui.greyBlue
 import com.example.summit_climb.ui.white
 import com.example.summit_climb.ui.black
 import com.example.summit_climb.ui.*
+import com.example.summit_climb.ui.theme.screenBackground
 
 
 // Displays the owner's management menu for a selected campsite.
@@ -116,8 +122,18 @@ fun ManageCampsiteScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        ScreensBackground()
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .background(screenBackground)
+    ) {
+        Image(
+            painter = painterResource(R.drawable.mountain_header),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(150.dp) )
+
 
         Column(
             modifier = Modifier
@@ -138,7 +154,6 @@ fun ManageCampsiteScreen(
             Row(
                 modifier = Modifier
                     .clickable(onClick = backButton)
-                    .background(Color.White, RoundedCornerShape(20.dp))
                     .padding(horizontal = 6.dp, vertical = 1.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -158,28 +173,27 @@ fun ManageCampsiteScreen(
                 )
             }
 
+            Spacer(modifier = Modifier.height(20.dp))
+
             // Heading, campsite name and location, and lottery status
             Column {
                 Text(
                     text = "Manage",
                     style = MaterialTheme.typography.headlineLarge.copy(
-                        fontSize = 42.sp,
-                        fontWeight = FontWeight.ExtraBold
+                        fontSize = 35.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontFamily = FontFamily.Serif
                     ),
                     color = black,
                     modifier = Modifier
-                        .background(Color.White, RoundedCornerShape(20.dp))
-                        .padding(horizontal = 20.dp, vertical = 8.dp)
+                        .padding(horizontal = 5.dp, vertical = 8.dp)
                 )
-
-                Spacer(Modifier.height(8.dp))
 
                 Text(
                     text = "$campsiteName · $location",
                     color = charcoal,
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier
-                        .background(Color.White, RoundedCornerShape(20.dp))
                         .padding(horizontal = 10.dp, vertical = 1.dp)
                 )
 
