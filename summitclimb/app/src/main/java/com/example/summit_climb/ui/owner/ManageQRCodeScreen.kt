@@ -92,7 +92,6 @@ fun ManageQRCodeScreen(
                 .align(Alignment.TopStart)
                 .padding(start = 10.dp, top = 10.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(Color.White)
                 .padding(horizontal = 4.dp)
         ) {
             BackRow(onBackClick = { navController.popBackStack() })
@@ -114,7 +113,6 @@ fun ManageQRCodeScreen(
                 fontSize = 32.sp,
                 color = Color.Black,
                 modifier = Modifier
-                    .background(Color.White, RoundedCornerShape(12.dp))
                     .padding(horizontal = 16.dp, vertical = 8.dp)
                     .align(Alignment.CenterHorizontally)
             )
@@ -168,9 +166,9 @@ fun ManageQRCodeScreen(
                 color = charcoal,
                 textAlign = TextAlign.Center,
                 fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .fillMaxWidth(0.75f)
-                    .background(Color.White, RoundedCornerShape(16.dp))
                     .padding(horizontal = 16.dp, vertical = 12.dp)
                     .align(Alignment.CenterHorizontally)
             )
