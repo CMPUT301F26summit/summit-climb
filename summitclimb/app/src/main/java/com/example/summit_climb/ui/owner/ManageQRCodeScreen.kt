@@ -37,13 +37,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import com.example.summit_climb.R
 import com.example.summit_climb.service.saveQRCodeToGallery
 
 import com.example.summit_climb.ui.charcoal
 import com.example.summit_climb.ui.entrant.BackRow
 import com.example.summit_climb.ui.greyBlue
+import com.example.summit_climb.ui.theme.screenBackground
 
 
 /**
@@ -73,15 +77,21 @@ fun ManageQRCodeScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxWidth()) {
-        ScreensBackground()
-
+    Box(modifier = Modifier
+        .fillMaxWidth()
+        .background(screenBackground)) {
+        Image(
+            painter = painterResource(R.drawable.mountain_header),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(150.dp) )
         Box(
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(start = 10.dp, top = 10.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(Color.White)
                 .padding(horizontal = 4.dp)
         ) {
             BackRow(onBackClick = { navController.popBackStack() })
@@ -103,7 +113,6 @@ fun ManageQRCodeScreen(
                 fontSize = 32.sp,
                 color = Color.Black,
                 modifier = Modifier
-                    .background(Color.White, RoundedCornerShape(12.dp))
                     .padding(horizontal = 16.dp, vertical = 8.dp)
                     .align(Alignment.CenterHorizontally)
             )
@@ -157,9 +166,9 @@ fun ManageQRCodeScreen(
                 color = charcoal,
                 textAlign = TextAlign.Center,
                 fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .fillMaxWidth(0.75f)
-                    .background(Color.White, RoundedCornerShape(16.dp))
                     .padding(horizontal = 16.dp, vertical = 12.dp)
                     .align(Alignment.CenterHorizontally)
             )

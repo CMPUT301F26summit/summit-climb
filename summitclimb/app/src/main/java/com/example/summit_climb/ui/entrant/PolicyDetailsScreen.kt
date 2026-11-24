@@ -1,6 +1,7 @@
 package com.example.summit_climb.ui.entrant
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,12 +21,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.summit_climb.R
 import com.example.summit_climb.ui.ScreensBackground
 import com.example.summit_climb.ui.charcoal
+import com.example.summit_climb.ui.theme.screenBackground
 
 /**
  * The content for each policy
@@ -100,8 +105,10 @@ fun PolicyDetailsScreen(
 ) {
     val currentPolicy = CURRENT_POLICIES.firstOrNull { it.code == policyCode }
 
-    Box(Modifier.fillMaxSize()) {
-        ScreensBackground()
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .background(screenBackground)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -111,7 +118,6 @@ fun PolicyDetailsScreen(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color.White)
                     .padding(horizontal = 6.dp)
             ) {
                 BackRow(onBackClick = { navController.popBackStack() })
@@ -123,15 +129,8 @@ fun PolicyDetailsScreen(
                     .fillMaxSize()
                     .padding(bottom = 16.dp, start = 12.dp, end = 12.dp)
             ) {
-                Card(
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 64.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    border = BorderStroke(1.dp, charcoal)
-                ) {
-                    Column(
-                        modifier = Modifier
                             .fillMaxWidth()
                             .verticalScroll(rememberScrollState())
                             .padding(24.dp)
@@ -163,6 +162,5 @@ fun PolicyDetailsScreen(
                 }
             }
         }
-    }
 }
 

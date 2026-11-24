@@ -63,6 +63,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import com.example.summit_climb.R
+import com.example.summit_climb.ui.theme.screenBackground
 
 /**
  * The entrant's campsite list screen (Home).
@@ -154,7 +155,7 @@ fun CampsiteListContent(
 
     Box(Modifier
             .fillMaxSize()
-            .background(Color(0xD8D3E8F3))
+            .background(screenBackground)
         ) {
         Image(
             painter = painterResource(R.drawable.mountain_header),

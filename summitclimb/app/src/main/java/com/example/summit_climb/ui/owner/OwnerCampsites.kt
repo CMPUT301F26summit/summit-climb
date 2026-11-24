@@ -42,6 +42,8 @@ import androidx.compose.ui.res.painterResource
 import com.example.summit_climb.R
 import com.example.summit_climb.ui.Routes
 import com.example.summit_climb.model.Campsite
+import com.example.summit_climb.ui.theme.screenBackground
+
 
 
 /**
@@ -91,7 +93,7 @@ fun OwnerCampsites(
     ) { padding ->
         Box(Modifier
                 .fillMaxSize()
-                .background(Color(0xD8D3E8F3))
+                .background(screenBackground)
             ) {
             Image(
                 painter = painterResource(R.drawable.mountain_header),

@@ -46,6 +46,7 @@ import com.example.summit_climb.ui.lightRed
 import com.example.summit_climb.ui.lightOrange
 import com.example.summit_climb.ui.greyBlue
 import com.example.summit_climb.ui.lightBlue
+import com.example.summit_climb.ui.theme.screenBackground
 import com.google.firebase.annotations.concurrent.Background
 
 /**
@@ -108,7 +109,7 @@ fun MyLotteriesContent(
 
     Box(Modifier
         .fillMaxSize()
-        .background(Color(0xD8D3E8F3))
+        .background(screenBackground)
     ) {
         Image(
             painter = painterResource(R.drawable.mountain_header),
