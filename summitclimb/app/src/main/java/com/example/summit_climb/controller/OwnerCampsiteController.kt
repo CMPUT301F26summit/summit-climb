@@ -9,6 +9,7 @@ import com.example.summit_climb.model.ListingStatus
 import com.example.summit_climb.service.ImageService
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
+import com.google.firebase.firestore.toObjects
 
 /**
  * Handles the registation, validation, and editing of campsites
@@ -18,7 +19,6 @@ class OwnerCampsiteController(private val campsiteRepository: CampsiteRepository
     private val currentCamp = Firebase.firestore.collection("campsites")
     private val qrService = QRCodeService()
     private val imageService = ImageService()
-
 
     /**
      * Checks that a campsite's details are valid.
@@ -95,6 +95,35 @@ class OwnerCampsiteController(private val campsiteRepository: CampsiteRepository
                 }
             }
             .addOnFailureListener { onFailure(Exception("Unable to save the campsite")) }
+    }
+
+    /**
+     * Deletes a campsite for the owner
+     *
+     * @param ownerId: ID of the owner making the deletion
+     * @param campsiteId: campsite that will be deleted
+     * @param onSuccess: decides outcome if changes are deleted successfully
+     * @param onFailure: appears on failure to delete
+     * @return a message if something failed or null
+     */
+    fun deleteCampsite(
+        ownerId: String,
+        campsiteId: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        val storedCampsite = campsiteRepository.getCampsite(campsiteId)
+        if (storedCampsite == null) {
+            onFailure(Exception("Campsite not found"))
+            return
+        }
+
+        currentCamp.document(campsiteId).delete()
+            .addOnSuccessListener {
+                imageService.delete(storedCampsite.promoImageUrl)
+                onSuccess()
+            }
+            .addOnFailureListener { onFailure(Exception("Unable to delete campsite")) }
     }
 
     /**
@@ -181,10 +210,25 @@ class OwnerCampsiteController(private val campsiteRepository: CampsiteRepository
      * Lists the campsites that belong to an owner.
      *
      * @param ownerId: ID of the owner
+     * @param onSuccess: decides the outcome when the campsite is listed
+     * @param onFailure: provides a message if unable to list campsite
      * @return the owner's campsites
      */
-    fun listCampsites(ownerId: String): List<Campsite> {
-        return campsiteRepository.searchCampsites("", null).filter { it.ownerId == ownerId }
+    fun listCampsites(
+        ownerId: String,
+        onSuccess: (List<Campsite>) -> Unit,
+        onFailure: (Exception) -> Unit = {}
+    ){
+        currentCamp
+            .whereEqualTo("ownerId", ownerId)
+            .get()
+            .addOnSuccessListener { snapshot ->
+            val campsiteItems = snapshot.toObjects<Campsite>()
+            for (i in campsiteItems.indices)
+                campsiteItems[i].id = snapshot.documents[i].id
+            onSuccess(campsiteItems)
+        }
+            .addOnFailureListener { onFailure(Exception("Unable to list campsites")) }
     }
 
     /**

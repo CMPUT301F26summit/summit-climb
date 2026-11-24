@@ -31,7 +31,7 @@ import com.example.summit_climb.controller.OwnerLotteryController
 import com.example.summit_climb.model.CampsiteFilter
 import com.example.summit_climb.model.LotteryStatus
 import com.example.summit_climb.model.WaitlistEntry
-import com.example.summit_climb.ui.ScreensBackground
+import com.example.summit_climb.controller.NotificationController
 
 import com.example.summit_climb.ui.charcoal
 import com.example.summit_climb.ui.lightGreen
@@ -60,7 +60,8 @@ fun WaitlistScreen(
     searchController: CampsiteSearchController,
     ownerLotteryController: OwnerLotteryController,
     onBack: () -> Unit,
-    navController: NavController
+    navController: NavController,
+    notificationController: NotificationController,
 ) {
     // Find the lotteries belonging to this campsite.
     val campsiteLotteries = ownerLotteryController
@@ -179,8 +180,13 @@ fun WaitlistScreen(
             maxEntrants = selectedLottery?.waitlistCap,
             navController = navController,
             onBack = onBack,
-            onNotifyEntrants = {
-                // TODO: Connect notification functionality.
+            onSendNotification = { title, message ->
+                notificationController.sendToEntrants(
+                    campsiteId = campsiteId,
+                    recipientIds = waitlistEntries.map { it.entrantId },
+                    title = title,
+                    message = message
+                )
             }
         )
     }
@@ -196,8 +202,10 @@ fun WaitlistContent(
     navController: NavController,
     maxEntrants: Int?,
     onBack: () -> Unit,
-    onNotifyEntrants: () -> Unit
+    onSendNotification: (String, String) -> Unit
 ) {
+    var showNotifySheet by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -309,37 +317,14 @@ fun WaitlistContent(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = entrantCount.toString(),
+                        text = "$entrantCount / ${maxEntrants ?: "—"}",
                         color = charcoal,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold
                     )
 
                     Text(
-                        text = "Entrants",
-                        color = charcoal,
-                        fontSize = 13.sp
-                    )
-                }
-
-                VerticalDivider(
-                    modifier = Modifier.height(45.dp),
-                    color = greyBlue,
-                    thickness = 1.dp
-                )
-
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = maxEntrants?.toString() ?: "—",
-                        color = charcoal,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Text(
-                        text = "Maximum Entrants",
+                        text = "Entrants Joined",
                         color = charcoal,
                         fontSize = 13.sp
                     )
@@ -410,7 +395,7 @@ fun WaitlistContent(
             )
         ) {
             Button(
-                onClick = onNotifyEntrants,
+                onClick = { showNotifySheet = true },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(8.dp),
@@ -423,6 +408,89 @@ fun WaitlistContent(
                     text = "Notify Entrants",
                     color = black,
                     fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+    if (showNotifySheet) {
+        NotifyEntrantsSheet(
+            entrantCount = entrantCount,
+            onDismiss = { showNotifySheet = false },
+            onSend= { title, message ->
+                onSendNotification(title, message)
+                showNotifySheet = false
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NotifyEntrantsSheet(
+    entrantCount: Int,
+    onDismiss: () -> Unit,
+    onSend: (String, String) -> Unit
+) {
+    var title by remember { mutableStateOf("") }
+    var message by remember { mutableStateOf("") }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = screenBackground
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
+                .navigationBarsPadding(),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Notify Entrants",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = black
+            )
+
+            Text(
+                text = "To: All $entrantCount entrants",
+                color = charcoal,
+                fontWeight = FontWeight.Bold
+            )
+
+            OutlinedTextField(
+                value = title,
+                onValueChange = { title = it },
+                label = { Text("Title") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            OutlinedTextField(
+                value = message,
+                onValueChange = { message = it },
+                label = { Text("Message") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 120.dp)
+            )
+
+            Button(
+                onClick = {
+                    onSend(title.trim(), message.trim())
+                },
+                enabled = title.isNotBlank() &&
+                        message.isNotBlank() &&
+                        entrantCount > 0,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = lightBlue
+                )
+            ) {
+                Text(
+                    text = "Send to $entrantCount entrants",
+                    color = black,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -497,6 +565,6 @@ fun WaitlistScreenPreview() {
         maxEntrants = 10,
         onBack = {},
         navController = rememberNavController(),
-        onNotifyEntrants = {}
+        onSendNotification = { _, _ -> }
     )
 }

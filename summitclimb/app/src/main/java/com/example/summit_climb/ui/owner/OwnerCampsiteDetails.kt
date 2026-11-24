@@ -61,7 +61,49 @@ import com.example.summit_climb.model.Campsite
 import com.example.summit_climb.ui.AvailabilityCalendar
 import com.example.summit_climb.ui.entrant.AmenityBorder
 import com.example.summit_climb.ui.entrant.amenityDrawables
+import com.example.summit_climb.model.ListingStatus
+/**
+ * Campsite Listing Badge
+ *
+ * US 02.01.01, US 02.03.01
+ *
+ * Displays a badge for a newly registered campsite listing (declined or pending)
+ * Approved listings do not need a badge
+ *
+ * @param status the listing status for a newly registered campsite
+ */
 
+@Composable
+fun ListingStatusBadge(status: ListingStatus) {
+    val statusText = when (status) {
+        ListingStatus.PENDING -> "Pending"
+        ListingStatus.REJECTED -> "Declined"
+        else -> return
+    }
+
+    val statusColor = when (status) {
+        ListingStatus.PENDING -> beige
+        ListingStatus.REJECTED -> lightRed
+    }
+
+    val statusTextColor =
+        if (status == ListingStatus.PENDING)
+            sonicSilver
+        else
+            Color.White
+
+    Box(
+        Modifier
+            .background(statusColor, RoundedCornerShape(10.dp))
+    ){
+        Text(
+            text = statusText,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp),
+            fontSize = 11.sp,
+            color = statusTextColor
+        )
+    }
+}
 /**
  * Campsite detail screen for an owner's campsite listing.
  *
@@ -77,6 +119,7 @@ import com.example.summit_climb.ui.entrant.amenityDrawables
  * @param campsite campsite model
  * @param lotteryStatus the lottery status for this campsite, or null if it has no lottery
  */
+
 @Composable
 fun OwnerCampsiteDetails(
     navController: NavController,
@@ -179,7 +222,7 @@ fun OwnerCampsiteDetails(
 
                         Row(verticalAlignment = Alignment.Bottom) {
                             Text(
-                                text = "$${campsite.price.toInt()}",
+                                text = "$${"%.2f".format(campsite.price)}",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp
                             )
@@ -189,6 +232,11 @@ fun OwnerCampsiteDetails(
                                 fontSize = 15.sp,
                                 modifier = Modifier.padding(bottom = 2.dp)
                             )
+                        }
+
+                        if (campsite.id.isNotBlank()) {
+                            Spacer(Modifier.height(6.dp))
+                            ListingStatusBadge(campsite.listingStatus)
                         }
                     }
 
@@ -265,6 +313,7 @@ fun OwnerCampsiteDetails(
                                 null,
                                 Modifier.size(14.dp)
                             )
+
 
                             val rating =
                                 if (campsite.ratings.isEmpty())

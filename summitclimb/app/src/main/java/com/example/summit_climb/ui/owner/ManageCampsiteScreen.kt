@@ -74,7 +74,6 @@ import com.example.summit_climb.ui.theme.screenBackground
  * @param lotteryStatus current lottery status
  * @param activeReservations number of active reservations
  * @param entrantCount number of people on the waitlist
- * @param sentCount number of notifications sent
  */
 @Composable
 fun ManageCampsiteScreen(
@@ -85,14 +84,13 @@ fun ManageCampsiteScreen(
     lotteryStatus: String,
     activeReservations: Int,
     entrantCount: Int,
-    sentCount: Int
 ) {
     val context = LocalContext.current
 
     // opens a screen if its route exists, otherwise tells the user it is coming
-    fun open(route: String) {
-        if (navController.graph.findNode(route) != null) {
-            navController.navigate(route)
+    fun openSentNotifications() {
+        if (navController.graph.findNode(Routes.OWNER_SENT_NOTIFICATIONS) != null) {
+            navController.navigate(Routes.ownerSentNotifications(campsiteId))
         } else {
             Toast.makeText(context, "Coming soon", Toast.LENGTH_SHORT).show()
         }
@@ -218,8 +216,8 @@ fun ManageCampsiteScreen(
                 openWaitlist()
             }
 
-            MenuCard("Sent notifications", "Messages sent to entrants", "$sentCount") {
-                open("ownerSentNotifications")
+            MenuCard("Sent notifications", "Messages sent to entrants", null) {
+                openSentNotifications()
             }
 
             MenuCard("QR code", "Share a link to your campsite", null) {
@@ -295,7 +293,6 @@ private fun ManageCampsitePreview() {
         location = "Banff, AB",
         lotteryStatus = "No Lottery",
         activeReservations = 3,
-        entrantCount = 12,
-        sentCount = 29
+        entrantCount = 12
     )
 }

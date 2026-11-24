@@ -4,6 +4,7 @@ import com.example.summit_climb.controller.NotificationController
 import com.example.summit_climb.data.NotificationRepository
 import com.example.summit_climb.model.Notification
 import com.example.summit_climb.model.NotificationType
+import com.example.summit_climb.ui.Routes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -221,12 +222,12 @@ class NotificationControllerTest {
     }
 
     @Test
-    fun reservationUpdateHasNoDestination() {
+    fun reservationUpdateOpensMyReservations() {
         val repository = FakeRepository()
         val controller = NotificationController(repository) { "user123" }
 
         val notification = Notification(type = NotificationType.RESERVATION_UPDATE)
 
-        assertNull(controller.destinationFor(notification))
+        assertEquals(Routes.MY_RESERVATIONS, controller.destinationFor(notification))
     }
 }
