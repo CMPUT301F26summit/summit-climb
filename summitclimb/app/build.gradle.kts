@@ -74,5 +74,4 @@ dependencies {
     implementation("io.coil-kt.coil3:coil-compose:3.6.0")
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.6.0")
     implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
-
 }
