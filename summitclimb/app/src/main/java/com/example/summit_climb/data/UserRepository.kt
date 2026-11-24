@@ -5,7 +5,6 @@ import com.example.summit_climb.model.AccountStatus
 import com.example.summit_climb.model.User
 import com.google.firebase.firestore.FirebaseFirestore
 
-
 /**
  * Handles the Firestore operations for user profiles.
  * Firestore stores users in a `users` collection.
@@ -25,16 +24,15 @@ import com.google.firebase.firestore.FirebaseFirestore
  */
 class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getInstance()) {
     private val userRef = db.collection("users")
-
     //private val imageService = ImageService()
     private val _users = mutableStateListOf<User>()
 
     // Every user in Firestore. Updates automatically. Used by the admin screens.
     val users: List<User> = _users
 
-    init {
+    init{
         userRef.addSnapshotListener { snapshot, error ->
-            if (error != null) {
+            if (error != null){
                 return@addSnapshotListener
             }
             _users.clear()
@@ -57,13 +55,14 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
     fun getUser(
         deviceId: String,
         onResult: (User) -> Unit
-    ) {
+    ){
         userRef.document(deviceId).get().addOnSuccessListener { document ->
             val exist = document.toObject(User::class.java)
-            if (exist != null) {
+            if (exist != null){
                 // User already exists
                 onResult(exist)
-            } else {
+            }
+            else{
                 val newUser = User(userId = deviceId)
                 userRef.document(deviceId).set(newUser)
                 onResult(newUser)
@@ -77,7 +76,7 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
      */
     fun saveProfile(
         user: User
-    ) {
+    ){
         userRef.document(user.userId).set(user)
     }
 
@@ -87,9 +86,9 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
      * @param optOut: `true` to stop notifications, `false` to receive them.
      */
     fun updateNotificationOpt(
-        userId: String,
+        userId:String,
         optOut: Boolean
-    ) {
+    ){
         userRef.document(userId).update("notificationsOptedOut", optOut)
     }
 
@@ -99,18 +98,18 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
      * @param user: user to be deleted.
      *
     fun deleteUser(
-    user: User
+        user: User
     ){
-    lotteryRepository.getUserEntries(user.userId){ entries ->
-    entries.forEach{ entry ->
-    lotteryRepository.removeWaitlistEntry(entry)
-    }
-    }
+        lotteryRepository.getUserEntries(user.userId){ entries ->
+            entries.forEach{ entry ->
+                lotteryRepository.removeWaitlistEntry(entry)
+            }
+        }
 
-    if (user.profileImageUrl.isNotBlank()){
-    imageService.deleteImage(user.profileImageUrl)
-    }
-    userRef.document(user.userId).delete()
+        if (user.profileImageUrl.isNotBlank()){
+            imageService.deleteImage(user.profileImageUrl)
+        }
+        userRef.document(user.userId).delete()
     }*/
 
     /**
@@ -123,9 +122,9 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
      * @return the matching users.
      */
     fun searchUsers(
-        searchText: String,
+        searchText:String,
         status: AccountStatus?
-    ): List<User> {
+    ):List<User> {
         return _users.filter { user ->
             val nameMatch = user.name.contains(searchText.trim(), ignoreCase = true)
             val emailMatch = user.email.contains(searchText.trim(), ignoreCase = true)
@@ -142,8 +141,7 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
     fun updateStatus(
         userId: String,
         status: AccountStatus
-    ) {
+    ){
         userRef.document(userId).update("accountStatus", status.name)
     }
 }
-
