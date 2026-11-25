@@ -78,6 +78,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.PickVisualMediaRequest
 import com.example.summit_climb.model.Campsite
 import android.util.Log
+import androidx.compose.runtime.LaunchedEffect
+import com.example.summit_climb.controller.ReservationController
 import java.time.LocalDate
 import com.example.summit_climb.ui.AvailabilityCalendar
 
@@ -162,6 +164,7 @@ private fun AmenityBorder(
  * @param imageService imaging service that handles images to url
  * @param saveCampsite saving campsite details after editing
  * @param deleteCampsite deleting campsite instead of editing listing
+ * @param reservationController reservation controller for reserved functionalities
  */
 @Composable
 fun OwnerEditCampsite(
@@ -170,7 +173,8 @@ fun OwnerEditCampsite(
     campsite: Campsite,
     imageService: ImageService = ImageService(),
     saveCampsite: (Campsite) -> Unit = {},
-    deleteCampsite: (Campsite) -> Unit = {}
+    deleteCampsite: (Campsite) -> Unit = {},
+    reservationController: ReservationController? = null
 ){
     val backButton = { navController.popBackStack(); Unit }
 
@@ -197,10 +201,25 @@ fun OwnerEditCampsite(
         )
     }
 
-    val bookedDates = remember(campsite.bookedDates) {
-        campsite.bookedDates
-            .mapNotNull { runCatching { LocalDate.parse(it) }.getOrNull() }
-            .toSet()
+    var bookedDates by remember { mutableStateOf(setOf<LocalDate>()) }
+
+    LaunchedEffect(campsite.id) {
+        reservationController?.getBookedDates(
+            campsite.id,
+            { ranges ->
+                val days = mutableSetOf<LocalDate>()
+                for ((checkIn, checkOut) in ranges) {
+                    var day = LocalDate.parse(checkIn)
+                    val last = LocalDate.parse(checkOut)
+                    while (day < last) {
+                        days.add(day)
+                        day = day.plusDays(1)
+                    }
+                }
+                bookedDates = days
+            },
+            { }
+        )
     }
 
     Box(
