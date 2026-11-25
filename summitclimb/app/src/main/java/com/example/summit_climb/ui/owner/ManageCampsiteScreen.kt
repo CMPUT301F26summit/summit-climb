@@ -240,10 +240,10 @@ fun ManageCampsiteScreen(
                             overflow = TextOverflow.Ellipsis
                         )
 
-                       StatusBadge(
-                           text = lotteryStatus,
-                           color = statusColor
-                       )
+                        StatusBadge(
+                            text = lotteryStatus,
+                            color = statusColor
+                        )
                     }
                 }
             }

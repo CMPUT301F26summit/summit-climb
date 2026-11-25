@@ -13,6 +13,7 @@ import com.example.summit_climb.controller.EntrantLotteryController
 import com.example.summit_climb.controller.NotificationController
 import com.example.summit_climb.controller.OwnerCampsiteController
 import com.example.summit_climb.controller.OwnerLotteryController
+import com.example.summit_climb.controller.OwnerNotificationController
 import com.example.summit_climb.data.CampsiteRepository
 import com.example.summit_climb.data.FirestoreLotteryRepository
 import com.example.summit_climb.data.FirestoreNotificationRepository
@@ -23,6 +24,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.example.summit_climb.controller.OwnerReservationController
 import com.example.summit_climb.data.FirestoreReservationRepository
+import com.example.summit_climb.controller.ReservationController
 
 
 class MainActivity : ComponentActivity() {
@@ -47,10 +49,18 @@ class MainActivity : ComponentActivity() {
             FirebaseAuth.getInstance().currentUser?.uid
         }
 
+        val ownerNotificationController = OwnerNotificationController(
+            notificationRepository = notificationRepository
+        )
+
         val reservationRepository = FirestoreReservationRepository(db)
         val reservationController = OwnerReservationController(
             repository = reservationRepository,
             notificationRepository = notificationRepository
+        )
+
+        val entrantReservationController = ReservationController(
+            repository = reservationRepository
         )
 
         window.statusBarColor = android.graphics.Color.rgb(225, 241, 250)
@@ -69,7 +79,9 @@ class MainActivity : ComponentActivity() {
                     ownerCampsiteController = OwnerCampsiteController(campsiteRepository),
                     notificationController = notificationController,
                     reservationController = reservationController,
-                    ownerLotteryController = ownerLotteryController
+                    ownerLotteryController = ownerLotteryController,
+                    entrantReservationController = entrantReservationController,
+                    ownerNotificationController = ownerNotificationController
                 )
             }
         }

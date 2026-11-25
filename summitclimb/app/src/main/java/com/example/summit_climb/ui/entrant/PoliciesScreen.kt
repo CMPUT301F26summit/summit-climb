@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontFamily
 import com.example.summit_climb.ui.ScreensBackground
 import com.example.summit_climb.ui.charcoal
 import com.example.summit_climb.ui.greyBlue
+import com.example.summit_climb.ui.theme.screenBackground
 
 /**
  * Purpose: directs users to each of the policies and guidelines for the app
@@ -41,7 +42,7 @@ fun PoliciesScreen(
 ) {
     Box(modifier = Modifier
         .fillMaxSize()
-        .background(Color(0xFFF4F8FB))
+        .background(screenBackground)
     ) {
 
         Column(
@@ -54,14 +55,10 @@ fun PoliciesScreen(
 
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color.White)
                     .padding(horizontal = 6.dp)
             ) {
                 BackRow(onBackClick = { navController.popBackStack() })
             }
-
-            Spacer(modifier = Modifier.height(10.dp))
 
             PolicyTitle("Legal")
             PolicySection(TERMS_OF_SERVICE, navController)
@@ -132,7 +129,6 @@ fun PolicyTitle(
     Text(
         text = title,
         modifier = Modifier
-            .background(Color.White, shape = RoundedCornerShape(12.dp))
             .padding(horizontal = 6.dp, vertical = 6.dp),
         fontFamily = FontFamily.Serif,
         fontWeight = FontWeight.Bold,

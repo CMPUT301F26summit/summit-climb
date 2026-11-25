@@ -35,7 +35,8 @@ class OwnerReservationController(
         entrantId: String,
         campsiteId: String,
         onSuccess: () -> Unit, // If the reservation is rejected successfully
-        onFailure: (Exception) -> Unit // Error message if failure to reject
+        onFailure: (Exception) -> Unit, // Error message if failure to reject
+        campsiteName: String = "your campsite"
     ){
         repository.rejectReservation(
             reservationId = reservationId,
@@ -49,7 +50,7 @@ class OwnerReservationController(
                         recipientId = entrantId,
                         type = NotificationType.RESERVATION_UPDATE,
                         title = "Reservation Rejected",
-                        text = "Your reservation for ${campsiteId} has been rejected.",
+                        text = "Your reservation for $campsiteName has been rejected.",
                         campsiteId = campsiteId,
                         relatedId = reservationId
                     )

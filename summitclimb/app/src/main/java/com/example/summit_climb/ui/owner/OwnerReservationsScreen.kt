@@ -33,12 +33,14 @@ data class ReservationUiItem(
     val guests: Int,
     val status: String,
     val entrantId: String = "",
-    val campsiteId: String = ""
+    val campsiteId: String = "",
+    val campsiteName: String = ""
 )
 
 @Composable
 fun OwnerReservationsFromFirestore(
     campsiteId: String,
+    campsiteName: String,
     controller: OwnerReservationController,
     onReservationClick: (String) -> Unit,
     onBackClick: () -> Unit
@@ -62,6 +64,7 @@ fun OwnerReservationsFromFirestore(
                         guests = reservation.guests,
                         entrantId = reservation.entrantId,
                         campsiteId = reservation.campsiteId,
+                        campsiteName = campsiteName,
 
                         status = if (
                             reservation.status == "ACTIVE" &&
@@ -104,6 +107,7 @@ fun OwnerReservationsFromFirestore(
                         reservationId = reservation.id,
                         entrantId = reservation.entrantId,
                         campsiteId = reservation.campsiteId,
+                        campsiteName = reservation.campsiteName,
 
                         onSuccess = { loadReservations() },
                         onFailure = { exception ->
@@ -143,8 +147,8 @@ fun OwnerReservationsScreen(
         }
     }
 
-    val backgroundColor = Color(0xFFE6E6E6)
-    val tabBackground = Color(0xFFD6D5D2)
+    val backgroundColor = Color(0xFFDEE7E7)
+    val tabBackground = Color(0xFFFFFFFF)
     val textColor = Color(0xFF1E1E1E)
 
     Column(
@@ -458,7 +462,7 @@ private fun ReservationCard(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = "${reservation.dates} · ${reservation.guests} guests",
+                        text = "${reservation.dates} · ${reservation.guests} ${if (reservation.guests == 1) "guest" else "guests"}",
                         fontSize = 18.sp,
                         color = Color(0xFF777777),
                         maxLines = 2
@@ -507,33 +511,34 @@ private fun ReservationCard(
                     }
                 }
             }
-
             if (isActive) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    OutlinedButton(
-                        onClick = onReject,
-                        shape = RoundedCornerShape(50.dp),
-                        border = BorderStroke(
-                            1.dp,
-                            Color(0xFFBD3C32)
-                        ),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = Color(0xFFBD3C32)
-                        ),
-                        contentPadding = PaddingValues(
-                            horizontal = 16.dp,
-                        ),
-                        modifier = Modifier.height(32.dp)
-                    ) {
+                    TextButton(onClick = onClick) {
                         Text(
-                            text = "Reject",
-                            fontSize = 17.sp,
+                            text = "View Details",
+                            color = Color(0xFF245C86)
                         )
+                    }
+
+                    if (isActive) {
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        OutlinedButton(
+                            onClick = onReject,
+                            shape = RoundedCornerShape(50.dp),
+                            border = BorderStroke(1.dp, Color(0xFFBD3C32)),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = Color(0xFFBD3C32)
+                            )
+                        ) {
+                            Text("Reject")
+                        }
                     }
                 }
             }

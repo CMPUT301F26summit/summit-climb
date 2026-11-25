@@ -1,4 +1,3 @@
-
 package com.example.summit_climb.ui.owner
 
 import androidx.compose.foundation.Image
@@ -175,7 +174,9 @@ fun WaitlistScreen(
                 else -> "No Lottery"
             },
             entrantCount = waitlistEntries.size,
-            winnersDrawnDate = "—",
+            winnersDrawnDate = selectedLottery?.registrationEnd?.let {
+                SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(it))
+            } ?: "—",
             maxEntrants = selectedLottery?.waitlistCap,
             onBack = onBack,
             onSendNotification = { title, message ->
@@ -193,16 +194,16 @@ fun WaitlistScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WaitlistContent(
-        campsiteName: String,
-        location: String,
-        entrants: List<Entrant>,
-        lotteryStatus: String,
-        entrantCount: Int,
-        winnersDrawnDate: String,
-        maxEntrants: Int?,
-        onBack: () -> Unit,
-        onSendNotification: (String, String) -> Unit
-    ) {
+    campsiteName: String,
+    location: String,
+    entrants: List<Entrant>,
+    lotteryStatus: String,
+    entrantCount: Int,
+    winnersDrawnDate: String,
+    maxEntrants: Int?,
+    onBack: () -> Unit,
+    onSendNotification: (String, String) -> Unit
+) {
     // Controls whether the notification panel is visible
     var showNotifySheet by remember { mutableStateOf(false) }
 
@@ -387,7 +388,7 @@ fun WaitlistContent(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "—",
+                            text = winnersDrawnDate,
                             color = Color(0xFF496B83),
                             fontSize = 26.sp,
                             fontWeight = FontWeight.Bold
@@ -705,59 +706,59 @@ fun WaitlistContent(
     }
 }
 @Composable
-    fun EntrantRow(
-            entrant: Entrant
-        ) {
-        Row(
+fun EntrantRow(
+    entrant: Entrant
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Entrant initials.
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .size(42.dp)
+                .background(
+                    color = lightBlue,
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.Center
         ) {
-            // Entrant initials.
-            Box(
-                modifier = Modifier
-                    .size(42.dp)
-                    .background(
-                        color = lightBlue,
-                        shape = CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                val initials = entrant.name
-                    .split(" ")
-                    .filter { it.isNotBlank() }
-                    .take(2)
-                    .joinToString("") {
-                        it.first().uppercase()
-                    }
+            val initials = entrant.name
+                .split(" ")
+                .filter { it.isNotBlank() }
+                .take(2)
+                .joinToString("") {
+                    it.first().uppercase()
+                }
 
-                Text(
-                    text = initials,
-                    color = black,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+            Text(
+                text = initials,
+                color = black,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
 
-            Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(12.dp))
 
-            Column {
-                Text(
-                    text = entrant.name,
-                    color = charcoal,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
+        Column {
+            Text(
+                text = entrant.name,
+                color = charcoal,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold
+            )
 
-                Text(
-                    text = "Joined ${entrant.joinedDate}",
-                    color = charcoal,
-                    fontSize = 12.sp
-                )
-            }
+            Text(
+                text = "Joined ${entrant.joinedDate}",
+                color = charcoal,
+                fontSize = 12.sp
+            )
         }
     }
+}
 
 @Preview(showBackground = true)
 @Composable
@@ -774,10 +775,9 @@ fun WaitlistScreenPreview() {
         ),
         lotteryStatus = "Lottery Open",
         entrantCount = 12,
-        winnersDrawnDate = "—",
+        winnersDrawnDate = "Nov 24",
         maxEntrants = 50,
         onBack = {},
         onSendNotification = { _, _ -> }
     )
 }
-

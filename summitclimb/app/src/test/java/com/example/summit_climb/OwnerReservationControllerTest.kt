@@ -83,6 +83,8 @@ class OwnerReservationControllerTest {
                 startDate: String,
                 endDate: String,
                 guests: Int,
+                totalPrice: Double?,
+                rulesAccepted: Boolean?,
                 onSuccess: () -> Unit,
                 onFailure: (Exception) -> Unit
             ) {
@@ -95,6 +97,14 @@ class OwnerReservationControllerTest {
                 onFailure: (Exception) -> Unit
             ) {
                 onSuccess()
+            }
+
+            override fun getReservationsByEntrant(
+                entrantId: String,
+                onSuccess: (List<Reservation>) -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess(emptyList())
             }
         }
 
@@ -131,6 +141,14 @@ class OwnerReservationControllerTest {
                 onSuccess(emptyList())
             }
 
+            override fun getReservationsByEntrant(
+                entrantId: String,
+                onSuccess: (List<Reservation>) -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess(emptyList())
+            }
+
             override fun rejectReservation(
                 reservationId: String,
                 onSuccess: () -> Unit,
@@ -146,6 +164,8 @@ class OwnerReservationControllerTest {
                 startDate: String,
                 endDate: String,
                 guests: Int,
+                totalPrice: Double?,
+                rulesAccepted: Boolean?,
                 onSuccess: () -> Unit,
                 onFailure: (Exception) -> Unit
             ) {
@@ -194,6 +214,14 @@ class OwnerReservationControllerTest {
                 onSuccess(emptyList())
             }
 
+            override fun getReservationsByEntrant(
+                entrantId: String,
+                onSuccess: (List<Reservation>) -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess(emptyList())
+            }
+
             override fun rejectReservation(
                 reservationId: String,
                 onSuccess: () -> Unit,
@@ -209,6 +237,8 @@ class OwnerReservationControllerTest {
                 startDate: String,
                 endDate: String,
                 guests: Int,
+                totalPrice: Double?,
+                rulesAccepted: Boolean?,
                 onSuccess: () -> Unit,
                 onFailure: (Exception) -> Unit
             ) {
@@ -268,6 +298,14 @@ class OwnerReservationControllerTest {
                 onSuccess(emptyList())
             }
 
+            override fun getReservationsByEntrant(
+                entrantId: String,
+                onSuccess: (List<Reservation>) -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess(emptyList())
+            }
+
             override fun rejectReservation(
                 reservationId: String,
                 onSuccess: () -> Unit,
@@ -283,6 +321,8 @@ class OwnerReservationControllerTest {
                 startDate: String,
                 endDate: String,
                 guests: Int,
+                totalPrice: Double?,
+                rulesAccepted: Boolean?,
                 onSuccess: () -> Unit,
                 onFailure: (Exception) -> Unit
             ) {
