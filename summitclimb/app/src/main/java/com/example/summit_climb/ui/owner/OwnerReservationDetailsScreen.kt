@@ -31,7 +31,8 @@ fun OwnerReservationDetailsScreen(
     rulesAccepted: Boolean?,
     onMessageClick: (String) -> Unit,
     onRejectClick: () -> Unit,
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    onConversationClick: (() -> Unit)? = null
 ) {
     var showRejectDialog by remember { mutableStateOf(false) }
     var showMessageDialog by remember { mutableStateOf(false) }
@@ -143,7 +144,13 @@ fun OwnerReservationDetailsScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             Button(
-                onClick = { showMessageDialog = true },
+                onClick = {
+                    if (onConversationClick != null) {
+                        onConversationClick()
+                    } else {
+                        showMessageDialog = true
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),

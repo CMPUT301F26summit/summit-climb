@@ -72,6 +72,8 @@ import com.example.summit_climb.ui.lightOrange
 import com.example.summit_climb.ui.greyBlue
 import com.example.summit_climb.ui.lightBlue
 import com.example.summit_climb.ui.noLotteryGrey
+
+import com.example.summit_climb.ui.Routes
 /**
  * The entrant's campsite details screen (US 01.01.05, 01.01.06, 01.02.01, 01.02.02, 01.13.01).
  * Styled like the owner's details screen ([com.example.summit_climb.ui.owner.OwnerCampsiteDetails]) but with entrant actions:
@@ -137,6 +139,21 @@ fun CampsiteDetailsScreen(
         onRateClick = { stars ->
             searchController.rateCampsite(campsite.id, currentUserId, stars)
             message = CampsiteDetailsText.RATED
+        },
+        onMessageOwnerClick = if (
+            campsite.ownerId.isNotBlank() &&
+            campsite.ownerId != currentUserId
+        ) {
+            {
+                navController.navigate(
+                    Routes.conversation(
+                        campsite.id,
+                        campsite.ownerId
+                    )
+                )
+            }
+        } else {
+            null
         }
     )
 }
@@ -181,7 +198,8 @@ fun CampsiteDetailsContent(
     onBackClick: () -> Unit,
     onJoinClick: () -> Unit,
     onLeaveClick: () -> Unit,
-    onRateClick: (Int) -> Unit
+    onRateClick: (Int) -> Unit,
+    onMessageOwnerClick: (() -> Unit)?
 ) {
     Column(
         modifier = Modifier
@@ -206,6 +224,27 @@ fun CampsiteDetailsContent(
 
         Spacer(Modifier.height(14.dp))
         CampsiteHeader(campsite = campsite, lottery = lottery)
+
+        if (onMessageOwnerClick != null) {
+            Spacer(Modifier.height(12.dp))
+
+            Button(
+                onClick = onMessageOwnerClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp),
+                shape = RoundedCornerShape(24.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = greyBlue,
+                    contentColor = charcoal
+                )
+            ) {
+                Text(
+                    text = "Message Owner",
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
 
         if (message.isNotEmpty()) {
             Spacer(Modifier.height(10.dp))

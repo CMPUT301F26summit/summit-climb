@@ -1,5 +1,6 @@
 package com.example.summit_climb.ui
 
+
 import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -83,6 +84,7 @@ import com.example.summit_climb.ui.entrant.PolicyDetailsScreen
 import com.example.summit_climb.model.Notification
 import com.example.summit_climb.model.NotificationType
 import com.example.summit_climb.ui.owner.OwnerReservationDetailsScreen
+import com.example.summit_climb.controller.ConversationController
 
 val campsiteIdArgs = listOf(
     navArgument(Routes.CAMPSITE_ID_ARG) { type = NavType.StringType }
@@ -115,6 +117,7 @@ fun AppNavigation(
 ){
     val navController = rememberNavController()
     val profileController: ProfileController = viewModel()
+    val conversationController = remember { ConversationController() }
 
     DisposableEffect(
         profileController.profileLoaded,
@@ -307,6 +310,7 @@ fun AppNavigation(
                     }
                 )
             }
+
             composable(Routes.POLICIES) { PoliciesScreen(navController) }
             composable("policy_details/{code}") { entry ->
                 PolicyDetailsScreen(
@@ -697,6 +701,10 @@ fun AppNavigation(
                         status = selected.status,
                         rulesAccepted = selected.rulesAccepted,
                         onBackClick = {navController.popBackStack()},
+                        onConversationClick = { navController.navigate(
+                                Routes.conversation(selected.campsiteId, selected.entrantId)
+                            )
+                        },
 
                         onMessageClick = { message ->
                             ownerNotificationController.messageEntrant(
@@ -779,6 +787,98 @@ fun AppNavigation(
                     onDecline = { navController.popBackStack() },
                     onGuidelinesClick = { navController.navigate(Routes.POLICIES) }
                 )
+            }
+
+            composable(
+                route = Routes.CONVERSATION,
+                arguments = listOf(
+                    navArgument("campsiteId") {
+                        type = NavType.StringType
+                    },
+                    navArgument("recipientId") {
+                        type = NavType.StringType
+                    }
+                )
+            ) { entry ->
+
+                val campsiteId = entry.arguments
+                    ?.getString("campsiteId").orEmpty()
+
+                val recipientId = entry.arguments
+                    ?.getString("recipientId").orEmpty()
+
+                val campsite =
+                    searchController.campsiteDetails(campsiteId)
+
+                if (
+                    campsite == null ||
+                    recipientId.isBlank() ||
+                    recipientId == currentUserId ||
+                    (
+                            currentUserId != campsite.ownerId &&
+                            recipientId != campsite.ownerId
+                            )
+                ) {
+                    Text("Conversation unavailable")
+                } else {
+
+                    var messages by remember(campsiteId, recipientId) {
+                        mutableStateOf<List<Notification>>(emptyList())
+                    }
+
+                    var isSending by remember { mutableStateOf(false) }
+
+                    var error by remember { mutableStateOf("") }
+
+                    DisposableEffect(currentUserId, recipientId, campsiteId) {
+                        val stopListening =
+                            conversationController.getConversationMessages(
+                                currentUserId = currentUserId,
+                                recipientId = recipientId,
+                                campsiteId = campsiteId,
+                                onMessages = { messages = it },
+                                onFailure = { error = it.message ?: "Unable to load messages" }
+                            )
+                        onDispose {
+                            stopListening()
+                        }
+                    }
+
+                    ConversationScreen(
+                        currentUserId = currentUserId,
+                        recipientName = if (
+                            recipientId == campsite.ownerId
+                        ) {
+                            "Campsite Owner"
+                        } else {
+                            "Entrant"
+                        },
+                        campsiteName = campsite.name,
+                        messages = emptyList(),
+                        isSending = isSending,
+                        error = error,
+                        onBack = {navController.popBackStack()},
+                        onSendMessage = { text, clearInput ->
+                            isSending = true
+                            error = ""
+
+                            conversationController.sendMessage(
+                                currentUserId = currentUserId,
+                                recipientId = recipientId,
+                                campsiteId = campsiteId,
+                                message = text,
+                                onSuccess = {
+                                    isSending = false
+                                    clearInput()
+                                },
+                                onFailure = {
+                                    isSending = false
+                                    error = it.message ?: "Unable to send message"
+                                }
+                            )
+                        },
+                    )
+                }
             }
         }
     }

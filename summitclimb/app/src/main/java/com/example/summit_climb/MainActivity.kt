@@ -27,6 +27,14 @@ import com.example.summit_climb.data.FirestoreReservationRepository
 import com.example.summit_climb.controller.ReservationController
 import com.example.summit_climb.data.UserRepository
 import android.util.Log
+import androidx.compose.runtime.*
+import androidx.compose.material3.Text
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.Alignment
+import com.example.summit_climb.model.User
+import com.example.summit_climb.model.UserRole
+import com.example.summit_climb.model.AccountStatus
+import com.example.summit_climb.ui.AdminNavigation
 
 
 class MainActivity : ComponentActivity() {
@@ -42,7 +50,6 @@ class MainActivity : ComponentActivity() {
         fun startScreen(currentUserId: String) {
             Log.d("Auth-login", "current user id: $currentUserId")
             val userRepository = UserRepository(db)
-            userRepository.getUser(currentUserId) { }
 
             val campsiteRepository = CampsiteRepository()
             val searchController = CampsiteSearchController(campsiteRepository)
@@ -72,23 +79,62 @@ class MainActivity : ComponentActivity() {
             )
 
             setContent {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color(0xFFCFE7F5))
-                )
+                var currentUser by remember(currentUserId) {
+                    mutableStateOf<User?>(null)
+                }
+
+                LaunchedEffect(currentUserId) {
+                    userRepository.getUser(currentUserId) { user ->
+                        currentUser = user
+                    }
+                }
+
                 SummitclimbTheme {
-                    AppNavigation(
-                        searchController = searchController,
-                        lotteryController = lotteryController,
-                        currentUserId = currentUserId,
-                        ownerCampsiteController = OwnerCampsiteController(campsiteRepository),
-                        notificationController = notificationController,
-                        reservationController = reservationController,
-                        ownerLotteryController = ownerLotteryController,
-                        entrantReservationController = entrantReservationController,
-                        ownerNotificationController = ownerNotificationController
-                    )
+                    val user = currentUser
+
+                    when {
+                        user == null -> {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color(0xFFCFE7F5)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
+
+                        user.userId != currentUserId ||
+                                user.accountStatus != AccountStatus.ACTIVE -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("Account unavailable")
+                            }
+                        }
+
+                        UserRole.ADMIN in user.roles -> {
+                            AdminNavigation()
+                        }
+
+                        else -> {
+                            AppNavigation(
+                                searchController = searchController,
+                                lotteryController = lotteryController,
+                                currentUserId = currentUserId,
+                                ownerCampsiteController =
+                                    OwnerCampsiteController(campsiteRepository),
+                                notificationController = notificationController,
+                                reservationController = reservationController,
+                                ownerLotteryController = ownerLotteryController,
+                                entrantReservationController =
+                                    entrantReservationController,
+                                ownerNotificationController =
+                                    ownerNotificationController
+                            )
+                        }
+                    }
                 }
             }
         }

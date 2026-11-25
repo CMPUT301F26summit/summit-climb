@@ -17,6 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 
 /**
  * Admin page for reviewing images, notifications, and messages.
@@ -38,7 +41,13 @@ fun AdminLogsScreen() {
         )
 
         TabRow(
-            selectedTabIndex = tabs.indexOf(selectedTab)
+            selectedTabIndex = tabs.indexOf(selectedTab),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp)),
+            containerColor = Color.White,
+            contentColor = Color(0xFF245C86),
+            divider = {}
         ) {
             tabs.forEach { tab ->
                 Tab(
