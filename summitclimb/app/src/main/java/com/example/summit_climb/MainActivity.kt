@@ -60,7 +60,8 @@ class MainActivity : ComponentActivity() {
         )
 
         val entrantReservationController = ReservationController(
-            repository = reservationRepository
+            repository = reservationRepository,
+            notificationRepository = notificationRepository
         )
 
         window.statusBarColor = android.graphics.Color.rgb(225, 241, 250)
