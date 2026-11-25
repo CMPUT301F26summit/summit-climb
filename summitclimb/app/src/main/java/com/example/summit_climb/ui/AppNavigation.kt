@@ -307,8 +307,6 @@ fun AppNavigation(
                     }
                 )
             }
-
-            composable(Routes.QR_SCANNER) { ComingSoonScreen("QR Scanner") }
             composable(Routes.POLICIES) { PoliciesScreen(navController) }
             composable("policy_details/{code}") { entry ->
                 PolicyDetailsScreen(
