@@ -21,6 +21,10 @@ class ReservationControllerTest {
         var receivedGuests = 0
         var receivedReservationId = ""
 
+        var receivedTotalPrice: Double? = null
+
+        var receivedRulesAccepted: Boolean? = null
+
         override fun getBookedDates(
             campsiteId: String,
             onSuccess: (List<Pair<String, String>>) -> Unit,
@@ -52,6 +56,8 @@ class ReservationControllerTest {
             startDate: String,
             endDate: String,
             guests: Int,
+            totalPrice: Double?,
+            rulesAccepted: Boolean?,
             onSuccess: () -> Unit,
             onFailure: (Exception) -> Unit
         ) {
@@ -61,6 +67,10 @@ class ReservationControllerTest {
             receivedStartDate = startDate
             receivedEndDate = endDate
             receivedGuests = guests
+            receivedTotalPrice = totalPrice
+            receivedRulesAccepted = rulesAccepted
+
+
 
             onSuccess()
         }
@@ -72,6 +82,14 @@ class ReservationControllerTest {
         ) {
             receivedReservationId = reservationId
             onSuccess()
+        }
+
+        override fun getReservationsByEntrant(
+            entrantId: String,
+            onSuccess: (List<Reservation>) -> Unit,
+            onFailure: (Exception) -> Unit
+        ) {
+            onSuccess(emptyList())
         }
     }
 
@@ -128,6 +146,8 @@ class ReservationControllerTest {
             "2023-06-01",
             "2023-06-05",
             4,
+            totalPrice = 160.0,
+            rulesAccepted = true,
             onSuccess = {},
             onFailure = {}
         )
@@ -138,6 +158,8 @@ class ReservationControllerTest {
         assertEquals("2023-06-01", fakeRepository.receivedStartDate)
         assertEquals("2023-06-05", fakeRepository.receivedEndDate)
         assertEquals(4, fakeRepository.receivedGuests)
+        assertEquals(160.0, fakeRepository.receivedTotalPrice!!, 0.001)
+        assertEquals(true, fakeRepository.receivedRulesAccepted)
     }
 
     @Test

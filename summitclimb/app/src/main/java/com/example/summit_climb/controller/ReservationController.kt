@@ -1,6 +1,7 @@
 package com.example.summit_climb.controller
 
 import com.example.summit_climb.data.ReservationRepository
+import com.example.summit_climb.model.Reservation
 
 class ReservationController(
     private val repository: ReservationRepository
@@ -14,6 +15,17 @@ class ReservationController(
         onFailure: (Exception) -> Unit
     ) {
         repository.getBookedDates(campsiteId, onSuccess, onFailure)
+    }
+
+    fun getReservationsByEntrant(
+        entrantId: String,
+        onSuccess: (List<Reservation>) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        repository.getReservationsByEntrant(
+            entrantId,
+            onSuccess,
+            onFailure)
     }
 
     // Companion object to make the function static
@@ -37,6 +49,8 @@ class ReservationController(
         startDate: String,
         endDate: String,
         guests: Int,
+        totalPrice: Double?,
+        rulesAccepted: Boolean?,
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
     ) {
@@ -47,6 +61,8 @@ class ReservationController(
             startDate,
             endDate,
             guests,
+            totalPrice,
+            rulesAccepted,
             onSuccess,
             onFailure
         )

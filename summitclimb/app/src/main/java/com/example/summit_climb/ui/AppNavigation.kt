@@ -38,6 +38,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.summit_climb.ui.entrant.ReservationContent
 import com.example.summit_climb.ui.entrant.ReservationUiInfo
 import com.example.summit_climb.ui.owner.SentNotificationsScreen
+import com.example.summit_climb.controller.ReservationController
 
 
 //testing (ignore, just to show ui)
@@ -55,6 +56,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.summit_climb.controller.NotificationController
 import com.example.summit_climb.controller.OwnerLotteryController
+import com.example.summit_climb.controller.OwnerNotificationController
 import com.example.summit_climb.ui.entrant.MyLotteriesContent
 import com.example.summit_climb.ui.entrant.MyReservationsText
 import com.example.summit_climb.model.WaitlistEntry
@@ -80,6 +82,8 @@ import com.example.summit_climb.ui.entrant.PoliciesScreen
 import com.example.summit_climb.ui.entrant.PolicyDetailsScreen
 import com.example.summit_climb.model.Notification
 import com.example.summit_climb.model.NotificationType
+import com.example.summit_climb.ui.owner.OwnerReservationDetailsScreen
+
 val campsiteIdArgs = listOf(
     navArgument(Routes.CAMPSITE_ID_ARG) { type = NavType.StringType }
 )
@@ -105,7 +109,9 @@ fun AppNavigation(
     ownerCampsiteController: OwnerCampsiteController,
     notificationController: NotificationController,
     reservationController: OwnerReservationController,
-    ownerLotteryController: OwnerLotteryController
+    ownerLotteryController: OwnerLotteryController,
+    entrantReservationController: ReservationController,
+    ownerNotificationController: OwnerNotificationController
 ){
     val navController = rememberNavController()
     val profileController: ProfileController = viewModel()
@@ -146,51 +152,72 @@ fun AppNavigation(
 
             // test
             composable(Routes.MY_RESERVATIONS) {
-                var reservations by remember {
-                    mutableStateOf(
-                        listOf(
-                            MyReservationUiItem(
-                                "sample-reservation-cedar-valley",
-                                "Cedar Valley",
-                                "Banff, AB",
-                                "Dec 12 – Dec 14, 2026",
-                                2,
-                                "\$90",
-                                MyReservationsText.ACTIVE
-                            ),
-                            MyReservationUiItem(
-                                "sample-reservation-lakeside-camp",
-                                "Lakeside Camp",
-                                "Jasper, AB",
-                                "Aug 3 – Aug 6, 2026",
-                                3,
-                                "\$135",
-                                MyReservationsText.COMPLETED
-                            ),
-                            MyReservationUiItem(
-                                "sample-reservation-summit-camp",
-                                "Summit Camp",
-                                "Hinton, AB",
-                                "Sep 18 – Sep 20, 2026",
-                                2,
-                                "\$80",
-                                MyReservationsText.CANCELLED
-                            )
-                        )
+                var reservations by remember(currentUserId) {
+                    mutableStateOf<List<MyReservationUiItem>>(emptyList())
+                }
+
+                var message by remember { mutableStateOf("") }
+
+                LaunchedEffect(currentUserId) {
+                    entrantReservationController.getReservationsByEntrant(
+                        entrantId = currentUserId,
+                        onSuccess = { results ->
+                            reservations = results.map { reservation ->
+                                val campsite = searchController.campsiteDetails(
+                                    reservation.campsiteId
+                                )
+
+                                val nights = runCatching {
+                                    ChronoUnit.DAYS.between(
+                                        LocalDate.parse(reservation.startDate),
+                                        LocalDate.parse(reservation.endDate)
+                                    ).toInt()
+                                }.getOrDefault(0)
+
+                                MyReservationUiItem(
+                                    reservationId = reservation.id,
+                                    campsiteName = campsite?.name ?: "Unknown campsite",
+                                    location = campsite?.location ?: "Unknown location",
+                                    dates = "${reservation.startDate} – ${reservation.endDate}",
+                                    nights = nights,
+                                    total = reservation.totalPrice?.let {
+                                        String.format(Locale.US, "$%.2f", it)
+                                    } ?: "Unavailable",
+                                    status = reservation.status
+                                )
+                            }
+                        },
+                        onFailure = { error ->
+                            message = error.message ?: "Failed to load reservations"
+                        }
                     )
                 }
-                var message by remember { mutableStateOf("") }
 
                 MyReservationsContent(
                     reservations = reservations,
                     message = message,
                     onMessageShown = { message = "" },
                     onCancel = { id ->
-                        val name = reservations.find { it.reservationId == id }?.campsiteName ?: ""
-                        reservations = reservations.map {
-                            if (it.reservationId == id) it.copy(status = MyReservationsText.CANCELLED) else it
-                        }
-                        message = MyReservationsText.cancelled(name)
+                        val name = reservations.find {
+                            it.reservationId == id
+                        }?.campsiteName ?: "campsite"
+
+                        entrantReservationController.cancelReservation(
+                            reservationId = id,
+                            onSuccess = {
+                                reservations = reservations.map {
+                                    if (it.reservationId == id) {
+                                        it.copy(status = MyReservationsText.CANCELLED)
+                                    } else {
+                                        it
+                                    }
+                                }
+                                message = "Your reservation at $name has been cancelled."
+                            },
+                            onFailure = { error ->
+                                message = error.message ?: "Failed to cancel reservation"
+                            }
+                        )
                     }
                 )
             }
@@ -535,9 +562,12 @@ fun AppNavigation(
                 } else {
                     OwnerReservationsFromFirestore(
                         campsiteId = id,
+                        campsiteName = searchController.campsiteDetails(id)?.name ?: "your campsite",
                         controller = reservationController,
                         onReservationClick = { reservationId ->
-                            navController.navigate(Routes.OWNER_RESERVATION_DETAILS + "/$reservationId")
+                            navController.navigate(
+                                Routes.OWNER_RESERVATION_DETAILS + "/$id/$reservationId"
+                            )
                         },
                         onBackClick = {
                             navController.popBackStack()
@@ -545,8 +575,111 @@ fun AppNavigation(
                     )
                 }
             }
+            composable(
+                route = Routes.OWNER_RESERVATION_DETAILS +
+                        "/{campsiteId}/{reservationId}",
+                arguments = listOf(
+                    navArgument("campsiteId") {
+                        type = NavType.StringType
+                    },
+                    navArgument("reservationId") {
+                        type = NavType.StringType
+                    }
+                )
+            ) { entry ->
+
+                val campsiteId = entry.arguments
+                    ?.getString("campsiteId").orEmpty()
+
+                val reservationId = entry.arguments
+                    ?.getString("reservationId").orEmpty()
+
+                var reservation by remember {
+                    mutableStateOf<Reservation?>(null)
+                }
+
+                var error by remember {
+                    mutableStateOf<String?>(null)
+                }
+
+                LaunchedEffect(campsiteId, reservationId) {
+                    reservationController.getReservationsByCampsite(
+                        campsiteId = campsiteId,
+                        onSuccess = { results ->
+                            reservation = results.find {
+                                it.id == reservationId
+                            }
+
+                            if (reservation == null) {
+                                error = "Reservation not found"
+                            }
+                        },
+                        onFailure = {
+                            error = it.message ?: "Failed to load reservation"
+                        }
+                    )
+                }
+
+                val selected = reservation
+
+                if (error != null) {
+                    Text(error ?: "")
+                } else if (selected == null) {
+                    Text("Loading reservation...")
+                } else {
+                    val campsite = searchController.campsiteDetails(campsiteId)
+
+                    val nights = ChronoUnit.DAYS.between(
+                        LocalDate.parse(selected.startDate),
+                        LocalDate.parse(selected.endDate)
+                    ).toInt()
+
+                    OwnerReservationDetailsScreen(
+                        entrantName = selected.entrantName,
+                        dates = "${selected.startDate} - ${selected.endDate}",
+                        nights = nights,
+                        guests = selected.guests,
+                        totalPrice = selected.totalPrice?.let {
+                            String.format(Locale.US, "$%.2f", it)
+                        } ?: "Unavailable",
+                        status = selected.status,
+                        rulesAccepted = selected.rulesAccepted,
+                        onBackClick = {navController.popBackStack()},
+
+                        onMessageClick = { message ->
+                            ownerNotificationController.messageEntrant(
+                                ownerId = currentUserId,
+                                entrantId = selected.entrantId,
+                                campsiteId = selected.campsiteId,
+                                message = message
+                            )
+                        },
+
+                        onRejectClick = {
+                            reservationController.rejectReservation(
+                                reservationId = selected.id,
+                                entrantId = selected.entrantId,
+                                campsiteId = selected.campsiteId,
+                                campsiteName = campsite?.name ?: "your campsite",
+                                onSuccess = {
+                                    navController.popBackStack()
+                                },
+                                onFailure = {
+                                    error = it.message ?: "Rejection failed"
+                                }
+                            )
+                        }
+                    )
+                }
+            }
+
             // test
             composable(Routes.RESERVATION) {
+
+                val campsiteId = "sample-lakeside-camp"
+                var message by remember { mutableStateOf("") }
+                var isSaving by remember { mutableStateOf(false) }
+
                 ReservationContent(
                     info = ReservationUiInfo(
                         lotteryId = "sample-lottery-lakeside-camp",
@@ -561,9 +694,36 @@ fun AppNavigation(
                         ),
                         reserved = false
                     ),
-                    message = "",
+                    message = message,
                     onBackClick = { navController.popBackStack() },
-                    onConfirm = { _, _ -> navController.popBackStack() },
+                    onConfirm = { checkIn, checkOut ->
+                        if (!isSaving) {
+                            isSaving = true
+                            message = ""
+
+                            entrantReservationController.createReservation(
+                                campsiteId = campsiteId,
+                                entrantId = currentUserId,
+                                entrantName = "Test Entrant",
+                                startDate = checkIn.toString(),
+                                endDate = checkOut.toString(),
+                                guests = 1,
+                                totalPrice = searchController.campsiteDetails(campsiteId)?.let {
+                                    it.price * ChronoUnit.DAYS.between(checkIn, checkOut)
+                                },
+                                rulesAccepted = true,
+                                onSuccess = {
+                                    isSaving = false
+                                    navController.popBackStack()
+                                },
+                                onFailure = { error ->
+                                    isSaving = false
+                                    message = error.message ?: "Reservation failed"
+                                    android.util.Log.e("ReservationDebug", "Creation failed", error)
+                                }
+                            )
+                        }
+                    },
                     onDecline = { navController.popBackStack() },
                     onGuidelinesClick = { navController.navigate(Routes.POLICIES) }
                 )
