@@ -474,8 +474,8 @@ fun AppNavigation(
                     searchController = searchController,
                     ownerLotteryController = ownerLotteryController,
                     notificationController = notificationController,
-                    onBack = { navController.popBackStack() },
-                    navController = navController
+                    onBack = { navController.popBackStack()
+                    }
                 )
             }
 
@@ -568,7 +568,6 @@ fun AppNavigation(
                     onGuidelinesClick = { navController.navigate(Routes.POLICIES) }
                 )
             }
-            //composable(Routes.OWNER_SENT_NOTIFICATIONS) { ... }
         }
     }
 
