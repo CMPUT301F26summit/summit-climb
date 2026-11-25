@@ -27,6 +27,9 @@ import com.example.summit_climb.data.FirestoreReservationRepository
 import com.example.summit_climb.controller.ReservationController
 import com.example.summit_climb.data.UserRepository
 import android.util.Log
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
+import com.example.summit_climb.service.LotteryDrawService
 
 
 class MainActivity : ComponentActivity() {
@@ -48,6 +51,7 @@ class MainActivity : ComponentActivity() {
             val searchController = CampsiteSearchController(campsiteRepository)
 
             val lotteryRepository = FirestoreLotteryRepository(db)
+            val drawService = LotteryDrawService()
             val lotteryController = EntrantLotteryController(lotteryRepository, currentUserId)
             val ownerLotteryController = OwnerLotteryController(lotteryRepository)
 
@@ -72,6 +76,13 @@ class MainActivity : ComponentActivity() {
             )
 
             setContent {
+                // runs any lottery draws that are due whenever the lottery list loads or changes (F3)
+                LaunchedEffect(Unit) {
+                    snapshotFlow { lotteryRepository.lotteries.toList() }
+                        .collect { lotteries ->
+                            drawService.runDueDraws(lotteries, lotteryRepository, notificationRepository)
+                        }
+                }
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
