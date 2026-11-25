@@ -1,12 +1,15 @@
 package com.example.summit_climb.data
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import com.example.summit_climb.controller.Rating
 import com.example.summit_climb.model.Campsite
 import com.example.summit_climb.model.ListingStatus
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import com.example.summit_climb.service.ImageService
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 /**
  * Handles the Firestore operations for campsites.
@@ -25,6 +28,9 @@ class CampsiteRepository {
     private val campRef = db.collection("campsites")
     private val _campsites = mutableStateListOf<Campsite>()
 
+    var isLoaded by mutableStateOf(false)
+        private set
+
     val campsite: List<Campsite> = _campsites
 
     init {
@@ -32,17 +38,19 @@ class CampsiteRepository {
             if (error != null){
                 return@addSnapshotListener
             }
-            _campsites.clear()
 
-            snapshots?.documents?.forEach { document ->
-                if (error != null){
-                    return@addSnapshotListener
+            if (snapshots != null) {
+                _campsites.clear()
+
+                snapshots.documents.forEach { document ->
+                    val campsite = document.toObject(Campsite::class.java)
+
+                    if (campsite != null) {
+                        campsite.id = document.id
+                        _campsites.add(campsite)
+                    }
                 }
-                val campsite = document.toObject(Campsite::class.java)
-                if (campsite != null){
-                    campsite.id = document.id
-                    _campsites.add(campsite)
-                }
+                isLoaded = true
             }
         }
     }

@@ -3,6 +3,7 @@ package com.example.summit_climb.controller
 import com.example.summit_climb.data.CampsiteRepository
 import com.example.summit_climb.model.Campsite
 import com.example.summit_climb.model.CampsiteFilter
+import com.example.summit_climb.service.QRCodeService
 
 /**
  * Handles what an entrant does when finding campsites: search, filter, view details and rate.
@@ -15,7 +16,10 @@ import com.example.summit_climb.model.CampsiteFilter
  * @constructor Creates a controller that searches the given repository.
  */
 class CampsiteSearchController(private val campsiteRepository: CampsiteRepository) {
-    //private val qrService = QRCodeService()
+    private val qrService = QRCodeService()
+
+    val isCampsitesLoaded: Boolean
+        get() = campsiteRepository.isLoaded
 
     /**
      * Searches approved campsites by keyword and filters them by location, date and guests number.
@@ -40,17 +44,21 @@ class CampsiteSearchController(private val campsiteRepository: CampsiteRepositor
         return campsiteRepository.getCampsite(campsiteId)
     }
 
-    /*
+
     /**
-     * Gets a campsite's details from the text of a scanned QR code.
-     * @param qrText: raw text the scanner read from the QR code.
-     * @return the campsite, or `null` if the QR code is not a campsite code.
+     * Gets a campsite's details from the rest of a scanned QR code
+     *
+     * @param qrText: raw text the scanner read from the QR code
+     * @return the campsite, or null if the QR is invalid
+     * or the campsite does not exist.
      */
-    fun getCampFromQR(qrText: String): Campsite?{
-        val campsiteId = qrService.campsiteIDFromQRText(qrText) ?: return null
+    fun getCampFromQR(qrText: String): Campsite? {
+        val campsiteId = qrService.campsiteIDFromQRText(qrText)
+            ?: return null
+
         return campsiteDetails(campsiteId)
     }
-    */
+
 
     /**
      * Saves an entrant's star rating for a campsite.
