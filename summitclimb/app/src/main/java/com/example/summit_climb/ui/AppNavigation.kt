@@ -359,8 +359,41 @@ fun AppNavigation(
             ) { backStackEntry ->
                 val id = backStackEntry.campsiteId()
 
-                val campsite = searchController.campsiteDetails(backStackEntry.campsiteId())
-                    ?: searchController.search("", CampsiteFilter()).find { it.id == id }
+                val campsite = searchController.campsiteDetails(id)
+                    ?: searchController.search("", CampsiteFilter())
+                        .find { it.id == id }
+
+                var reservationDates by remember(id) {
+                    mutableStateOf<List<String>>(emptyList())
+                }
+
+                LaunchedEffect(id) {
+                    entrantReservationController.getBookedDates(
+                        campsiteId = id,
+                        onSuccess = { ranges ->
+                            val dates = mutableSetOf<String>()
+
+                            ranges.forEach { (start, end) ->
+                                var date = LocalDate.parse(start)
+                                val checkout = LocalDate.parse(end)
+
+                                while (date.isBefore(checkout)) {
+                                    dates.add(date.toString())
+                                    date = date.plusDays(1)
+                                }
+                            }
+
+                            reservationDates = dates.toList()
+                        },
+                        onFailure = { error ->
+                            Log.e(
+                                "OwnerCalendar",
+                                "Failed to load booked dates",
+                                error
+                            )
+                        }
+                    )
+                }
 
                 if (campsite == null) {
                     Text(
@@ -368,7 +401,14 @@ fun AppNavigation(
                         modifier = Modifier.padding(16.dp)
                     )
                 } else {
-                    OwnerCampsiteDetails(navController = navController, campsite = campsite)
+                    OwnerCampsiteDetails(
+                        navController = navController,
+                        campsite = campsite.copy(
+                            bookedDates = (
+                                    campsite.bookedDates + reservationDates
+                                    ).distinct()
+                        )
+                    )
                 }
             }
 
@@ -472,7 +512,9 @@ fun AppNavigation(
                             campsiteId = campsite.id,
                             onSuccess = { reservations ->
                                 activeReservations = reservations.count {
-                                    it.status == "ACTIVE"
+                                    it.status == "ACTIVE" &&
+                                            !LocalDate.parse(it.endDate)
+                                                .isBefore(LocalDate.now())
                                 }
                             },
                             onFailure = { error ->
