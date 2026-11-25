@@ -53,8 +53,6 @@ class FirestoreLotteryRepository(
         }
     }
 
-    // ---------- lotteries ----------
-
     /** creates a new lottery. Firestore makes the ID */
     override fun add(lottery: Lottery) {
         val doc = lotteriesRef.document()
@@ -96,11 +94,11 @@ class FirestoreLotteryRepository(
 
     // ---------- EVERYTHING under this is UNTESTED ----------
 
-    //where one lottery's entries live: lotteries/{lotteryId}/entries */
+    // Where one lottery's entries live: lotteries/{lotteryId}/entries */
     private fun entriesRef(lotteryId: String) =
         lotteriesRef.document(lotteryId).collection("entries")
 
-    //joins in a transaction so two people can't take the last spot at the same time */
+    // Joins in a transaction so two people can't take the last spot at the same time */
     override fun join(
         lotteryId: String,
         entrantId: String,
@@ -161,7 +159,7 @@ class FirestoreLotteryRepository(
             }
     }
 
-    // live waitlist for one lottery; call the returned function to stop listening
+    // live waitlist for one lottery, call the returned function to stop listening
     override fun listenToEntries(
         lotteryId: String,
         onUpdate: (List<WaitlistEntry>) -> Unit
@@ -197,7 +195,42 @@ class FirestoreLotteryRepository(
         entriesRef(lotteryId).document(entrantId).update("result", result)
     }
 
-    // makes the error a transaction throws to cancel itself; its message reaches onFailure
+    // makes the error a transaction throws to cancel itself, its message reaches onFailure
     private fun stop(reason: String) =
         FirebaseFirestoreException(reason, FirebaseFirestoreException.Code.ABORTED)
+
+    // reads one lottery's waitlist once, used by the draw
+    override fun getEntries(lotteryId: String, onResult: (List<WaitlistEntry>) -> Unit) {
+        entriesRef(lotteryId).get()
+            .addOnSuccessListener { snapshot ->
+                onResult(snapshot.documents.mapNotNull { it.toObject(WaitlistEntry::class.java) })
+            }
+            .addOnFailureListener { e ->
+                Log.e("LotteryRepo", "Couldn't load entries", e)
+                onResult(emptyList())
+            }
+    }
+
+    // claims the draw in a transaction so only one phone ever runs it
+    override fun claimDraw(lotteryId: String, now: Long, onResult: (Boolean) -> Unit) {
+        val lotteryDoc = lotteriesRef.document(lotteryId)
+
+        db.runTransaction { transaction ->
+            val lottery = transaction.get(lotteryDoc).toObject(Lottery::class.java)
+                ?: return@runTransaction false
+
+            // someone already drew it, or registration hasn't ended yet
+            if (lottery.status != LotteryStatus.OPEN || now < lottery.registrationEnd) {
+                return@runTransaction false
+            }
+
+            transaction.update(lotteryDoc, "status", LotteryStatus.DRAWN)
+            true
+        }
+            .addOnSuccessListener { claimed -> onResult(claimed) }
+            .addOnFailureListener { e ->
+                Log.e("LotteryRepo", "Couldn't claim draw", e)
+                onResult(false)
+            }
+    }
 }

@@ -43,4 +43,14 @@ interface LotteryRepository {
 
     // sets an entry's result
     fun setResult(lotteryId: String, entrantId: String, result: WaitlistResult)
+
+    // reads one lottery's waitlist once
+    fun getEntries(lotteryId: String, onResult: (List<WaitlistEntry>) -> Unit) {
+        onResult(emptyList())
+    }
+
+    // claims a lottery's draw and sets it to DRAWN only if it's still OPEN and registration has ended
+    fun claimDraw(lotteryId: String, now: Long, onResult: (Boolean) -> Unit) {
+        onResult(false)
+    }
 }
