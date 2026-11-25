@@ -183,7 +183,15 @@ fun AppNavigation(
                                     total = reservation.totalPrice?.let {
                                         String.format(Locale.US, "$%.2f", it)
                                     } ?: "Unavailable",
-                                    status = reservation.status
+                                    status = if (
+                                        reservation.status == "ACTIVE" &&
+                                        LocalDate.parse(reservation.endDate).isBefore(LocalDate.now())
+                                    ) {
+                                        MyReservationsText.COMPLETED
+                                    } else {
+                                        reservation.status
+                                    },
+                                    campsiteId = reservation.campsiteId
                                 )
                             }
                         },
@@ -198,26 +206,30 @@ fun AppNavigation(
                     message = message,
                     onMessageShown = { message = "" },
                     onCancel = { id ->
-                        val name = reservations.find {
+                        val selected = reservations.find {
                             it.reservationId == id
-                        }?.campsiteName ?: "campsite"
+                        }
 
-                        entrantReservationController.cancelReservation(
-                            reservationId = id,
-                            onSuccess = {
-                                reservations = reservations.map {
-                                    if (it.reservationId == id) {
-                                        it.copy(status = MyReservationsText.CANCELLED)
-                                    } else {
-                                        it
+                        if (selected != null) {
+                            entrantReservationController.cancelReservation(
+                                reservationId = id,
+                                entrantId = currentUserId,
+                                campsiteId = selected.campsiteId,
+                                onSuccess = {
+                                    reservations = reservations.map {
+                                        if (it.reservationId == id) {
+                                            it.copy(status = MyReservationsText.CANCELLED)
+                                        } else {
+                                            it
+                                        }
                                     }
+                                    message = "Your reservation at ${selected.campsiteName} has been cancelled."
+                                },
+                                onFailure = { error ->
+                                    message = error.message ?: "Failed to cancel reservation"
                                 }
-                                message = "Your reservation at $name has been cancelled."
-                            },
-                            onFailure = { error ->
-                                message = error.message ?: "Failed to cancel reservation"
-                            }
-                        )
+                            )
+                        }
                     }
                 )
             }
@@ -345,8 +357,41 @@ fun AppNavigation(
             ) { backStackEntry ->
                 val id = backStackEntry.campsiteId()
 
-                val campsite = searchController.campsiteDetails(backStackEntry.campsiteId())
-                    ?: searchController.search("", CampsiteFilter()).find { it.id == id }
+                val campsite = searchController.campsiteDetails(id)
+                    ?: searchController.search("", CampsiteFilter())
+                        .find { it.id == id }
+
+                var reservationDates by remember(id) {
+                    mutableStateOf<List<String>>(emptyList())
+                }
+
+                LaunchedEffect(id) {
+                    entrantReservationController.getBookedDates(
+                        campsiteId = id,
+                        onSuccess = { ranges ->
+                            val dates = mutableSetOf<String>()
+
+                            ranges.forEach { (start, end) ->
+                                var date = LocalDate.parse(start)
+                                val checkout = LocalDate.parse(end)
+
+                                while (date.isBefore(checkout)) {
+                                    dates.add(date.toString())
+                                    date = date.plusDays(1)
+                                }
+                            }
+
+                            reservationDates = dates.toList()
+                        },
+                        onFailure = { error ->
+                            Log.e(
+                                "OwnerCalendar",
+                                "Failed to load booked dates",
+                                error
+                            )
+                        }
+                    )
+                }
 
                 if (campsite == null) {
                     Text(
@@ -354,7 +399,14 @@ fun AppNavigation(
                         modifier = Modifier.padding(16.dp)
                     )
                 } else {
-                    OwnerCampsiteDetails(navController = navController, campsite = campsite)
+                    OwnerCampsiteDetails(
+                        navController = navController,
+                        campsite = campsite.copy(
+                            bookedDates = (
+                                    campsite.bookedDates + reservationDates
+                                    ).distinct()
+                        )
+                    )
                 }
             }
 
@@ -458,7 +510,9 @@ fun AppNavigation(
                             campsiteId = campsite.id,
                             onSuccess = { reservations ->
                                 activeReservations = reservations.count {
-                                    it.status == "ACTIVE"
+                                    it.status == "ACTIVE" &&
+                                            !LocalDate.parse(it.endDate)
+                                                .isBefore(LocalDate.now())
                                 }
                             },
                             onFailure = { error ->

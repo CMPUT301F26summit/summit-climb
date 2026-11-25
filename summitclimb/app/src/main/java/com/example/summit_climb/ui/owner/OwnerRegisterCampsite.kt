@@ -66,6 +66,8 @@ import android.net.Uri
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.PickVisualMediaRequest
 import com.example.summit_climb.model.Campsite
+import java.time.LocalDate
+import com.example.summit_climb.ui.AvailabilityCalendar
 
 /**
  * Amenity border for an amenity icon.
@@ -146,7 +148,7 @@ fun OwnerRegisterCampsite(
 
     var name by remember { mutableStateOf(campsite.name) }
     var location by remember { mutableStateOf(campsite.location) }
-    var price by remember(campsite.id) { mutableStateOf(campsite.price.toString()) }
+    var price by remember(campsite.id) { mutableStateOf("%.2f".format(campsite.price)) }
     var occupancy by remember { mutableIntStateOf(maxOf(campsite.maxOccupancy, 1)) }
     var description by remember { mutableStateOf(campsite.description) }
     var amenities by remember { mutableStateOf(campsite.amenities.toSet()) }
@@ -155,7 +157,9 @@ fun OwnerRegisterCampsite(
     var addingTag by remember { mutableStateOf(false) }
     var newTag by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
+
     var saving by remember { mutableStateOf(false) }
+    var pickedDates by remember { mutableStateOf<Set<LocalDate>>(emptySet()) }
 
     val newImage =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
@@ -326,14 +330,17 @@ fun OwnerRegisterCampsite(
 
                     OutlinedTextField(
                         value = price,
-                        onValueChange = { input ->
-                            if (input.all { it.isDigit() })
+                        onValueChange = { input: String ->
+                            if (input.isEmpty() ||
+                                (input.all { it.isDigit() || it == '.' } &&
+                                        input.toDoubleOrNull() != null &&
+                                        input.substringAfter('.', "").length <= 2))
                                 price = input
                         },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.fillMaxWidth().testTag("pricePerNight"),
                         singleLine = true,
                         shape = RoundedCornerShape(14.dp),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         colors =
                             OutlinedTextFieldDefaults.colors(
                                 focusedTextColor = charcoal,
@@ -570,6 +577,35 @@ fun OwnerRegisterCampsite(
 
             Spacer(Modifier.height(16.dp))
 
+            Text(
+                text = "Available dates · ${pickedDates.size} selected",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(top = 16.dp, bottom = 6.dp)
+            )
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(22.dp))
+                    .background(greyBlue)
+                    .padding(horizontal = 16.dp, vertical = 14.dp)
+            ) {
+                AvailabilityCalendar(
+                    bookedDates = emptySet(),
+                    selectedDate = null,
+                    ownerDates = pickedDates,
+                    onDayClicked = { day ->
+                        pickedDates =
+                            if (day in pickedDates)
+                                pickedDates - day
+                            else
+                            pickedDates + day
+                    }
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
             Button(
                 onClick = {
                     val newCampsite = Campsite(
@@ -580,7 +616,8 @@ fun OwnerRegisterCampsite(
                         description = description,
                         amenities = amenities.toList(),
                         tags = tags,
-                        rules = rules
+                        rules = rules,
+                        availableDates = pickedDates.map { "$it" }
                     )
 
                     val pickedImage = imageUri

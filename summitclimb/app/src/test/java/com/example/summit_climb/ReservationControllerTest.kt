@@ -2,14 +2,51 @@ package com.example.summit_climb
 
 import org.junit.Test
 import org.junit.Assert.assertTrue
-import com.example.summit_climb.controller.ReservationController
 import org.junit.Assert.assertFalse
-import com.example.summit_climb.model.Reservation
-import java.lang.Exception
 import org.junit.Assert.assertEquals
+import com.example.summit_climb.controller.ReservationController
+import com.example.summit_climb.model.Reservation
+import com.example.summit_climb.model.Notification
+import com.example.summit_climb.model.NotificationType
 import com.example.summit_climb.data.ReservationRepository
+import com.example.summit_climb.data.NotificationRepository
 
 class ReservationControllerTest {
+
+    private class FakeNotificationRepository : NotificationRepository {
+
+        val sentNotifications = mutableListOf<Notification>()
+
+        override val notifications: List<Notification>
+            get() = sentNotifications
+
+        override fun send(notification: Notification) {
+            sentNotifications.add(notification)
+        }
+
+        override fun markRead(notificationId: String) {}
+
+        override fun forUser(userId: String): List<Notification> {
+            return sentNotifications.filter {
+                it.recipientId == userId
+            }
+        }
+
+        override fun sentBy(senderId: String): List<Notification> {
+            return sentNotifications.filter {
+                it.senderId == senderId
+            }
+        }
+
+        override fun listenToUser(
+            userId: String,
+            onAdded: (Notification) -> Unit,
+            onModified: (Notification) -> Unit,
+            onRemoved: (Notification) -> Unit
+        ): () -> Unit {
+            return {}
+        }
+    }
 
     private class FakeRepository : ReservationRepository {
 
@@ -22,8 +59,9 @@ class ReservationControllerTest {
         var receivedReservationId = ""
 
         var receivedTotalPrice: Double? = null
-
         var receivedRulesAccepted: Boolean? = null
+
+        var shouldFail = false
 
         override fun getBookedDates(
             campsiteId: String,
@@ -70,9 +108,11 @@ class ReservationControllerTest {
             receivedTotalPrice = totalPrice
             receivedRulesAccepted = rulesAccepted
 
-
-
-            onSuccess()
+            if (shouldFail) {
+                onFailure(Exception("Reservation failed"))
+            } else {
+                onSuccess()
+            }
         }
 
         override fun cancelReservation(
@@ -81,7 +121,12 @@ class ReservationControllerTest {
             onFailure: (Exception) -> Unit
         ) {
             receivedReservationId = reservationId
-            onSuccess()
+
+            if (shouldFail) {
+                onFailure(Exception("Cancellation failed"))
+            } else {
+                onSuccess()
+            }
         }
 
         override fun getReservationsByEntrant(
@@ -94,9 +139,7 @@ class ReservationControllerTest {
     }
 
     @Test
-
     fun overlappingDatesReturnTrue() {
-
         assertTrue(
             ReservationController.datesOverlap(
                 "2023-06-01",
@@ -108,9 +151,7 @@ class ReservationControllerTest {
     }
 
     @Test
-
     fun nonOverlappingDatesReturnFalse() {
-
         assertFalse(
             ReservationController.datesOverlap(
                 "2023-06-01",
@@ -137,7 +178,12 @@ class ReservationControllerTest {
     fun correctDetails() {
 
         val fakeRepository = FakeRepository()
-        val controller = ReservationController(fakeRepository)
+        val fakeNotifications = FakeNotificationRepository()
+
+        val controller = ReservationController(
+            fakeRepository,
+            fakeNotifications
+        )
 
         controller.createReservation(
             "campsite123",
@@ -149,7 +195,7 @@ class ReservationControllerTest {
             totalPrice = 160.0,
             rulesAccepted = true,
             onSuccess = {},
-            onFailure = {}
+            onFailure = { throw AssertionError(it) }
         )
 
         assertEquals("campsite123", fakeRepository.receivedCampsiteId)
@@ -160,19 +206,111 @@ class ReservationControllerTest {
         assertEquals(4, fakeRepository.receivedGuests)
         assertEquals(160.0, fakeRepository.receivedTotalPrice!!, 0.001)
         assertEquals(true, fakeRepository.receivedRulesAccepted)
+
+        // Verify the booking confirmation notification.
+        assertEquals(1, fakeNotifications.sentNotifications.size)
+
+        val notification = fakeNotifications.sentNotifications.single()
+
+        assertEquals("entrant456", notification.recipientId)
+        assertEquals("campsite123", notification.campsiteId)
+        assertEquals(NotificationType.RESERVATION_UPDATE, notification.type)
+        assertEquals("Reservation confirmed", notification.title)
     }
 
     @Test
     fun correctReservationID() {
+
         val fakeRepository = FakeRepository()
-        val controller = ReservationController(fakeRepository)
+        val fakeNotifications = FakeNotificationRepository()
+
+        val controller = ReservationController(
+            fakeRepository,
+            fakeNotifications
+        )
 
         controller.cancelReservation(
-            "reservation789",
+            reservationId = "reservation789",
+            entrantId = "entrant456",
+            campsiteId = "campsite123",
             onSuccess = {},
-            onFailure = {}
+            onFailure = { throw AssertionError(it) }
         )
 
         assertEquals("reservation789", fakeRepository.receivedReservationId)
+
+        // Verify the cancellation confirmation notification.
+        assertEquals(1, fakeNotifications.sentNotifications.size)
+
+        val notification = fakeNotifications.sentNotifications.single()
+
+        assertEquals("entrant456", notification.recipientId)
+        assertEquals("campsite123", notification.campsiteId)
+        assertEquals("reservation789", notification.relatedId)
+        assertEquals(NotificationType.RESERVATION_UPDATE, notification.type)
+        assertEquals("Reservation cancelled", notification.title)
+    }
+
+    @Test
+    fun failedReservationDoesNotSendNotification() {
+
+        val fakeRepository = FakeRepository()
+        fakeRepository.shouldFail = true
+
+        val fakeNotifications = FakeNotificationRepository()
+
+        val controller = ReservationController(
+            fakeRepository,
+            fakeNotifications
+        )
+
+        var failureCalled = false
+        var successCalled = false
+
+        controller.createReservation(
+            campsiteId = "campsite123",
+            entrantId = "entrant456",
+            entrantName = "John Doe",
+            startDate = "2026-12-01",
+            endDate = "2026-12-05",
+            guests = 2,
+            totalPrice = 160.0,
+            rulesAccepted = true,
+            onSuccess = { successCalled = true },
+            onFailure = { failureCalled = true }
+        )
+
+        assertTrue(failureCalled)
+        assertFalse(successCalled)
+        assertTrue(fakeNotifications.sentNotifications.isEmpty())
+    }
+
+    @Test
+    fun failedCancellationDoesNotSendNotification() {
+
+        val fakeRepository = FakeRepository()
+        fakeRepository.shouldFail = true
+
+        val fakeNotifications = FakeNotificationRepository()
+
+        val controller = ReservationController(
+            fakeRepository,
+            fakeNotifications
+        )
+
+        var failureCalled = false
+        var successCalled = false
+
+        controller.cancelReservation(
+            reservationId = "reservation789",
+            entrantId = "entrant456",
+            campsiteId = "campsite123",
+            onSuccess = { successCalled = true },
+            onFailure = { failureCalled = true }
+        )
+
+        assertTrue(failureCalled)
+        assertFalse(successCalled)
+        assertTrue(fakeNotifications.sentNotifications.isEmpty())
     }
 }

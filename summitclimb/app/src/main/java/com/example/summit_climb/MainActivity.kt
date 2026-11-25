@@ -25,65 +25,85 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.example.summit_climb.controller.OwnerReservationController
 import com.example.summit_climb.data.FirestoreReservationRepository
 import com.example.summit_climb.controller.ReservationController
+import com.example.summit_climb.data.UserRepository
+import android.util.Log
 
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
 
         val db = FirebaseFirestore.getInstance()
         SampleData.uploadIfMissing(db)
 
         val auth = FirebaseAuth.getInstance()
-        val currentUserId = auth.currentUser?.uid ?: "test_user"
 
-        val campsiteRepository = CampsiteRepository()
-        val searchController = CampsiteSearchController(campsiteRepository)
+        fun startScreen(currentUserId: String) {
+            Log.d("Auth-login", "current user id: $currentUserId")
+            val userRepository = UserRepository(db)
+            userRepository.getUser(currentUserId) { }
 
-        val lotteryRepository = FirestoreLotteryRepository(db)
-        val lotteryController = EntrantLotteryController(lotteryRepository, currentUserId)
-        val ownerLotteryController = OwnerLotteryController(lotteryRepository)
+            val campsiteRepository = CampsiteRepository()
+            val searchController = CampsiteSearchController(campsiteRepository)
 
-        val notificationRepository = FirestoreNotificationRepository(db)
-        val notificationController = NotificationController(notificationRepository) {
-            FirebaseAuth.getInstance().currentUser?.uid
+            val lotteryRepository = FirestoreLotteryRepository(db)
+            val lotteryController = EntrantLotteryController(lotteryRepository, currentUserId)
+            val ownerLotteryController = OwnerLotteryController(lotteryRepository)
+
+            val notificationRepository = FirestoreNotificationRepository(db)
+            val notificationController = NotificationController(notificationRepository) {
+                FirebaseAuth.getInstance().currentUser?.uid
+            }
+
+            val ownerNotificationController = OwnerNotificationController(
+                notificationRepository = notificationRepository
+            )
+
+            val reservationRepository = FirestoreReservationRepository(db)
+            val reservationController = OwnerReservationController(
+                repository = reservationRepository,
+                notificationRepository = notificationRepository
+            )
+
+            val entrantReservationController = ReservationController(
+                repository = reservationRepository,
+                notificationRepository = notificationRepository
+            )
+
+            setContent {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0xFFCFE7F5))
+                )
+                SummitclimbTheme {
+                    AppNavigation(
+                        searchController = searchController,
+                        lotteryController = lotteryController,
+                        currentUserId = currentUserId,
+                        ownerCampsiteController = OwnerCampsiteController(campsiteRepository),
+                        notificationController = notificationController,
+                        reservationController = reservationController,
+                        ownerLotteryController = ownerLotteryController,
+                        entrantReservationController = entrantReservationController,
+                        ownerNotificationController = ownerNotificationController
+                    )
+                }
+            }
         }
-
-        val ownerNotificationController = OwnerNotificationController(
-            notificationRepository = notificationRepository
-        )
-
-        val reservationRepository = FirestoreReservationRepository(db)
-        val reservationController = OwnerReservationController(
-            repository = reservationRepository,
-            notificationRepository = notificationRepository
-        )
-
-        val entrantReservationController = ReservationController(
-            repository = reservationRepository
-        )
 
         window.statusBarColor = android.graphics.Color.rgb(225, 241, 250)
 
-        setContent {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color(0xFFCFE7F5))
-            )
-            SummitclimbTheme {
-                AppNavigation(
-                    searchController = searchController,
-                    lotteryController = lotteryController,
-                    currentUserId = currentUserId,
-                    ownerCampsiteController = OwnerCampsiteController(campsiteRepository),
-                    notificationController = notificationController,
-                    reservationController = reservationController,
-                    ownerLotteryController = ownerLotteryController,
-                    entrantReservationController = entrantReservationController,
-                    ownerNotificationController = ownerNotificationController
-                )
-            }
+        val current = auth.currentUser
+
+        if (current != null) {
+            startScreen(current.uid)
+        }
+        else {
+            auth.signInAnonymously()
+                .addOnSuccessListener { startScreen(it.user!!.uid) }
+                .addOnFailureListener { Log.e("Auth", "Anonymous sign-in failed", it) }
         }
     }
 }
