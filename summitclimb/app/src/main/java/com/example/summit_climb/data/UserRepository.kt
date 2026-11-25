@@ -28,6 +28,7 @@ import com.google.firebase.firestore.FieldValue
  */
 class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getInstance()) {
     private val userRef = db.collection("users")
+
     //private val imageService = ImageService()
     private val _users = mutableStateListOf<User>()
 
@@ -35,9 +36,9 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
     // Every user in Firestore. Updates automatically. Used by the admin screens.
     val users: List<User> = _users
 
-    init{
+    init {
         userRef.addSnapshotListener { snapshot, error ->
-            if (error != null){
+            if (error != null) {
                 return@addSnapshotListener
             }
             _users.clear()
@@ -60,10 +61,10 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
     fun getUser(
         deviceId: String,
         onResult: (User) -> Unit
-    ){
+    ) {
         userRef.document(deviceId).get().addOnSuccessListener { document ->
             val exist = document.toObject(User::class.java)
-            if (exist != null){
+            if (exist != null) {
                 // User already exists, check if they should also be an owner
                 db.collection("campsites")
                     .whereEqualTo("ownerId", deviceId)
@@ -77,8 +78,7 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
                         onResult(exist)
                     }
                     .addOnFailureListener { onResult(exist) }
-            }
-            else{
+            } else {
                 val newUser = User(userId = deviceId)
                 userRef.document(deviceId).set(newUser)
                 onResult(newUser)
@@ -92,7 +92,7 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
      */
     fun saveProfile(
         user: User
-    ){
+    ) {
         userRef.document(user.userId).set(user)
     }
 
@@ -102,9 +102,9 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
      * @param optOut: `true` to stop notifications, `false` to receive them.
      */
     fun updateNotificationOpt(
-        userId:String,
+        userId: String,
         optOut: Boolean
-    ){
+    ) {
         userRef.document(userId).update("notificationsOptedOut", optOut)
     }
 
@@ -113,7 +113,7 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
      * Entrants use this to delete their own profile. Admin can use it to delete a user.
      * @param user: user to be deleted.
      *
-    **/
+     **/
     fun deleteUser(user: User) {
         val lotteryRepository = FirestoreLotteryRepository(db)
         val campsiteRepository = CampsiteRepository()
@@ -125,7 +125,13 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
                     entry.lotteryId,
                     entry.entrantId,
                     onSuccess = { Log.d("DeleteUser", "Left ${entry.lotteryId}") },
-                    onFailure = { e -> Log.e("DeleteUser", "Error leaving: ${entry.lotteryId}", e)})
+                    onFailure = { e ->
+                        Log.e(
+                            "DeleteUser",
+                            "Error leaving: ${entry.lotteryId}",
+                            e
+                        )
+                    })
             }
         }
 
@@ -155,9 +161,9 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
      * @return the matching users.
      */
     fun searchUsers(
-        searchText:String,
+        searchText: String,
         status: AccountStatus?
-    ):List<User> {
+    ): List<User> {
         return _users.filter { user ->
             val nameMatch = user.name.contains(searchText.trim(), ignoreCase = true)
             val emailMatch = user.email.contains(searchText.trim(), ignoreCase = true)
@@ -174,7 +180,7 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
     fun updateStatus(
         userId: String,
         status: AccountStatus
-    ){
+    ) {
         userRef.document(userId).update("accountStatus", status.name)
     }
 
@@ -186,5 +192,16 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
     fun addOwnerRole(userId: String) {
         userRef.document(userId)
             .update("roles", FieldValue.arrayUnion(UserRole.OWNER.name))
+            .addOnFailureListener { Log.e("OwnerRole", "failed to add $userId", it) }
+    }
+
+    /**
+     * Removes the owner role if the user has no approved campsites.
+     * @param userId: user to update role.
+     */
+    fun removeOwnerRole(userId: String) {
+        userRef.document(userId)
+            .update("roles", FieldValue.arrayRemove(UserRole.OWNER.name))
+            .addOnFailureListener { Log.e("OwnerRole", "failed to remove owner role", it) }
     }
 }

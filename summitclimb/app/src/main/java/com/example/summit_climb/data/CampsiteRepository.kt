@@ -10,6 +10,7 @@ import com.google.firebase.firestore.firestore
 import com.example.summit_climb.service.ImageService
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import android.util.Log
 
 /**
  * Handles the Firestore operations for campsites.
@@ -35,7 +36,7 @@ class CampsiteRepository {
 
     init {
         campRef.addSnapshotListener { snapshots, error ->
-            if (error != null){
+            if (error != null) {
                 return@addSnapshotListener
             }
 
@@ -56,7 +57,6 @@ class CampsiteRepository {
     }
 
 
-
     /**
      * Gets one campsite by its ID.
      *
@@ -64,7 +64,21 @@ class CampsiteRepository {
      * @return the campsite, or null if no campsite has this ID.
      */
     fun getCampsite(campsiteId: String): Campsite? {
-        return _campsites.find { campsite -> campsite.id == campsiteId}
+        return _campsites.find { campsite -> campsite.id == campsiteId }
+    }
+
+    fun fetchCampsite(campsiteId: String, onResult: (Campsite?) -> Unit) {
+        if (campsiteId.isBlank()) {
+            onResult(null)
+            return
+        }
+        campRef.document(campsiteId).get()
+            .addOnSuccessListener { doc ->
+                val campsite = doc.toObject(Campsite::class.java)
+                campsite?.id = doc.id
+                onResult(campsite)
+            }
+            .addOnFailureListener { onResult(null) }
     }
 
     /**
@@ -72,8 +86,8 @@ class CampsiteRepository {
      * Entrant searches start from this list. [com.example.summit_climb.controller.CampsiteSearchController.filterCampsites]
      * @return the approved campsites.
      */
-    fun approvedCampsites(): List<Campsite>{
-        return  _campsites.filter { campsite -> campsite.listingStatus == ListingStatus.APPROVED }
+    fun approvedCampsites(): List<Campsite> {
+        return _campsites.filter { campsite -> campsite.listingStatus == ListingStatus.APPROVED }
     }
 
     /**
@@ -84,7 +98,7 @@ class CampsiteRepository {
      *
      * @param rating: rating to save.
      */
-    fun saveRating(rating: Rating){
+    fun saveRating(rating: Rating) {
         val campsite = getCampsite(rating.campsiteId) ?: return
         val updatedCampsite = campsite.copy()
         updatedCampsite.setRating(rating.entrantId, rating.stars)
@@ -100,7 +114,7 @@ class CampsiteRepository {
      * @param status: listing status to keep, or `null` to keep every status.
      * @return the matching campsites.
      */
-    fun searchCampsites(keyword: String, status: ListingStatus?): List<Campsite>{
+    fun searchCampsites(keyword: String, status: ListingStatus?): List<Campsite> {
         return _campsites.filter { campsite ->
             val matchesKeyword = campsite.keywordMatch(keyword)
             val matchesStatus = status == null || campsite.listingStatus == status
@@ -117,52 +131,61 @@ class CampsiteRepository {
      * @param adminNotes: admin's notes(replaces any old notes).
      */
     fun updateListingStatus(campsiteId: String, status: ListingStatus, adminNotes: String) {
-        val ownerId = getCampsite(campsiteId)?.ownerId
-        campRef.document(campsiteId).update(
-            "listingStatus", status.name,
-            "adminNotes", adminNotes
-        ).addOnSuccessListener {
-            if (status == ListingStatus.APPROVED && ownerId != null && ownerId != "") {
-                UserRepository().addOwnerRole(ownerId)
+        val ref = campRef.document(campsiteId)
+        ref.update("listingStatus", status.name, "adminNotes", adminNotes)
+            .addOnSuccessListener {
+                ref.get().addOnSuccessListener { doc ->
+                    campStatusCheck(doc.getString("ownerId") ?: "")
+                }
             }
-        }
     }
 
     /**
      * Deletes a campsite. Admins use.
      * @param campsiteId: campsite to delete.
      */
-    fun deleteCamp(campsiteId: String){
-        campRef.document(campsiteId).delete()
+    fun deleteCamp(campsiteId: String) {
+        val ref = campRef.document(campsiteId)
+        ref.get().addOnSuccessListener { doc ->
+            val ownerId = doc.getString("ownerId") ?: ""
+            ref.delete().addOnSuccessListener { campStatusCheck(ownerId) }
+        }
     }
 
     /**
      * Deletes any registered campsites.
-     * @param ownerId: campsite to delete.
+     * @param userId: campsite to delete.
      */
-    fun deleteListing(ownerId: String) {
-        campRef.whereEqualTo("ownerId", ownerId).get().addOnSuccessListener { snapshot ->
+    fun deleteListing(userId: String) {
+        campRef.whereEqualTo("ownerId", userId).get().addOnSuccessListener { snapshot ->
             for (doc in snapshot.documents) {
                 doc.reference.delete()
-                ImageService().delete(doc.getString("promoImageUrl") ?: "")
+                val imageUrl = doc.getString("promoImageUrl") ?: ""
+                if (imageUrl.isNotBlank()) {
+                    ImageService().delete(imageUrl)
+                }
             }
+            UserRepository().removeOwnerRole(userId)
         }
     }
 
-    fun assignOwnerRoles() {
-        campRef.whereEqualTo("listingStatus", ListingStatus.APPROVED.name)
-            .get()
-            .addOnSuccessListener { snapshot ->
-                val ownerIds = snapshot.documents
-                    .mapNotNull { it.getString("ownerId") }
-                    .filter { it.isNotBlank() }
-                    .distinct()
-                val userRepository = UserRepository()
-                for (ownerId in ownerIds) {
-                    userRepository.addOwnerRole(ownerId)
-                }
-            }
-    }
+    /**
+     * Checks if the user has any approved listings, if not owner role is removed.
+     * @param userId: campsite to delete.
+     */
+    fun campStatusCheck(ownerId: String) {
+        Log.d("checkCamp", "check called for '$ownerId'")
+        if (ownerId.isBlank()) return
+        val approvedCount = _campsites.count {
+            it.ownerId == ownerId && it.listingStatus == ListingStatus.APPROVED
+        }
+        val users = UserRepository()
 
+        if (approvedCount == 0) {
+            users.removeOwnerRole(ownerId)
+        } else {
+            users.addOwnerRole(ownerId)
+        }
+    }
 }
 

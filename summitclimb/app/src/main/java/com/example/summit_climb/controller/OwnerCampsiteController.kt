@@ -10,6 +10,7 @@ import com.example.summit_climb.service.ImageService
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.toObjects
+import android.util.Log
 
 /**
  * Handles the registation, validation, and editing of campsites
@@ -67,6 +68,7 @@ class OwnerCampsiteController(private val campsiteRepository: CampsiteRepository
 
         val issue = validate(campsite)
         if (issue != null) {
+            Log.e("RegisterCamp", "validation failed: $issue")
             onFailure(Exception(issue))
             return
         }
@@ -121,6 +123,7 @@ class OwnerCampsiteController(private val campsiteRepository: CampsiteRepository
         currentCamp.document(campsiteId).delete()
             .addOnSuccessListener {
                 imageService.delete(storedCampsite.promoImageUrl)
+                campsiteRepository.campStatusCheck(ownerId)
                 onSuccess()
             }
             .addOnFailureListener { onFailure(Exception("Unable to delete campsite")) }
@@ -180,6 +183,7 @@ class OwnerCampsiteController(private val campsiteRepository: CampsiteRepository
                 ) {
                     imageService.delete(storedCampsite.promoImageUrl)
                 }
+                campsiteRepository.campStatusCheck(ownerId)
                 onSuccess()
             }
             .addOnFailureListener { onFailure(Exception("Unable to save changes to campsite")) }
@@ -255,6 +259,16 @@ class OwnerCampsiteController(private val campsiteRepository: CampsiteRepository
         return qrService.generateQRCode(storedCampsite.id)
     }
 
+    /**
+     * Uploads a new image for the campsite and updates its image URL
+     * in Firestore. Once the new image is successfully saved, the previous image is deleted.
+     *
+     * @param campsiteId campsite ID for image
+     * @param imageUri The URI of the new image to upload
+     * @param oldImageUrl The old URL of the previously stored image
+     * @param onSuccess image is successfully uploaded and saved.
+     * @param onFailure  image upload or Firestore update fails
+     */
     // Helper function for changePromoImage
     private fun addImage(
         campsiteId: String,

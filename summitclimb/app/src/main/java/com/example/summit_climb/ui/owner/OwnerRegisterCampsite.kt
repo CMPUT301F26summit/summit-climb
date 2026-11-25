@@ -161,6 +161,11 @@ fun OwnerRegisterCampsite(
     var saving by remember { mutableStateOf(false) }
     var pickedDates by remember { mutableStateOf<Set<LocalDate>>(emptySet()) }
 
+    val completeForm = name.isNotBlank() &&
+            location != "" &&
+            description != "" &&
+            pickedDates != emptySet<LocalDate>()
+
     val newImage =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             imageUri = uri
@@ -644,7 +649,7 @@ fun OwnerRegisterCampsite(
                     .height(56.dp)
                     .testTag("registerButton"),
                 shape = CircleShape,
-                enabled = !saving && name.isNotBlank() && location.isNotBlank(),
+                enabled = !saving && completeForm,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = charcoal,
                     contentColor = Color.White
