@@ -183,7 +183,15 @@ fun AppNavigation(
                                     total = reservation.totalPrice?.let {
                                         String.format(Locale.US, "$%.2f", it)
                                     } ?: "Unavailable",
-                                    status = reservation.status
+                                    status = if (
+                                        reservation.status == "ACTIVE" &&
+                                        LocalDate.parse(reservation.endDate).isBefore(LocalDate.now())
+                                    ) {
+                                        MyReservationsText.COMPLETED
+                                    } else {
+                                        reservation.status
+                                    },
+                                    campsiteId = reservation.campsiteId
                                 )
                             }
                         },
@@ -198,26 +206,30 @@ fun AppNavigation(
                     message = message,
                     onMessageShown = { message = "" },
                     onCancel = { id ->
-                        val name = reservations.find {
+                        val selected = reservations.find {
                             it.reservationId == id
-                        }?.campsiteName ?: "campsite"
+                        }
 
-                        entrantReservationController.cancelReservation(
-                            reservationId = id,
-                            onSuccess = {
-                                reservations = reservations.map {
-                                    if (it.reservationId == id) {
-                                        it.copy(status = MyReservationsText.CANCELLED)
-                                    } else {
-                                        it
+                        if (selected != null) {
+                            entrantReservationController.cancelReservation(
+                                reservationId = id,
+                                entrantId = currentUserId,
+                                campsiteId = selected.campsiteId,
+                                onSuccess = {
+                                    reservations = reservations.map {
+                                        if (it.reservationId == id) {
+                                            it.copy(status = MyReservationsText.CANCELLED)
+                                        } else {
+                                            it
+                                        }
                                     }
+                                    message = "Your reservation at ${selected.campsiteName} has been cancelled."
+                                },
+                                onFailure = { error ->
+                                    message = error.message ?: "Failed to cancel reservation"
                                 }
-                                message = "Your reservation at $name has been cancelled."
-                            },
-                            onFailure = { error ->
-                                message = error.message ?: "Failed to cancel reservation"
-                            }
-                        )
+                            )
+                        }
                     }
                 )
             }

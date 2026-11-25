@@ -2,9 +2,13 @@ package com.example.summit_climb.controller
 
 import com.example.summit_climb.data.ReservationRepository
 import com.example.summit_climb.model.Reservation
+import com.example.summit_climb.data.NotificationRepository
+import com.example.summit_climb.model.Notification
+import com.example.summit_climb.model.NotificationType
 
 class ReservationController(
-    private val repository: ReservationRepository
+    private val repository: ReservationRepository,
+    private val notificationRepository: NotificationRepository
 ) {
 
     /** Retrieves booked dates for a campsite */
@@ -53,6 +57,7 @@ class ReservationController(
         rulesAccepted: Boolean?,
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
+
     ) {
         repository.createReservation(
             campsiteId,
@@ -63,16 +68,48 @@ class ReservationController(
             guests,
             totalPrice,
             rulesAccepted,
-            onSuccess,
+            {
+                notificationRepository.send(
+                    Notification(
+                        senderId = "system",
+                        recipientId = entrantId,
+                        type = NotificationType.RESERVATION_UPDATE,
+                        title = "Reservation confirmed",
+                        text = "Your reservation from $startDate to $endDate has been confirmed.",
+                        campsiteId = campsiteId
+                    )
+                )
+                onSuccess()
+            },
             onFailure
         )
     }
 
     fun cancelReservation(
         reservationId: String,
+        entrantId: String,
+        campsiteId: String,
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
     ) {
-        repository.cancelReservation(reservationId, onSuccess, onFailure) // Calls the repository's cancelReservation function
+        repository.cancelReservation(
+            reservationId,
+            {
+                notificationRepository.send(
+                    Notification(
+                        senderId = "system",
+                        recipientId = entrantId,
+                        type = NotificationType.RESERVATION_UPDATE,
+                        title = "Reservation cancelled",
+                        text = "Your campsite reservation has been successfully cancelled.",
+                        campsiteId = campsiteId,
+                        relatedId = reservationId
+                    )
+                )
+                onSuccess()
+            },
+            onFailure
+        )
     }
+
 }
