@@ -4,6 +4,10 @@ import androidx.compose.runtime.mutableStateListOf
 import com.example.summit_climb.model.AccountStatus
 import com.example.summit_climb.model.User
 import com.google.firebase.firestore.FirebaseFirestore
+import com.example.summit_climb.service.ImageService
+import android.util.Log
+import com.example.summit_climb.model.UserRole
+import com.google.firebase.firestore.FieldValue
 
 /**
  * Handles the Firestore operations for user profiles.
@@ -26,6 +30,7 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
     private val userRef = db.collection("users")
     //private val imageService = ImageService()
     private val _users = mutableStateListOf<User>()
+
 
     // Every user in Firestore. Updates automatically. Used by the admin screens.
     val users: List<User> = _users
@@ -59,8 +64,19 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
         userRef.document(deviceId).get().addOnSuccessListener { document ->
             val exist = document.toObject(User::class.java)
             if (exist != null){
-                // User already exists
-                onResult(exist)
+                // User already exists, check if they should also be an owner
+                db.collection("campsites")
+                    .whereEqualTo("ownerId", deviceId)
+                    .whereEqualTo("listingStatus", "APPROVED")
+                    .get()
+                    .addOnSuccessListener { snapshot ->
+                        if (!snapshot.isEmpty && !exist.roles.contains(UserRole.OWNER)) {
+                            addOwnerRole(deviceId)
+                            exist.roles = exist.roles + UserRole.OWNER
+                        }
+                        onResult(exist)
+                    }
+                    .addOnFailureListener { onResult(exist) }
             }
             else{
                 val newUser = User(userId = deviceId)
@@ -97,20 +113,37 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
      * Entrants use this to delete their own profile. Admin can use it to delete a user.
      * @param user: user to be deleted.
      *
-    fun deleteUser(
-        user: User
-    ){
-        lotteryRepository.getUserEntries(user.userId){ entries ->
-            entries.forEach{ entry ->
-                lotteryRepository.removeWaitlistEntry(entry)
+    **/
+    fun deleteUser(user: User) {
+        val lotteryRepository = FirestoreLotteryRepository(db)
+        val campsiteRepository = CampsiteRepository()
+        val imageService = ImageService()
+
+        lotteryRepository.entriesFor(user.userId) { entries ->
+            for (entry in entries) {
+                lotteryRepository.leave(
+                    entry.lotteryId,
+                    entry.entrantId,
+                    onSuccess = { Log.d("DeleteUser", "Left ${entry.lotteryId}") },
+                    onFailure = { e -> Log.e("DeleteUser", "Error leaving: ${entry.lotteryId}", e)})
             }
         }
 
-        if (user.profileImageUrl.isNotBlank()){
-            imageService.deleteImage(user.profileImageUrl)
+        for (campsite in campsiteRepository.campsite) {
+            if (campsite.ownerId == user.userId) {
+                if (campsite.promoImageUrl.isNotBlank()) {
+                    imageService.delete(campsite.promoImageUrl)
+                }
+                campsiteRepository.deleteListing(campsite.id)
+            }
         }
+
+        CampsiteRepository().deleteListing(user.userId)
+
+        imageService.delete(user.profileImageUrl)
+
         userRef.document(user.userId).delete()
-    }*/
+    }
 
     /**
      * Gets all users, searched by name, email and filtered by account status. For admins.
@@ -143,5 +176,15 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
         status: AccountStatus
     ){
         userRef.document(userId).update("accountStatus", status.name)
+    }
+
+    /**
+     * Adds the owner role to a user when the campsite has been approved.
+     * Does nothing if they are already an owner.
+     * @param userId: user to update role.
+     */
+    fun addOwnerRole(userId: String) {
+        userRef.document(userId)
+            .update("roles", FieldValue.arrayUnion(UserRole.OWNER.name))
     }
 }

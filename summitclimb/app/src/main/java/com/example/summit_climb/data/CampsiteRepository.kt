@@ -6,6 +6,7 @@ import com.example.summit_climb.model.Campsite
 import com.example.summit_climb.model.ListingStatus
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
+import com.example.summit_climb.service.ImageService
 
 /**
  * Handles the Firestore operations for campsites.
@@ -45,6 +46,8 @@ class CampsiteRepository {
             }
         }
     }
+
+
 
     /**
      * Gets one campsite by its ID.
@@ -105,11 +108,16 @@ class CampsiteRepository {
      * @param status: new listing status.
      * @param adminNotes: admin's notes(replaces any old notes).
      */
-    fun updateListingStatus(campsiteId: String, status: ListingStatus, adminNotes: String){
+    fun updateListingStatus(campsiteId: String, status: ListingStatus, adminNotes: String) {
+        val ownerId = getCampsite(campsiteId)?.ownerId
         campRef.document(campsiteId).update(
             "listingStatus", status.name,
             "adminNotes", adminNotes
-        )
+        ).addOnSuccessListener {
+            if (status == ListingStatus.APPROVED && ownerId != null && ownerId != "") {
+                UserRepository().addOwnerRole(ownerId)
+            }
+        }
     }
 
     /**
@@ -119,4 +127,34 @@ class CampsiteRepository {
     fun deleteCamp(campsiteId: String){
         campRef.document(campsiteId).delete()
     }
+
+    /**
+     * Deletes any registered campsites.
+     * @param ownerId: campsite to delete.
+     */
+    fun deleteListing(ownerId: String) {
+        campRef.whereEqualTo("ownerId", ownerId).get().addOnSuccessListener { snapshot ->
+            for (doc in snapshot.documents) {
+                doc.reference.delete()
+                ImageService().delete(doc.getString("promoImageUrl") ?: "")
+            }
+        }
+    }
+
+    fun assignOwnerRoles() {
+        campRef.whereEqualTo("listingStatus", ListingStatus.APPROVED.name)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val ownerIds = snapshot.documents
+                    .mapNotNull { it.getString("ownerId") }
+                    .filter { it.isNotBlank() }
+                    .distinct()
+                val userRepository = UserRepository()
+                for (ownerId in ownerIds) {
+                    userRepository.addOwnerRole(ownerId)
+                }
+            }
+    }
+
 }
+

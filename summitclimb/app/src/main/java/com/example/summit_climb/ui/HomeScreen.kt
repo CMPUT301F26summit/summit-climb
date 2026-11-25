@@ -79,26 +79,6 @@ fun HomeScreen(navController: NavController) {
                     text = "Login",
                     fontSize = 16.sp)
             }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Button(
-                onClick = {
-                    auth.signInAnonymously()
-                        .addOnSuccessListener { navController.navigate(Routes.SIGNUP_PAGE) }
-                        .addOnFailureListener { errorMessage = "login failed" }
-                },
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .height(40.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFE3963E)
-                )
-            ){
-                Text(
-                    text = "Sign Up",
-                    fontSize = 16.sp)
-            }
         }
     }
 }
