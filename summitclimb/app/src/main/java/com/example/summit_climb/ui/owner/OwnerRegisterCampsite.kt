@@ -148,7 +148,7 @@ fun OwnerRegisterCampsite(
 
     var name by remember { mutableStateOf(campsite.name) }
     var location by remember { mutableStateOf(campsite.location) }
-    var price by remember(campsite.id) { mutableStateOf(campsite.price.toString()) }
+    var price by remember(campsite.id) { mutableStateOf("%.2f".format(campsite.price)) }
     var occupancy by remember { mutableIntStateOf(maxOf(campsite.maxOccupancy, 1)) }
     var description by remember { mutableStateOf(campsite.description) }
     var amenities by remember { mutableStateOf(campsite.amenities.toSet()) }
@@ -330,14 +330,17 @@ fun OwnerRegisterCampsite(
 
                     OutlinedTextField(
                         value = price,
-                        onValueChange = { input ->
-                            if (input.all { it.isDigit() })
+                        onValueChange = { input: String ->
+                            if (input.isEmpty() ||
+                                (input.all { it.isDigit() || it == '.' } &&
+                                        input.toDoubleOrNull() != null &&
+                                        input.substringAfter('.', "").length <= 2))
                                 price = input
                         },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.fillMaxWidth().testTag("pricePerNight"),
                         singleLine = true,
                         shape = RoundedCornerShape(14.dp),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         colors =
                             OutlinedTextFieldDefaults.colors(
                                 focusedTextColor = charcoal,

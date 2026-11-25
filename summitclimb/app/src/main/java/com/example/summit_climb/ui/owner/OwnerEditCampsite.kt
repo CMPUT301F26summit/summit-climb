@@ -367,7 +367,13 @@ fun OwnerEditCampsite(
 
                     OutlinedTextField(
                         value = price,
-                        onValueChange = { price = it },
+                        onValueChange = { input: String ->
+                            if (input.isEmpty() ||
+                                (input.all { it.isDigit() || it == '.' } &&
+                                        input.toDoubleOrNull() != null &&
+                                        input.substringAfter('.', "").length <= 2))
+                                price = input
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("pricePerNight"),
