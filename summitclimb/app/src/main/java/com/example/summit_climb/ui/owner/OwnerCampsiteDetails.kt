@@ -141,6 +141,12 @@ fun OwnerCampsiteDetails(
         }
     }
 
+    val availableDates = remember(campsite.availableDates) {
+        campsite.availableDates.mapNotNull {
+            runCatching { LocalDate.parse(it) }.getOrNull()
+        }.toSet()
+    }
+
     Spacer(modifier = Modifier.height(5.dp))
 
     Scaffold(modifier = modifier) { padding ->
@@ -390,8 +396,8 @@ fun OwnerCampsiteDetails(
                 ){
                     AvailabilityCalendar(
                         bookedDates = bookedDates,
-                        selectedDate = selectedDate ?: LocalDate.now(),
-                        onDateSelected = { selectedDate = it }
+                        selectedDate = selectedDate,
+                        ownerDates = availableDates
                     )
                 }
 

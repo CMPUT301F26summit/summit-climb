@@ -51,6 +51,8 @@ import coil3.compose.AsyncImage
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.material3.OutlinedButton
 import com.example.summit_climb.service.ImageService
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -758,60 +760,56 @@ fun OwnerEditCampsite(
                     fontWeight = FontWeight.SemiBold
                 )
             }
-
             if (deleteCampsite) {
-                Column(
-                    Modifier
-                        .padding(top = 12.dp)
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(22.dp))
-                        .background(greyBlue)
-                        .padding(horizontal = 16.dp, vertical = 14.dp)
-                ) {
-                    Text(
-                        text = "Delete this campsite?",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = charcoal
-                    )
-                    Text(
-                        text = "This will permanently delete ${campsite.name}. Are you sure?",
-                        fontSize = 13.sp,
-                        color = charcoal,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(top = 12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ){
-                        Button(
+                AlertDialog(
+                    onDismissRequest = {
+                        deleteCampsite = false
+                    },
+                    containerColor = Color.White,
+                    shape = RoundedCornerShape(22.dp),
+                    title = {
+                        Text(
+                            text = "Delete this campsite?",
+                            fontWeight = FontWeight.Bold,
+                            color = charcoal
+                        )
+                    },
+                    text = {
+                        Text(
+                            text = "This will permanently delete ${campsite.name}. Are you sure?",
+                            color = charcoal
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(
+                            modifier = Modifier.testTag("doDeleteButton"),
                             onClick = {
                                 deleteCampsite = false
                                 deleteCampsite(campsite)
-                                navController.popBackStack("ownerCampsites", inclusive = false)
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("doDeleteButton"),
-                            shape = CircleShape,
-                            colors = ButtonDefaults.buttonColors(containerColor = lightRed, contentColor = Color.White)
-                        ){
-                            Text("Delete", fontWeight = FontWeight.SemiBold)
-                        }
-                        Button(
-                            onClick = { deleteCampsite = false },
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("undoDeleteButton"),
-                            shape = CircleShape,
-                            colors = ButtonDefaults.buttonColors(containerColor = charcoal, contentColor = Color.White)
+                                navController.popBackStack(
+                                    "ownerCampsites",
+                                    inclusive = false
+                                )
+                            }
                         ) {
-                            Text("Cancel", fontWeight = FontWeight.SemiBold)
+                            Text(
+                                "Delete",
+                                color = lightRed,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            modifier = Modifier.testTag("undoDeleteButton"),
+                            onClick = {
+                                deleteCampsite = false
+                            }
+                        ) {
+                            Text("Cancel", color = charcoal)
                         }
                     }
-                }
+                )
             }
         }
     }
