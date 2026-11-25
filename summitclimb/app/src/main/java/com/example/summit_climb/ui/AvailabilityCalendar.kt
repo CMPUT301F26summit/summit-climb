@@ -66,30 +66,13 @@ fun AvailabilityCalendar(
     ){
 
         Row(
-            modifier = Modifier
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically)
-        {
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
                 text = "Availability",
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp)
-
-            Spacer(Modifier.width(8.dp))
-
-            Box(
-                Modifier
-                    .size(8.dp)
-                    .background(
-                        lightGreen,
-                        RoundedCornerShape(50))
-            )
-
-            Spacer(Modifier.width(4.dp))
-
-            Text(
-                text = "Booked",
-                fontSize = 11.sp
+                fontSize = 16.sp
             )
 
             Spacer(Modifier.weight(1f))
@@ -99,7 +82,8 @@ fun AvailabilityCalendar(
                 fontSize = 25.sp,
                 modifier = Modifier
                     .clickable { month = month.minusMonths(1) }
-                    .padding(horizontal = 8.dp))
+                    .padding(horizontal = 8.dp)
+            )
 
             Text(
                 text = month.format(DateTimeFormatter.ofPattern("MMM yyyy")),
@@ -115,6 +99,41 @@ fun AvailabilityCalendar(
                     .padding(horizontal = 8.dp)
             )
         }
+
+        Spacer(Modifier.height(6.dp))
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                Modifier
+                    .size(8.dp)
+                    .background(lightGreen, RoundedCornerShape(50))
+            )
+
+            Spacer(Modifier.width(4.dp))
+
+            Text("Booked", fontSize = 11.sp)
+
+            if (ownerDates.isNotEmpty()) {
+                Spacer(Modifier.width(12.dp))
+
+                Box(
+                    Modifier
+                        .size(8.dp)
+                        .background(
+                            Color(0xFF245C86),
+                            RoundedCornerShape(50)
+                        )
+                )
+
+                Spacer(Modifier.width(4.dp))
+
+                Text("Available", fontSize = 11.sp)
+            }
+        }
+
+        Spacer(Modifier.height(10.dp))
 
         Row(
             modifier = Modifier

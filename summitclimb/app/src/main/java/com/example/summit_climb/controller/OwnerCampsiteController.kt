@@ -80,7 +80,7 @@ class OwnerCampsiteController(private val campsiteRepository: CampsiteRepository
             activeLotteryId = null,
             listingStatus = ListingStatus.PENDING,
             adminNotes = "",
-            promoImageUrl = ""
+            promoImageUrl = campsite.promoImageUrl
         )
 
         val document = currentCamp.document()
@@ -169,10 +169,19 @@ class OwnerCampsiteController(private val campsiteRepository: CampsiteRepository
             cancellationPolicy = editCampsite.cancellationPolicy,
             latitude = editCampsite.latitude,
             longitude = editCampsite.longitude,
-            availableDates = editCampsite.availableDates
+            availableDates = editCampsite.availableDates,
+            promoImageUrl = editCampsite.promoImageUrl
         )
         currentCamp.document(editCampsite.id).set(updatedCampsite)
-            .addOnSuccessListener { onSuccess() }
+            .addOnSuccessListener {
+                if (
+                    storedCampsite.promoImageUrl.isNotBlank() &&
+                    storedCampsite.promoImageUrl != updatedCampsite.promoImageUrl
+                ) {
+                    imageService.delete(storedCampsite.promoImageUrl)
+                }
+                onSuccess()
+            }
             .addOnFailureListener { onFailure(Exception("Unable to save changes to campsite")) }
     }
 
