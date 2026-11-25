@@ -46,12 +46,15 @@ fun AvailabilityCalendar(
     bookedDates: Set<LocalDate>,
     selectedDate: LocalDate?,
     rangeDates: Set<LocalDate> = emptySet(),
-    onDateSelected: (LocalDate?) -> Unit = {}
+    onDateSelected: (LocalDate?) -> Unit = {},
+    ownerDates: Set<LocalDate> = emptySet(),
+    onDayClicked: ((LocalDate) -> Unit)? = null
     ){
 
     var month by remember { mutableStateOf(YearMonth.now()) }
     val daysInMonth = month.lengthOfMonth()
     val space = month.atDay(1).dayOfWeek.value % 7
+    val datesClicked = onDayClicked!= null
 
     Column(
         modifier = Modifier
@@ -145,7 +148,8 @@ fun AvailabilityCalendar(
                         val date = month.atDay(day)
                         val booked = date in bookedDates
                         val inRange = date in rangeDates
-                        val selected = date == selectedDate
+                        val picked = date in ownerDates
+                        val selected = !datesClicked && date == selectedDate
 
                         Box(
                             Modifier
@@ -155,7 +159,7 @@ fun AvailabilityCalendar(
                                 .background(
                                     if (booked)
                                         Color(0xFF96B38E)
-                                    else if (selected)
+                                    else if (picked || selected)
                                         Color(0xFF245C86)
                                     else if (inRange)
                                         Color(0xFF8FB9DE)
@@ -164,12 +168,16 @@ fun AvailabilityCalendar(
                                     RoundedCornerShape(8.dp)
                                 )
                                 .clickable(enabled = !booked) {
-                                    onDateSelected(
-                                        if (selected)
-                                            null
-                                        else
-                                            date
-                                    )
+                                    if (onDayClicked != null) {
+                                        onDayClicked(date)
+                                    } else {
+                                        onDateSelected(
+                                            if (selected)
+                                                null
+                                            else
+                                                date
+                                        )
+                                    }
                                 },
 
                             contentAlignment = Alignment.Center
@@ -178,12 +186,8 @@ fun AvailabilityCalendar(
                             Text(
                                 text = "$day",
 
-                                color = if (selected)
+                                color = if (picked || selected || booked || inRange)
                                     Color.White
-
-                                else if (booked || inRange)
-                                    Color.White
-
                                 else
                                     charcoal
                             )
