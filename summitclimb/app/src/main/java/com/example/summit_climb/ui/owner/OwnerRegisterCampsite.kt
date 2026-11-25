@@ -66,6 +66,8 @@ import android.net.Uri
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.PickVisualMediaRequest
 import com.example.summit_climb.model.Campsite
+import java.time.LocalDate
+import com.example.summit_climb.ui.AvailabilityCalendar
 
 /**
  * Amenity border for an amenity icon.
@@ -155,7 +157,9 @@ fun OwnerRegisterCampsite(
     var addingTag by remember { mutableStateOf(false) }
     var newTag by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
+
     var saving by remember { mutableStateOf(false) }
+    var pickedDates by remember { mutableStateOf<Set<LocalDate>>(emptySet()) }
 
     val newImage =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
@@ -570,6 +574,35 @@ fun OwnerRegisterCampsite(
 
             Spacer(Modifier.height(16.dp))
 
+            Text(
+                text = "Available dates · ${pickedDates.size} selected",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(top = 16.dp, bottom = 6.dp)
+            )
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(22.dp))
+                    .background(greyBlue)
+                    .padding(horizontal = 16.dp, vertical = 14.dp)
+            ) {
+                AvailabilityCalendar(
+                    bookedDates = emptySet(),
+                    selectedDate = null,
+                    ownerDates = pickedDates,
+                    onDayClicked = { day ->
+                        pickedDates =
+                            if (day in pickedDates)
+                                pickedDates - day
+                            else
+                            pickedDates + day
+                    }
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
             Button(
                 onClick = {
                     val newCampsite = Campsite(
@@ -580,7 +613,8 @@ fun OwnerRegisterCampsite(
                         description = description,
                         amenities = amenities.toList(),
                         tags = tags,
-                        rules = rules
+                        rules = rules,
+                        availableDates = pickedDates.map { "$it" }
                     )
 
                     val pickedImage = imageUri

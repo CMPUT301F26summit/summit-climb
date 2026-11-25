@@ -76,6 +76,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.PickVisualMediaRequest
 import com.example.summit_climb.model.Campsite
 import android.util.Log
+import java.time.LocalDate
+import com.example.summit_climb.ui.AvailabilityCalendar
 
 
 /** Holds the amenities for editing */
@@ -187,6 +189,17 @@ fun OwnerEditCampsite(
     val newImage = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> image = uri }
 
     var deleteCampsite by remember { mutableStateOf(false) }
+    var pickedDates by remember(campsite.id) {
+        mutableStateOf(
+            campsite.availableDates.map { LocalDate.parse(it) }.toSet()
+        )
+    }
+
+    val bookedDates = remember(campsite.bookedDates) {
+        campsite.bookedDates
+            .mapNotNull { runCatching { LocalDate.parse(it) }.getOrNull() }
+            .toSet()
+    }
 
     Box(
         modifier = modifier
@@ -647,6 +660,35 @@ fun OwnerEditCampsite(
 
             Spacer(Modifier.height(16.dp))
 
+            Text(
+                text = "Available dates · ${pickedDates.size} selected",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(top = 16.dp, bottom = 6.dp)
+            )
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(22.dp))
+                    .background(greyBlue)
+                    .padding(horizontal = 16.dp, vertical = 14.dp)
+            ) {
+                AvailabilityCalendar(
+                    bookedDates = bookedDates,
+                    selectedDate = null,
+                    ownerDates = pickedDates,
+                    onDayClicked = { day ->
+                        pickedDates =
+                            if (day in pickedDates)
+                                pickedDates - day
+                            else
+                                pickedDates + day
+                    }
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
             Button(
                 onClick = {
                     val updated = campsite.copy(
@@ -657,7 +699,8 @@ fun OwnerEditCampsite(
                         description = description,
                         amenities = amenities.toList(),
                         tags = tags,
-                        rules = rules
+                        rules = rules,
+                        availableDates = pickedDates.map { "$it" }
                     )
 
                     val pickedImage = image
