@@ -133,5 +133,6 @@ class NotificationController(
             NotificationType.RESERVATION_UPDATE -> Routes.MY_RESERVATIONS
             // NotificationType.RATING_REQUEST -> null
             NotificationType.MESSAGE -> null   // TO BE DONE
+            NotificationType.RATING_REQUEST -> null // T
         }
 }

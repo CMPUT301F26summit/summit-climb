@@ -81,6 +81,14 @@ object Routes {
     /** Owner's QR code screen (opened from the manage menu).*/
     const val MANAGE_QR_CODE = "manageQRCode/{$CAMPSITE_ID_ARG}"
 
+    // Admin screens
+    const val ADMIN_DASHBOARD = "adminDashboard"
+    const val ADMIN_CAMPSITES = "adminCampsites"
+    const val ADMIN_PROFILES = "adminProfiles"
+    const val ADMIN_LOGS = "adminLogs"
+
+    const val CONVERSATION = "conversation/{campsiteId}/{recipientId}"
+
 
     /**
      * Builds the route that opens one campsite's details.
@@ -163,5 +171,12 @@ object Routes {
             "{$CAMPSITE_ID_ARG}",
             campsiteId
         )
+    }
+
+    fun conversation(
+        campsiteId: String,
+        recipientId: String
+    ): String {
+        return "conversation/${android.net.Uri.encode(campsiteId)}/${android.net.Uri.encode(recipientId)}"
     }
 }

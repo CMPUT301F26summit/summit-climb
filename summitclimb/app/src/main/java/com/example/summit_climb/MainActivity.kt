@@ -27,6 +27,15 @@ import com.example.summit_climb.data.FirestoreReservationRepository
 import com.example.summit_climb.controller.ReservationController
 import com.example.summit_climb.data.UserRepository
 import android.util.Log
+import androidx.compose.runtime.*
+import androidx.compose.material3.Text
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.Alignment
+import com.example.summit_climb.model.User
+import com.example.summit_climb.model.UserRole
+import com.example.summit_climb.model.AccountStatus
+import com.example.summit_climb.ui.AdminNavigation
+import com.example.summit_climb.service.LotteryDrawService
 
 
 class MainActivity : ComponentActivity() {
@@ -34,24 +43,36 @@ class MainActivity : ComponentActivity() {
 
         super.onCreate(savedInstanceState)
 
-        val db = FirebaseFirestore.getInstance()
-        SampleData.uploadIfMissing(db)
+        val db = try {
+            FirebaseFirestore.getInstance()
+        } catch (e: Exception) {
+            Log.e("MainActivity", "FirebaseFirestore not initialized", e)
+            null
+        }
+        if (db != null) {
+            runCatching { SampleData.uploadIfMissing(db) }
+        }
 
-        val auth = FirebaseAuth.getInstance()
+        val auth = try {
+            FirebaseAuth.getInstance()
+        } catch (e: Exception) {
+            Log.e("MainActivity", "FirebaseAuth not initialized", e)
+            null
+        }
 
         fun startScreen(currentUserId: String) {
             Log.d("Auth-login", "current user id: $currentUserId")
-            val userRepository = UserRepository(db)
-            userRepository.getUser(currentUserId) { }
+            val userRepository = UserRepository(db ?: runCatching { FirebaseFirestore.getInstance() }.getOrNull() ?: return)
 
             val campsiteRepository = CampsiteRepository()
             val searchController = CampsiteSearchController(campsiteRepository)
 
-            val lotteryRepository = FirestoreLotteryRepository(db)
+            val lotteryRepository = FirestoreLotteryRepository(db ?: FirebaseFirestore.getInstance())
+            val drawService = LotteryDrawService()
             val lotteryController = EntrantLotteryController(lotteryRepository, currentUserId)
             val ownerLotteryController = OwnerLotteryController(lotteryRepository)
 
-            val notificationRepository = FirestoreNotificationRepository(db)
+            val notificationRepository = FirestoreNotificationRepository(db ?: runCatching { FirebaseFirestore.getInstance() }.getOrNull() ?: return)
             val notificationController = NotificationController(notificationRepository) {
                 FirebaseAuth.getInstance().currentUser?.uid
             }
@@ -60,7 +81,7 @@ class MainActivity : ComponentActivity() {
                 notificationRepository = notificationRepository
             )
 
-            val reservationRepository = FirestoreReservationRepository(db)
+            val reservationRepository = FirestoreReservationRepository(db ?: runCatching { FirebaseFirestore.getInstance() }.getOrNull() ?: return)
             val reservationController = OwnerReservationController(
                 repository = reservationRepository,
                 notificationRepository = notificationRepository
@@ -72,38 +93,95 @@ class MainActivity : ComponentActivity() {
             )
 
             setContent {
+                var currentUser by remember(currentUserId) {
+                    mutableStateOf<User?>(null)
+                }
+                var adminMode by remember { mutableStateOf(false) }
+
+                LaunchedEffect(currentUserId) {
+                    userRepository.getUser(currentUserId) { user ->
+                        currentUser = user
+                    }
+                }
+
+                // runs any lottery draws that are due whenever the lottery list loads or changes
+                LaunchedEffect(Unit) {
+                    snapshotFlow { lotteryRepository.lotteries.toList() }
+                        .collect { lotteries ->
+                            drawService.runDueDraws(lotteries, lotteryRepository, notificationRepository)
+                        }
+                }
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(Color(0xFFCFE7F5))
                 )
                 SummitclimbTheme {
-                    AppNavigation(
-                        searchController = searchController,
-                        lotteryController = lotteryController,
-                        currentUserId = currentUserId,
-                        ownerCampsiteController = OwnerCampsiteController(campsiteRepository),
-                        notificationController = notificationController,
-                        reservationController = reservationController,
-                        ownerLotteryController = ownerLotteryController,
-                        entrantReservationController = entrantReservationController,
-                        ownerNotificationController = ownerNotificationController
-                    )
+                    val user = currentUser
+
+                    when {
+                        user == null -> {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color(0xFFCFE7F5)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
+
+                        user.userId != currentUserId ||
+                                user.accountStatus != AccountStatus.ACTIVE -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("Account unavailable")
+                            }
+                        }
+
+                        adminMode -> {
+                            AdminNavigation(
+                                onExitAdmin = { adminMode = false }
+                            )
+                        }
+
+                        else -> {
+                            AppNavigation(
+                                searchController = searchController,
+                                lotteryController = lotteryController,
+                                currentUserId = currentUserId,
+                                ownerCampsiteController =
+                                    OwnerCampsiteController(campsiteRepository),
+                                notificationController = notificationController,
+                                reservationController = reservationController,
+                                ownerLotteryController = ownerLotteryController,
+                                entrantReservationController =
+                                    entrantReservationController,
+                                ownerNotificationController =
+                                    ownerNotificationController,
+                                onOpenAdmin = { adminMode = true }
+                            )
+                        }
+                    }
                 }
             }
         }
 
         window.statusBarColor = android.graphics.Color.rgb(225, 241, 250)
 
-        val current = auth.currentUser
+        val current = auth?.currentUser
 
         if (current != null) {
             startScreen(current.uid)
         }
-        else {
+        else if (auth != null) {
             auth.signInAnonymously()
                 .addOnSuccessListener { startScreen(it.user!!.uid) }
                 .addOnFailureListener { Log.e("Auth", "Anonymous sign-in failed", it) }
+        } else {
+            startScreen("test-user")
         }
     }
 }
