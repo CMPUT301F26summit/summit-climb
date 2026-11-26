@@ -62,28 +62,35 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
         deviceId: String,
         onResult: (User) -> Unit
     ) {
-        userRef.document(deviceId).get().addOnSuccessListener { document ->
-            val exist = document.toObject(User::class.java)
-            if (exist != null) {
-                // User already exists, check if they should also be an owner
-                db.collection("campsites")
-                    .whereEqualTo("ownerId", deviceId)
-                    .whereEqualTo("listingStatus", "APPROVED")
-                    .get()
-                    .addOnSuccessListener { snapshot ->
-                        if (!snapshot.isEmpty && !exist.roles.contains(UserRole.OWNER)) {
-                            addOwnerRole(deviceId)
-                            exist.roles = exist.roles + UserRole.OWNER
+        userRef.document(deviceId).get()
+            .addOnSuccessListener { document ->
+                val exist = document.toObject(User::class.java)
+                if (exist != null) {
+                    // User already exists, check if they should also be an owner
+                    db.collection("campsites")
+                        .whereEqualTo("ownerId", deviceId)
+                        .whereEqualTo("listingStatus", "APPROVED")
+                        .get()
+                        .addOnSuccessListener { snapshot ->
+                            if (!snapshot.isEmpty && !exist.roles.contains(UserRole.OWNER)) {
+                                addOwnerRole(deviceId)
+                                exist.roles = exist.roles + UserRole.OWNER
+                            }
+                            onResult(exist)
                         }
-                        onResult(exist)
-                    }
-                    .addOnFailureListener { onResult(exist) }
-            } else {
-                val newUser = User(userId = deviceId)
-                userRef.document(deviceId).set(newUser)
-                onResult(newUser)
+                        .addOnFailureListener { onResult(exist) }
+                } else {
+                    val newUser = User(userId = deviceId)
+                    userRef.document(deviceId).set(newUser)
+                        .addOnSuccessListener { onResult(newUser) }
+                        .addOnFailureListener { onResult(newUser) }
+                }
             }
-        }
+            .addOnFailureListener { error ->
+                Log.e("UserRepository", "Failed to get user from Firestore, falling back to default user", error)
+                val fallbackUser = User(userId = deviceId)
+                onResult(fallbackUser)
+            }
     }
 
     /**

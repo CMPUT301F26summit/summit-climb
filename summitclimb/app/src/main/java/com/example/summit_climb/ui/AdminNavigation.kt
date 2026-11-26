@@ -20,8 +20,15 @@ import androidx.navigation.compose.composable
 import androidx.compose.foundation.layout.systemBarsPadding
 
 
+/**
+ * Main navigation for the admin section, starting at the admin dashboard.
+ * An admin can open the campsite management, profile management
+ * and logs screens.
+ *
+ * @param onExitAdmin: called when the admin leaves the dashboard to return to the landing screen.
+ */
 @Composable
-fun AdminNavigation() {
+fun AdminNavigation(onExitAdmin: () -> Unit = {}) {
     val navController = rememberNavController()
 
     NavHost(
@@ -33,7 +40,7 @@ fun AdminNavigation() {
             .systemBarsPadding()
     ) {
         composable(Routes.ADMIN_DASHBOARD) {
-            AdminDashboardScreen(navController)
+            AdminDashboardScreen(navController, onExit = onExitAdmin)
         }
 
         composable(Routes.ADMIN_CAMPSITES) {

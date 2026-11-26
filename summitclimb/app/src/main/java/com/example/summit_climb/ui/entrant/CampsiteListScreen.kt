@@ -52,8 +52,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -69,6 +68,7 @@ import com.example.summit_climb.ui.greyBlue
 import com.example.summit_climb.ui.theme.screenBackground
 import java.util.Locale
 import android.widget.Toast
+import android.util.Log
 
 
 /**
@@ -180,7 +180,15 @@ fun CampsiteListScreen(
         },
         onNotificationsClick = {
             navController.navigate(Routes.NOTIFICATIONS) { launchSingleTop = true }
+        },
+        onBackClick = {
+            Log.d("BackTest", "back tapped")
+            navController.navigate(Routes.HOME_SCREEN) {
+                popUpTo(Routes.HOME_SCREEN) { inclusive = false }
+                launchSingleTop = true
+            }
         }
+
     )
 
     // dialog 1: shown while waiting for campsite data
@@ -250,6 +258,7 @@ fun CampsiteListScreen(
  * @param onCampsiteClick: called with campsite the user tapped.
  * @param onScanClick: called when user taps the QR scan button.
  * @param onNotificationsClick: called when the user taps bell.
+ * @param onBackClick: called when user taps back button.
  */
 @Composable
 fun CampsiteListContent(
@@ -263,7 +272,8 @@ fun CampsiteListContent(
     campsites: List<Campsite>,
     onCampsiteClick: (Campsite) -> Unit,
     onScanClick: () -> Unit,
-    onNotificationsClick: () -> Unit
+    onNotificationsClick: () -> Unit,
+    onBackClick: () -> Unit = {}
 ) {
     val focusManager = LocalFocusManager.current
     // Runs a search.
@@ -299,7 +309,10 @@ fun CampsiteListContent(
         ) {
             Spacer(modifier = Modifier.height(20.dp))
 
-            CampsiteListHeader(onNotificationsClick = onNotificationsClick)
+            CampsiteListHeader(
+                onNotificationsClick = onNotificationsClick,
+                onBackClick = onBackClick
+            )
 
             SearchRow(
                 keyword = keyword,
@@ -376,13 +389,26 @@ fun CampsiteListContent(
 /**
  * Top row has title  and the notifications bell
  * @param onNotificationsClick: called when user taps bell.
+ * @param onBackClick: called when user taps back button.
  */
 @Composable
-fun CampsiteListHeader(onNotificationsClick: () -> Unit) {
+fun CampsiteListHeader(
+    onNotificationsClick: () -> Unit,
+    onBackClick: () -> Unit = {}
+    ){
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        IconButton(onClick = onBackClick) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back",
+                tint = Color.Black,
+                modifier = Modifier.size(28.dp)
+            )
+        }
+
         Text(
             text = CampsiteListText.TITLE,
             fontFamily = FontFamily.Serif,
