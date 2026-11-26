@@ -23,10 +23,15 @@ import com.example.summit_climb.ui.Routes
 /**
  * Main dashboard for administrators.
  * Provides access to campsite, profile and log management.
+ *
+ * @param navController: navigation used to open the admin screens.
+ * @param onExit: called when the admin taps "Exit Admin Panel".
  */
+
 @Composable
 fun AdminDashboardScreen(
-    navController: NavController
+    navController: NavController,
+    onExit: () -> Unit = {}
 ) {
     Box(
         modifier = Modifier
@@ -48,7 +53,11 @@ fun AdminDashboardScreen(
                 .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(12.dp))
+
+            TextButton(onClick = onExit) {
+                Text("← Exit Admin Panel", fontWeight = FontWeight.Bold, color = Color(0xFF245C86))
+            }
 
             Text(
                 text = "Admin Dashboard",

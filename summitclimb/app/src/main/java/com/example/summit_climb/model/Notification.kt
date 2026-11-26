@@ -49,5 +49,6 @@ enum class NotificationType {
     LOTTERY_WIN,            // the user won the lottery
     LOTTERY_LOSS,           // the user lost the lottery
     RESERVATION_UPDATE,     // a reservation was confirmed, cancelled, or rejected
-    MESSAGE                 // a message from a campsite owner or to an entrant
+    MESSAGE,               // a message from a campsite owner or to an entrant
+    RATING_REQUEST
 }

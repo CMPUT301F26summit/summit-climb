@@ -113,7 +113,8 @@ fun AppNavigation(
     reservationController: OwnerReservationController,
     ownerLotteryController: OwnerLotteryController,
     entrantReservationController: ReservationController,
-    ownerNotificationController: OwnerNotificationController
+    ownerNotificationController: OwnerNotificationController,
+    onOpenAdmin: () -> Unit = {}
 ){
     val navController = rememberNavController()
     val profileController: ProfileController = viewModel()
@@ -138,7 +139,7 @@ fun AppNavigation(
         containerColor = Color(0xFFCFE7F5),
         bottomBar = {
             if (navController.currentBackStackEntryAsState().value?.destination?.route
-                != "homescreen") {
+                != Routes.HOME_SCREEN) {
                 AppBottomBar(navController)
             }
         }
@@ -151,7 +152,7 @@ fun AppNavigation(
                 .consumeWindowInsets(innerPadding)
         ) {
 
-            composable("homescreen") { HomeScreen(navController) }
+            composable(Routes.HOME_SCREEN) { HomeScreen(navController, onAdminClick = onOpenAdmin) }
 
             // test
             composable(Routes.MY_RESERVATIONS) {

@@ -389,6 +389,7 @@ private fun NotificationCard(
         NotificationType.LOTTERY_LOSS -> "Lottery Not Selected"
         NotificationType.RESERVATION_UPDATE -> "Reservation Notice"
         NotificationType.MESSAGE -> "New Message"
+        NotificationType.RATING_REQUEST -> "Rate Your Stay"
 
     }
     Card(
