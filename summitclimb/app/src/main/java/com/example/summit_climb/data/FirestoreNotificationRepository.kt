@@ -89,6 +89,12 @@ class FirestoreNotificationRepository(
 
                 val doc = notificationsRef.document()
                 doc.set(notification.copy(id = doc.id))
+                    .addOnSuccessListener {
+                        Log.d("NotificationRepo", "Rating notification saved successfully: ${doc.id}")
+                    }
+                    .addOnFailureListener { error ->
+                        Log.e("NotificationRepo", "Could not save notification", error)
+                    }
             }
             .addOnFailureListener { error ->
                 Log.e("NotificationRepo", "Could not check notification preferences", error)
@@ -102,6 +108,17 @@ class FirestoreNotificationRepository(
      */
     override fun markRead(notificationId: String) {
         notificationsRef.document(notificationId).update("read", true)
+    }
+
+    /** Deletes a notification in Firestore.
+     *
+     * @param notificationId ID of the notification to delete
+     */
+    override fun delete(notificationId: String) {
+        notificationsRef.document(notificationId).delete()
+            .addOnFailureListener { error ->
+                Log.e("NotificationRepo", "Could not delete notification", error)
+            }
     }
 
     /**

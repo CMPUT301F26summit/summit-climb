@@ -25,6 +25,10 @@ class OwnerNotificationTest {
             // Not needed for these tests
         }
 
+        override fun delete(notificationId: String) {
+            sentNotifications.removeAll { it.id == notificationId }
+        }
+
         override fun forUser(userId: String): List<Notification> {
             return sentNotifications.filter {
                 it.recipientId == userId

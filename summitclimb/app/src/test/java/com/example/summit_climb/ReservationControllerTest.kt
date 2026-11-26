@@ -26,6 +26,10 @@ class ReservationControllerTest {
 
         override fun markRead(notificationId: String) {}
 
+        override fun delete(notificationId: String) {
+            sentNotifications.removeAll { it.id == notificationId }
+        }
+
         override fun forUser(userId: String): List<Notification> {
             return sentNotifications.filter {
                 it.recipientId == userId
@@ -62,6 +66,14 @@ class ReservationControllerTest {
         var receivedRulesAccepted: Boolean? = null
 
         var shouldFail = false
+
+        override fun completeReservation(
+            reservationId: String,
+            onSuccess: () -> Unit,
+            onFailure: (Exception) -> Unit
+        ) {
+            onSuccess()
+        }
 
         override fun getBookedDates(
             campsiteId: String,

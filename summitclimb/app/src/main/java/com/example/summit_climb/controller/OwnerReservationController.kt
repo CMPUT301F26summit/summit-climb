@@ -1,5 +1,6 @@
 package com.example.summit_climb.controller
 
+import android.util.Log
 import com.example.summit_climb.data.NotificationRepository
 import com.example.summit_climb.model.Reservation
 import com.example.summit_climb.model.Notification
@@ -59,6 +60,43 @@ class OwnerReservationController(
             },
 
             // Left expects the failure callback; right provides the one received by this controller
+            onFailure = onFailure
+        )
+    }
+
+    fun completeReservation(
+        reservation: Reservation,
+        campsiteName: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        val today = java.text.SimpleDateFormat(
+            "yyyy-MM-dd",
+            java.util.Locale.US
+        ).format(java.util.Date())
+
+        if (reservation.endDate >= today) {
+            onFailure(IllegalStateException("Reservation has not ended yet."))
+            return
+        }
+
+        repository.completeReservation(
+            reservationId = reservation.id,
+            onSuccess = {
+                notificationRepository.send(
+                    Notification(
+                        senderId = "system",
+                        recipientId = reservation.entrantId,
+                        type = NotificationType.RATING_REQUEST,
+                        title = "Rate Your Experience?",
+                        text = "Your stay at $campsiteName has ended. How was your experience?",
+                        campsiteId = reservation.campsiteId,
+                        relatedId = reservation.id
+                    )
+                )
+
+                onSuccess()
+            },
             onFailure = onFailure
         )
     }

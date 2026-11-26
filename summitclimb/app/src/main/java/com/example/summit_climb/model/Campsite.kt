@@ -53,8 +53,8 @@ data class CampsiteFilter(
  * @property location: campsite's location as text, for example `Jasper, AB`. Part of the summary info.
  * @property maxOccupancy: most people who can stay at once. Part of the summary info.
  * @property avgRating: average of all star ratings, from 0.0 (no ratings) to 5.0. Part of the summary info.
- * @property ratings: each entrant's star rating, keyed by their [User.userId], for example
- *   `{"device123": 4, "device456": 5}`. One rating per entrant.
+ * @property ratings: each reservation's star rating, keyed by reservation ID
+ * @property reviews: each reservation's written review, keyed by reservation ID
  * @property description: a longer description of the campsite.
  * @property amenities: the amenities offered.
  * @property tags: short labels used in keyword search, like `["lake", "family"]`.
@@ -79,6 +79,7 @@ data class Campsite(
     var maxOccupancy: Int = 0,
     var avgRating: Double = 0.0,
     var ratings: Map<String, Int> = emptyMap(),
+    var reviews: Map<String, String> = emptyMap(),
     var description: String = "",
     var amenities: List<String> = emptyList(),
     var tags: List<String> = emptyList(),
@@ -102,9 +103,9 @@ data class Campsite(
      * @param searchLocation:  location text to look for. Empty matches every campsite.
      * @return `true` if [location] contains [searchLocation] or [searchLocation] is empty.
      */
-    fun locationMatch(searchLocation: String): Boolean{
+    fun locationMatch(searchLocation: String): Boolean {
         val trimSearch = searchLocation.trim()
-        if (trimSearch.isEmpty()){
+        if (trimSearch.isEmpty()) {
             return true
         }
         return location.contains(trimSearch, ignoreCase = true)
@@ -122,7 +123,7 @@ data class Campsite(
      * @param filter: location, dates and number of guests to check.
      * @return `true` if the location, dates and guests all match.
      */
-    fun filterMatch(filter: CampsiteFilter): Boolean{
+    fun filterMatch(filter: CampsiteFilter): Boolean {
         val locationMatched = locationMatch(filter.location)
         val available = availableBetween(filter.startDate, filter.endDate)
         val guestsFit = fitsGuest(filter.guests)
@@ -141,17 +142,17 @@ data class Campsite(
      * @return `true` if every date in the range is free, or [startDate] is empty.
      * `false` if a date is not in `yyyy-MM-dd` format or [endDate] is before [startDate].
      */
-    fun availableBetween( startDate: String, endDate: String): Boolean{
-        if (startDate.isBlank()){
+    fun availableBetween(startDate: String, endDate: String): Boolean {
+        if (startDate.isBlank()) {
             return true
         }
         val deadline = if (endDate.isBlank()) startDate else endDate
         val datesBetween = listDatesBetween(startDate, deadline)
-        if (datesBetween.isEmpty()){
+        if (datesBetween.isEmpty()) {
             return false
         }
-        for (date in datesBetween){
-            if (!isDateFree(date)){
+        for (date in datesBetween) {
+            if (!isDateFree(date)) {
                 return false
             }
         }
@@ -163,7 +164,7 @@ data class Campsite(
      * @param date: date to check, as `yyyy-MM-dd`.
      * @return `true` if [date] is in [availableDates] and not in [bookedDates].
      */
-    fun isDateFree(date: String): Boolean{
+    fun isDateFree(date: String): Boolean {
         val isAvailable = availableDates.contains(date)
         val isBooked = bookedDates.contains(date)
         return isAvailable && !isBooked
@@ -174,8 +175,8 @@ data class Campsite(
      * @param guests: number of people staying. 0 or less matches every campsite.
      * @return `true` if [guests] is at most [maxOccupancy], or [guests] is 0 or less.
      */
-    fun fitsGuest(guests:Int): Boolean{
-        if (guests <= 0){
+    fun fitsGuest(guests: Int): Boolean {
+        if (guests <= 0) {
             return true
         }
         return guests <= maxOccupancy
@@ -189,70 +190,76 @@ data class Campsite(
      * @return `true` if [name], [description] or one of the [tags] contains [keyword],
      * or [keyword] is empty.
      */
-    fun keywordMatch(keyword: String): Boolean{
+    fun keywordMatch(keyword: String): Boolean {
         val trimKeyword = keyword.trim()
-        if (trimKeyword.isEmpty()){
+        if (trimKeyword.isEmpty()) {
             return true
         }
         val matchesName = name.contains(trimKeyword, ignoreCase = true)
         val matchesDescription = description.contains(trimKeyword, ignoreCase = true)
-        val matchesTag = tags.any{tag -> tag.contains(trimKeyword, ignoreCase = true)}
+        val matchesTag = tags.any { tag -> tag.contains(trimKeyword, ignoreCase = true) }
         return matchesName || matchesDescription || matchesTag
     }
 
     /**
-     * Saves an entrant's rating and recalculates [avgRating].
-     * Each entrant has one rating, so second rating from the same entrant replaces the first.
+     * Saves a rating and review for a specific reservation.
+     * Recalculate the rating for that campsite.
      *
-     * @param entrantId: [User.userId] of the entrant rating the campsite.
+     * @param reservationId ID of the reservation being rated
      * @param stars: rating, from 1 to 5.
+     * @param review Written review of the campsite
      */
-    fun setRating(entrantId: String, stars: Int){
+    fun setRating(reservationId: String, stars: Int, review: String) {
         val updatedRatings = ratings.toMutableMap()
-        updatedRatings[entrantId] = stars
+        val updatedReviews = reviews.toMutableMap()
+
+        updatedRatings[reservationId] = stars
+        updatedReviews[reservationId] = review
+
         ratings = updatedRatings
-        avgRating =
-            if (ratings.isEmpty())
-                0.0
-            else
-                ratings.values.average()
-    }
-}
+        reviews = updatedReviews
 
-/**
- * Lists every date from [startDate] to [endDate], both included.
- * @return the dates, or an empty list if a date isn't correctly formatted or [endDate] is before [startDate].
- */
-private fun listDatesBetween(startDate: String, endDate: String): List<String>{
-    val dateformat = "yyyy-MM-dd"
-    val formatter = SimpleDateFormat(dateformat, Locale.CANADA)
-    formatter.timeZone = TimeZone.getTimeZone("UTC")
-    formatter.isLenient = false
+        avgRating = if (ratings.isEmpty()) {
+            0.0
+        } else {
+            ratings.values.average()
+        }
+    }
 
-    val start = parseDateOrNull(formatter, startDate) ?: return emptyList()
-    val end = parseDateOrNull(formatter, endDate) ?: return emptyList()
-    if (end.before(start)) {
-        return emptyList()
-    }
-    val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
-    calendar.time = start
-    val dates = mutableListOf<String>()
-    while (!calendar.time.after(end)){
-        dates.add(formatter.format(calendar.time))
-        calendar.add(Calendar.DAY_OF_MONTH, 1)
-    }
-    return dates
-}
+    /**
+     * Lists every date from [startDate] to [endDate], both included.
+     * @return the dates, or an empty list if a date isn't correctly formatted or [endDate] is before [startDate].
+     */
+    private fun listDatesBetween(startDate: String, endDate: String): List<String> {
+        val dateformat = "yyyy-MM-dd"
+        val formatter = SimpleDateFormat(dateformat, Locale.CANADA)
+        formatter.timeZone = TimeZone.getTimeZone("UTC")
+        formatter.isLenient = false
 
-/**
- * Reads a `yyyy-MM-dd` date.
- * @return the date, or `null` if [text] is not a valid date.
- */
-private fun parseDateOrNull(formatter: SimpleDateFormat, text: String): Date?{
-    return try{
-        formatter.parse(text.trim())
+        val start = parseDateOrNull(formatter, startDate) ?: return emptyList()
+        val end = parseDateOrNull(formatter, endDate) ?: return emptyList()
+        if (end.before(start)) {
+            return emptyList()
+        }
+        val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+        calendar.time = start
+        val dates = mutableListOf<String>()
+        while (!calendar.time.after(end)) {
+            dates.add(formatter.format(calendar.time))
+            calendar.add(Calendar.DAY_OF_MONTH, 1)
+        }
+        return dates
     }
-    catch (error: ParseException){
-        null
+
+    /**
+     * Reads a `yyyy-MM-dd` date.
+     * @return the date, or `null` if [text] is not a valid date.
+     */
+    private fun parseDateOrNull(formatter: SimpleDateFormat, text: String): Date? {
+        return try {
+            formatter.parse(text.trim())
+        } catch (error: ParseException) {
+            null
+        }
     }
 }

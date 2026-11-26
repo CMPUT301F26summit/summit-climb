@@ -123,6 +123,22 @@ class FirestoreReservationRepository(
     }
 
     /**
+     * Completes an active reservation after its end date has passed.
+     */
+    override fun completeReservation(
+        reservationId: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        updateReservationStatus(
+            reservationId = reservationId,
+            newStatus = "COMPLETED",
+            onSuccess = onSuccess,
+            onFailure = onFailure
+        )
+    }
+
+    /**
      * Creates a reservation if all requested nights are available.
      *
      * Validates the reservation details, then uses a Firestore transaction
@@ -251,7 +267,11 @@ class FirestoreReservationRepository(
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
     ) {
-        require(newStatus == "REJECTED" || newStatus == "CANCELLED") {
+        require(
+            newStatus == "REJECTED" ||
+                    newStatus == "CANCELLED" ||
+                    newStatus == "COMPLETED"
+        ) {
             "Unsupported reservation status: $newStatus"
         }
 

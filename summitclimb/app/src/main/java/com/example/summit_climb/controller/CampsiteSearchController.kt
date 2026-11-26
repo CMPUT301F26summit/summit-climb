@@ -60,23 +60,47 @@ class CampsiteSearchController(private val campsiteRepository: CampsiteRepositor
     }
 
 
+
     /**
-     * Saves an entrant's star rating for a campsite.
-     * If the entrant already rated this campsite, the new rating replaces the old one.
+     * Saves an entrant's rating and review for a specific reservation.
      *
-     * @param campsiteId: campsite being rated.
-     * @param entrantId: [com.example.summit_climb.model.User.userId] of the entrant rating it.
-     * @param stars: star value, a whole number from 1 to 5.
-     * @return `true` if the rating was saved, `false` if [stars] is not 1 to 5.
+     * @param reservationId ID of the reservation being rated.
+     * @param entrantId ID of the entrant submitting the rating.
+     * @param campsiteId ID of the campsite being rated.
+     * @param stars star value from 1 to 5.
+     * @param review written review of the campsite.
+     * @param onSuccess called when the rating is saved.
+     * @param onFailure called when validation or saving fails.
      */
-    fun rateCampsite(campsiteId: String, entrantId: String, stars: Int): Boolean{
-        val rating = Rating(entrantId = entrantId, campsiteId = campsiteId, stars = stars)
-        if (!rating.validStars()){
-            return false
+    fun rateCampsite(
+        reservationId: String,
+        entrantId: String,
+        campsiteId: String,
+        stars: Int,
+        review: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        val rating = Rating(
+            reservationId = reservationId,
+            entrantId = entrantId,
+            campsiteId = campsiteId,
+            stars = stars,
+            review = review
+        )
+
+        if (!rating.isValid()) {
+            onFailure(IllegalArgumentException("Invalid rating information."))
+            return
         }
-        campsiteRepository.saveRating(rating)
-        return true
+
+        campsiteRepository.saveRating(
+            rating,
+            onSuccess,
+            onFailure
+        )
     }
+
 
     /**
      * Keeps only the campsites that match keyword and filter.

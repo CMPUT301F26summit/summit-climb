@@ -95,6 +95,15 @@ class NotificationController(
         repository.markRead(notificationId)
     }
 
+    /**
+     * Deletes a notification
+     *
+     * @param notificationId ID of the notification being deleted
+     */
+    fun delete(notificationId: String) {
+        repository.delete(notificationId)
+    }
+
     fun sendToEntrants(
         campsiteId: String,
         recipientIds: List<String>,
@@ -131,7 +140,7 @@ class NotificationController(
             NotificationType.LOTTERY_LOSS -> Routes.MY_LOTTERIES
 
             NotificationType.RESERVATION_UPDATE -> Routes.MY_RESERVATIONS
-            // NotificationType.RATING_REQUEST -> null
+            NotificationType.RATING_REQUEST -> null
             NotificationType.MESSAGE -> null   // TO BE DONE
             NotificationType.RATING_REQUEST -> null // T
         }
