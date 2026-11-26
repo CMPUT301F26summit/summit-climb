@@ -165,6 +165,38 @@ fun AppNavigation(
                     entrantReservationController.getReservationsByEntrant(
                         entrantId = currentUserId,
                         onSuccess = { results ->
+                            results.forEach { reservation ->
+                                val today = LocalDate.now()
+
+                                val isExpired = runCatching {
+                                    LocalDate.parse(reservation.endDate).isBefore(today)
+                                }.getOrDefault(false)
+
+                                if (reservation.status == "ACTIVE" && isExpired) {
+                                    val campsiteName = searchController.campsiteDetails(
+                                        reservation.campsiteId
+                                    )?.name ?: "Unknown campsite"
+
+                                    reservationController.completeReservation(
+                                        reservation = reservation,
+                                        campsiteName = campsiteName,
+                                        onSuccess = {
+                                            android.util.Log.d(
+                                                "RatingRequest",
+                                                "Completed reservation: " + reservation.id
+                                            )
+                                        },
+                                        onFailure = { error ->
+                                            android.util.Log.e(
+                                                "RatingRequest",
+                                                "Could not complete reservation: " + reservation.id,
+                                                error
+                                            )
+                                        }
+                                    )
+                                }
+                            }
+
                             reservations = results.map { reservation ->
                                 val campsite = searchController.campsiteDetails(
                                     reservation.campsiteId
@@ -307,7 +339,10 @@ fun AppNavigation(
                     notificationsEnabled = profileController.notificationsStatus,
                     onEnableNotifications = {
                         profileController.setNotifications(true)
-                    }
+                    },
+                    searchController = searchController,
+                    entrantReservationController = entrantReservationController,
+                    currentUserId = currentUserId
                 )
             }
 
