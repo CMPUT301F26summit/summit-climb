@@ -595,7 +595,6 @@ fun LotterySection(
 /**
  * Five tappable stars. Tapping the 4th star fills stars 1–4 and reports 4.
  * @param onRateClick: called with the star value (1 to 5).
- */
 @Composable
 fun StarRatingRow(onRateClick: (Int) -> Unit) {
     var chosenStars by remember { mutableIntStateOf(0) }
@@ -620,6 +619,7 @@ fun StarRatingRow(onRateClick: (Int) -> Unit) {
         }
     }
 }
+*/
 
 /**
  * Describes how full the waitlist is.

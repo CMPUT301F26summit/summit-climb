@@ -193,6 +193,32 @@ class CampsiteRepository {
     }
 
     /**
+     * Clears the promo image URL for a campsite
+     *
+     * @param campsiteId: campsite whose image should be removed
+     * @param onDone: called with true if the Firestore update succeeds
+     */
+    fun removeCampsiteImage(
+        campsiteId: String,
+        onDone: (Boolean) -> Unit
+    ) {
+        if (campsiteId.isBlank()) {
+            onDone(false)
+            return
+        }
+
+        campRef.document(campsiteId)
+            .update("promoImageUrl", "")
+            .addOnSuccessListener {
+                onDone(true)
+            }
+            .addOnFailureListener { error ->
+                Log.e("CampsiteRepository", "Failed to remove campsite", error)
+                onDone(false)
+            }
+    }
+
+    /**
      * Deletes a campsite. Admins use.
      * @param campsiteId: campsite to delete.
      */
