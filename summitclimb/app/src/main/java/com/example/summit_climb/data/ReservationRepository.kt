@@ -16,7 +16,19 @@ interface ReservationRepository {
         onFailure: (Exception) -> Unit
     )
 
+    fun getReservationsByEntrant(
+        entrantId: String,
+        onSuccess: (List<Reservation>) -> Unit,
+        onFailure: (Exception) -> Unit
+    )
+
     fun rejectReservation(
+        reservationId: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    )
+
+    fun completeReservation(
         reservationId: String,
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit

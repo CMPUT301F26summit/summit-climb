@@ -9,6 +9,7 @@ import com.example.summit_climb.model.Notification
 import java.lang.Exception
 import com.example.summit_climb.data.ReservationRepository
 import com.example.summit_climb.data.NotificationRepository
+import com.example.summit_climb.model.NotificationType
 
 
 class OwnerReservationControllerTest {
@@ -69,6 +70,14 @@ class OwnerReservationControllerTest {
             }
 
             override fun rejectReservation(
+                reservationId: String,
+                onSuccess: () -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess()
+            }
+
+            override fun completeReservation(
                 reservationId: String,
                 onSuccess: () -> Unit,
                 onFailure: (Exception) -> Unit
@@ -139,6 +148,14 @@ class OwnerReservationControllerTest {
                 onSuccess()
             }
 
+            override fun completeReservation(
+                reservationId: String,
+                onSuccess: () -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess()
+            }
+
             override fun createReservation(
                 campsiteId: String,
                 entrantId: String,
@@ -195,6 +212,14 @@ class OwnerReservationControllerTest {
             }
 
             override fun rejectReservation(
+                reservationId: String,
+                onSuccess: () -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess()
+            }
+
+            override fun completeReservation(
                 reservationId: String,
                 onSuccess: () -> Unit,
                 onFailure: (Exception) -> Unit
@@ -276,6 +301,14 @@ class OwnerReservationControllerTest {
                 onFailure(Exception("Rejection failed"))
             }
 
+            override fun completeReservation(
+                reservationId: String,
+                onSuccess: () -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess()
+            }
+
             override fun createReservation(
                 campsiteId: String,
                 entrantId: String,
@@ -315,5 +348,93 @@ class OwnerReservationControllerTest {
 
         assertTrue(failureCalled)
         assertTrue(fakeNotificationRepository.sentNotifications.isEmpty())
+    }
+
+    @Test
+    fun completingReservationSendsRatingNotification() {
+        val fakeNotificationRepository = FakeNotificationRepository()
+
+        val fakeRepository = object : ReservationRepository {
+            override fun getBookedDates(
+                campsiteId: String,
+                onSuccess: (List<Pair<String, String>>) -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess(emptyList())
+            }
+
+            override fun getReservationsByCampsite(
+                campsiteId: String,
+                onSuccess: (List<Reservation>) -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess(emptyList())
+            }
+
+            override fun rejectReservation(
+                reservationId: String,
+                onSuccess: () -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess()
+            }
+
+            override fun completeReservation(
+                reservationId: String,
+                onSuccess: () -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess()
+            }
+
+            override fun createReservation(
+                campsiteId: String,
+                entrantId: String,
+                entrantName: String,
+                startDate: String,
+                endDate: String,
+                guests: Int,
+                onSuccess: () -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess()
+            }
+
+            override fun cancelReservation(
+                reservationId: String,
+                onSuccess: () -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess()
+            }
+        }
+
+        val controller = OwnerReservationController(
+            fakeRepository,
+            fakeNotificationRepository
+        )
+
+        controller.completeReservation(
+            reservationId = "reservation123",
+            entrantId = "entrant456",
+            campsiteId = "campsite789",
+            campsiteName = "Lakeview Valley Campground",
+            onSuccess = {},
+            onFailure = {}
+        )
+
+        assertEquals(1, fakeNotificationRepository.sentNotifications.size)
+
+        val notification = fakeNotificationRepository.sentNotifications.first()
+
+        assertEquals("entrant456", notification.recipientId)
+        assertEquals("campsite789", notification.campsiteId)
+        assertEquals("reservation123", notification.relatedId)
+        assertEquals(NotificationType.RATING_REQUEST, notification.type)
+        assertEquals("Rate Your Experience?", notification.title)
+        assertEquals(
+            "Your stay at Lakeview Valley Campground has ended. How was your experience?",
+            notification.text
+        )
     }
 }

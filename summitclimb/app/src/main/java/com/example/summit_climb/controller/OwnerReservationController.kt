@@ -30,6 +30,18 @@ class OwnerReservationController(
         repository.getReservationsByCampsite(campsiteId, onSuccess, onFailure)
     }
 
+    fun getReservationsByEntrant(
+        entrantId: String,
+        onSuccess: (List<Reservation>) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        repository.getReservationsByEntrant(
+            entrantId = entrantId,
+            onSuccess = onSuccess,
+            onFailure = onFailure
+        )
+    }
+
     fun rejectReservation(
         reservationId: String,
         entrantId: String,
@@ -58,6 +70,38 @@ class OwnerReservationController(
             },
 
             // Left expects the failure callback; right provides the one received by this controller
+            onFailure = onFailure
+        )
+    }
+
+    /**
+     * Marks a reservation as completed and sends a rating request
+     * to the entrant
+     */
+    fun completeReservation(
+        reservationId: String,
+        entrantId: String,
+        campsiteId: String,
+        campsiteName: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        repository.completeReservation(
+            reservationId = reservationId,
+            onSuccess = {
+                notificationRepository.send(
+                    Notification(
+                        senderId = "system",
+                        recipientId = entrantId,
+                        type = NotificationType.RATING_REQUEST,
+                        title = "Rate Your Experience?",
+                        text = "Your stay at $campsiteName has ended. How was your experience?",
+                        campsiteId = campsiteId,
+                        relatedId = reservationId
+                    )
+                )
+                onSuccess()
+            },
             onFailure = onFailure
         )
     }

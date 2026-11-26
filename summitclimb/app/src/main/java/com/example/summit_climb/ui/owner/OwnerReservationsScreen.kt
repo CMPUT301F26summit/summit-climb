@@ -39,6 +39,7 @@ data class ReservationUiItem(
 @Composable
 fun OwnerReservationsFromFirestore(
     campsiteId: String,
+    campsiteName: String,
     controller: OwnerReservationController,
     onReservationClick: (String) -> Unit,
     onBackClick: () -> Unit
@@ -54,6 +55,36 @@ fun OwnerReservationsFromFirestore(
         controller.getReservationsByCampsite(
             campsiteId = campsiteId,
             onSuccess = {result ->
+
+                val today = java.text.SimpleDateFormat(
+                    "yyyy-MM-dd",
+                    java.util.Locale.US
+                ).format(java.util.Date())
+
+                // Find reservations whose end date has passed
+                val expiredReservations = result.filter { reservation ->
+                    reservation.status == "ACTIVE" &&
+                            reservation.endDate < today
+                }
+
+                // Complete each expired reservation and send its rating notification
+                expiredReservations.forEach { reservation ->
+                    controller.completeReservation(
+                        reservationId = reservation.id,
+                        entrantId = reservation.entrantId,
+                        campsiteId = reservation.campsiteId,
+                        campsiteName = campsiteName,
+                        onSuccess = {
+                            // Reservation completed and notification sent.
+                        },
+                        onFailure =  { exception ->
+                            error = exception.message
+                                ?: "Could not complete reservation"
+                        }
+                    )
+                }
+
+                // Display expired reservations as completed
                 reservations = result.map { reservation ->
                     ReservationUiItem(
                         id = reservation.id,
@@ -65,11 +96,8 @@ fun OwnerReservationsFromFirestore(
 
                         status = if (
                             reservation.status == "ACTIVE" &&
-                            reservation.endDate < java.text.SimpleDateFormat(
-                                "yyyy-MM-dd",
-                                java.util.Locale.US
-                            ).format(java.util.Date())
-                        ){
+                            reservation.endDate < today
+                        ) {
                             "COMPLETED"
                         } else {
                             reservation.status

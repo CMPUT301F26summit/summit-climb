@@ -209,8 +209,11 @@ data class Campsite(
      */
     fun setRating(entrantId: String, stars: Int){
         val updatedRatings = ratings.toMutableMap()
+
         updatedRatings[entrantId] = stars
+
         ratings = updatedRatings
+
         avgRating =
             if (ratings.isEmpty())
                 0.0

@@ -45,6 +45,15 @@ class ReservationControllerTest {
             onSuccess()
         }
 
+        override fun completeReservation(
+            reservationId: String,
+            onSuccess: () -> Unit,
+            onFailure: (Exception) -> Unit
+        ) {
+            receivedReservationId = reservationId
+            onSuccess()
+        }
+
         override fun createReservation(
             campsiteId: String,
             entrantId: String,

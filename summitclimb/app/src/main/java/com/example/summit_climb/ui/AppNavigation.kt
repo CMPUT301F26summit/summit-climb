@@ -509,8 +509,11 @@ fun AppNavigation(
                         )
                     }
                 } else {
+                    Text("Campsite ID: $id")
+
                     OwnerReservationsFromFirestore(
                         campsiteId = id,
+                        campsiteName = campsite.name,
                         controller = reservationController,
                         onReservationClick = { reservationId ->
                             navController.navigate(Routes.OWNER_RESERVATION_DETAILS + "/$reservationId")
