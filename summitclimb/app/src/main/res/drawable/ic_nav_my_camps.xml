@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bottom bar icon: My Campsites (owner).
+     Material Symbols "camping" (outlined, weight 400), Apache License 2.0.
+     The Compose Icon's tint sets the real colour, so the fill colour here doesn't matter. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
+    <!-- Material Symbols are drawn from y = -960 to 0, so shift them down into view. -->
+    <group android:translateY="960">
+        <path
+            android:fillColor="@android:color/black"
+            android:pathData="M80-80v-183l363-491-67-90 49-35 55 75 56-75 48 35-66 90 362 491v183H80Zm400-623L140-243v103h145l195-273 195 273h145v-103L480-703ZM359-140h242L480-310 359-140Zm121-273 195 273-195-273-195 273 195-273Z" />
+    </group>
+</vector>
