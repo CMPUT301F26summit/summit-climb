@@ -4,6 +4,10 @@ import androidx.compose.runtime.mutableStateListOf
 import com.example.summit_climb.model.AccountStatus
 import com.example.summit_climb.model.User
 import com.google.firebase.firestore.FirebaseFirestore
+import com.example.summit_climb.service.ImageService
+import android.util.Log
+import com.example.summit_climb.model.UserRole
+import com.google.firebase.firestore.FieldValue
 
 /**
  * Handles the Firestore operations for user profiles.
@@ -24,15 +28,17 @@ import com.google.firebase.firestore.FirebaseFirestore
  */
 class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getInstance()) {
     private val userRef = db.collection("users")
+
     //private val imageService = ImageService()
     private val _users = mutableStateListOf<User>()
+
 
     // Every user in Firestore. Updates automatically. Used by the admin screens.
     val users: List<User> = _users
 
-    init{
+    init {
         userRef.addSnapshotListener { snapshot, error ->
-            if (error != null){
+            if (error != null) {
                 return@addSnapshotListener
             }
             _users.clear()
@@ -55,19 +61,36 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
     fun getUser(
         deviceId: String,
         onResult: (User) -> Unit
-    ){
-        userRef.document(deviceId).get().addOnSuccessListener { document ->
-            val exist = document.toObject(User::class.java)
-            if (exist != null){
-                // User already exists
-                onResult(exist)
+    ) {
+        userRef.document(deviceId).get()
+            .addOnSuccessListener { document ->
+                val exist = document.toObject(User::class.java)
+                if (exist != null) {
+                    // User already exists, check if they should also be an owner
+                    db.collection("campsites")
+                        .whereEqualTo("ownerId", deviceId)
+                        .whereEqualTo("listingStatus", "APPROVED")
+                        .get()
+                        .addOnSuccessListener { snapshot ->
+                            if (!snapshot.isEmpty && !exist.roles.contains(UserRole.OWNER)) {
+                                addOwnerRole(deviceId)
+                                exist.roles = exist.roles + UserRole.OWNER
+                            }
+                            onResult(exist)
+                        }
+                        .addOnFailureListener { onResult(exist) }
+                } else {
+                    val newUser = User(userId = deviceId)
+                    userRef.document(deviceId).set(newUser)
+                        .addOnSuccessListener { onResult(newUser) }
+                        .addOnFailureListener { onResult(newUser) }
+                }
             }
-            else{
-                val newUser = User(userId = deviceId)
-                userRef.document(deviceId).set(newUser)
-                onResult(newUser)
+            .addOnFailureListener { error ->
+                Log.e("UserRepository", "Failed to get user from Firestore, falling back to default user", error)
+                val fallbackUser = User(userId = deviceId)
+                onResult(fallbackUser)
             }
-        }
     }
 
     /**
@@ -76,8 +99,34 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
      */
     fun saveProfile(
         user: User
-    ){
+    ) {
         userRef.document(user.userId).set(user)
+    }
+
+    /**
+     * Clears the profile image URL for a user.
+     *
+     * @param userId: user whose profile image should be removed.
+     * @param onDone: called with true if the Firestore update succeeds.
+     */
+    fun removeProfileImage(
+        userId: String,
+        onDone: (Boolean) -> Unit
+    ) {
+        if (userId.isBlank()) {
+            onDone(false)
+            return
+        }
+
+        userRef.document(userId)
+            .update("profileImageUrl", "")
+            .addOnSuccessListener {
+                onDone(true)
+            }
+            .addOnFailureListener { error ->
+                Log.e("UserRepository", "Failed to remove profile image", error)
+                onDone(false)
+            }
     }
 
     /**
@@ -86,9 +135,9 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
      * @param optOut: `true` to stop notifications, `false` to receive them.
      */
     fun updateNotificationOpt(
-        userId:String,
+        userId: String,
         optOut: Boolean
-    ){
+    ) {
         userRef.document(userId).update("notificationsOptedOut", optOut)
     }
 
@@ -97,20 +146,43 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
      * Entrants use this to delete their own profile. Admin can use it to delete a user.
      * @param user: user to be deleted.
      *
-    fun deleteUser(
-        user: User
-    ){
-        lotteryRepository.getUserEntries(user.userId){ entries ->
-            entries.forEach{ entry ->
-                lotteryRepository.removeWaitlistEntry(entry)
+     **/
+    fun deleteUser(user: User) {
+        val lotteryRepository = FirestoreLotteryRepository(db)
+        val campsiteRepository = CampsiteRepository()
+        val imageService = ImageService()
+
+        lotteryRepository.entriesFor(user.userId) { entries ->
+            for (entry in entries) {
+                lotteryRepository.leave(
+                    entry.lotteryId,
+                    entry.entrantId,
+                    onSuccess = { Log.d("DeleteUser", "Left ${entry.lotteryId}") },
+                    onFailure = { e ->
+                        Log.e(
+                            "DeleteUser",
+                            "Error leaving: ${entry.lotteryId}",
+                            e
+                        )
+                    })
             }
         }
 
-        if (user.profileImageUrl.isNotBlank()){
-            imageService.deleteImage(user.profileImageUrl)
+        for (campsite in campsiteRepository.campsite) {
+            if (campsite.ownerId == user.userId) {
+                if (campsite.promoImageUrl.isNotBlank()) {
+                    imageService.delete(campsite.promoImageUrl)
+                }
+                campsiteRepository.deleteListing(campsite.id)
+            }
         }
+
+        CampsiteRepository().deleteListing(user.userId)
+
+        imageService.delete(user.profileImageUrl)
+
         userRef.document(user.userId).delete()
-    }*/
+    }
 
     /**
      * Gets all users, searched by name, email and filtered by account status. For admins.
@@ -122,9 +194,9 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
      * @return the matching users.
      */
     fun searchUsers(
-        searchText:String,
+        searchText: String,
         status: AccountStatus?
-    ):List<User> {
+    ): List<User> {
         return _users.filter { user ->
             val nameMatch = user.name.contains(searchText.trim(), ignoreCase = true)
             val emailMatch = user.email.contains(searchText.trim(), ignoreCase = true)
@@ -141,7 +213,28 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
     fun updateStatus(
         userId: String,
         status: AccountStatus
-    ){
+    ) {
         userRef.document(userId).update("accountStatus", status.name)
+    }
+
+    /**
+     * Adds the owner role to a user when the campsite has been approved.
+     * Does nothing if they are already an owner.
+     * @param userId: user to update role.
+     */
+    fun addOwnerRole(userId: String) {
+        userRef.document(userId)
+            .update("roles", FieldValue.arrayUnion(UserRole.OWNER.name))
+            .addOnFailureListener { Log.e("OwnerRole", "failed to add $userId", it) }
+    }
+
+    /**
+     * Removes the owner role if the user has no approved campsites.
+     * @param userId: user to update role.
+     */
+    fun removeOwnerRole(userId: String) {
+        userRef.document(userId)
+            .update("roles", FieldValue.arrayRemove(UserRole.OWNER.name))
+            .addOnFailureListener { Log.e("OwnerRole", "failed to remove owner role", it) }
     }
 }

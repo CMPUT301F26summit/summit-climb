@@ -1,29 +1,40 @@
 package com.example.summit_climb.ui.entrant
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.CardDefaults
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,38 +43,33 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import java.util.Locale
-import androidx.compose.foundation.layout.Box
-import com.example.summit_climb.ui.ScreensBackground
-import androidx.compose.foundation.background
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.foundation.BorderStroke
-
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.QrCodeScanner
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Search
+import com.example.summit_climb.R
+import com.example.summit_climb.controller.CampsiteSearchController
 import com.example.summit_climb.model.Campsite
 import com.example.summit_climb.model.CampsiteFilter
-import com.example.summit_climb.controller.CampsiteSearchController
+import com.example.summit_climb.service.QRCodeService
+import com.example.summit_climb.service.saveQRCodeToGallery
 import com.example.summit_climb.ui.Routes
 import com.example.summit_climb.ui.charcoal
 import com.example.summit_climb.ui.greyBlue
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import com.example.summit_climb.R
 import com.example.summit_climb.ui.theme.screenBackground
+import java.util.Locale
+import android.widget.Toast
+import android.util.Log
+
 
 /**
  * The entrant's campsite list screen (Home).
@@ -79,7 +85,7 @@ import com.example.summit_climb.ui.theme.screenBackground
 fun CampsiteListScreen(
     navController: NavController,
     searchController: CampsiteSearchController
-){
+) {
     // What the user is typing right now (not searched yet)
     var keyword by remember { mutableStateOf("") }
     var filter by remember { mutableStateOf(CampsiteFilter()) }
@@ -91,7 +97,66 @@ fun CampsiteListScreen(
     // true while the filter fields and Search button are showing
     var showFilters by remember { mutableStateOf(false) }
 
+    val context = LocalContext.current
+    val qrService = remember { QRCodeService() }
+
+    var scanErrorMessage by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    var pendingQrText by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    var isCheckingCampsite by remember {
+        mutableStateOf(false)
+    }
+
+    var foundCampsite by remember {
+        mutableStateOf<Campsite?>(null)
+    }
+
     val campsites = searchController.search(searchedKeyword, searchedFilter)
+
+    LaunchedEffect(searchController.isCampsitesLoaded, pendingQrText) {
+        val qrText = pendingQrText
+
+        if (qrText != null && searchController.isCampsitesLoaded) {
+            val campsite = searchController.getCampFromQR(qrText)
+
+            isCheckingCampsite = false
+            pendingQrText = null
+
+            if (campsite != null) {
+                foundCampsite = campsite
+            } else {
+                scanErrorMessage = "No campsite found for this QR code."
+            }
+
+        }
+    }
+
+    // opens Google's QR scanner and looks up the scanned campsite.
+    val startQrScan = {
+        qrService.scanCampsite(
+            context = context,
+
+            onScan = { qrText ->
+                pendingQrText = qrText
+                isCheckingCampsite = !searchController.isCampsitesLoaded
+            },
+            onError = { error ->
+                isCheckingCampsite = false
+                pendingQrText = null
+                scanErrorMessage = error
+            },
+            onCancel = {
+                isCheckingCampsite = false
+                pendingQrText = null
+                // The entrant cancelled scanning. Stay on the home page.
+            }
+        )
+    }
 
     CampsiteListContent(
         keyword = keyword,
@@ -110,13 +175,75 @@ fun CampsiteListScreen(
             navController.navigate(Routes.campsiteDetails(campsite.id))
         },
         onScanClick = {
-            //navController.navigate(Routes.SCAN_QR_CODE)
+            scanErrorMessage = null
+            startQrScan()
         },
         onNotificationsClick = {
             navController.navigate(Routes.NOTIFICATIONS) { launchSingleTop = true }
+        },
+        onBackClick = {
+            Log.d("BackTest", "back tapped")
+            navController.navigate(Routes.HOME_SCREEN) {
+                popUpTo(Routes.HOME_SCREEN) { inclusive = false }
+                launchSingleTop = true
+            }
         }
+
     )
+
+    // dialog 1: shown while waiting for campsite data
+    if (isCheckingCampsite) {
+        CheckingCampsiteDialog()
+    }
+
+    // dialog 2: shown when a matching campsite is found
+    foundCampsite?.let { campsite ->
+        CampsiteFoundDialog(
+            campsiteName = campsite.name,
+            imageUrl = campsite.promoImageUrl,
+            onShowDetails = {
+                foundCampsite = null
+                navController.navigate(
+                    Routes.campsiteDetails(campsite.id)
+                )
+            },
+            onSaveQrCode = {
+                val qrBitmap = qrService.generateQRCode(campsite.id)
+
+                val saved = saveQRCodeToGallery(
+                    context = context,
+                    bitmap = qrBitmap,
+                    fileName = "campsite_${campsite.id}"
+                )
+
+                Toast.makeText(
+                    context,
+                    if (saved) "QR code saved to gallery!"
+                    else "Could not save QR code.",
+                    Toast.LENGTH_SHORT
+                ).show()
+            },
+            onDismiss = {
+                foundCampsite = null
+            }
+        )
+    }
+
+    // dialog 3: shown when the QR code cannot be matched to a campsite
+    scanErrorMessage?.let { errorMessage ->
+        CampsiteNotFoundDialog(
+            errorMessage = errorMessage,
+            onTryAgain = {
+                scanErrorMessage = null
+                startQrScan()
+            },
+            onDismiss = {
+                scanErrorMessage = null
+            }
+        )
+    }
 }
+
 /**
  * The layout of [CampsiteListScreen].
  *
@@ -131,6 +258,7 @@ fun CampsiteListScreen(
  * @param onCampsiteClick: called with campsite the user tapped.
  * @param onScanClick: called when user taps the QR scan button.
  * @param onNotificationsClick: called when the user taps bell.
+ * @param onBackClick: called when user taps back button.
  */
 @Composable
 fun CampsiteListContent(
@@ -144,7 +272,8 @@ fun CampsiteListContent(
     campsites: List<Campsite>,
     onCampsiteClick: (Campsite) -> Unit,
     onScanClick: () -> Unit,
-    onNotificationsClick: () -> Unit
+    onNotificationsClick: () -> Unit,
+    onBackClick: () -> Unit = {}
 ) {
     val focusManager = LocalFocusManager.current
     // Runs a search.
@@ -153,17 +282,19 @@ fun CampsiteListContent(
         onSearchClick()
     }
 
-    Box(Modifier
+    Box(
+        Modifier
             .fillMaxSize()
             .background(screenBackground)
-        ) {
+    ) {
         Image(
             painter = painterResource(R.drawable.mountain_header),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(150.dp) )
+                .height(150.dp)
+        )
 
         Column(
             modifier = Modifier
@@ -172,12 +303,16 @@ fun CampsiteListContent(
                     start = 16.dp,
                     end = 16.dp,
                     top = 35.dp,
-                    bottom = 16.dp),
+                    bottom = 16.dp
+                ),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Spacer(modifier = Modifier.height(20.dp))
 
-            CampsiteListHeader(onNotificationsClick = onNotificationsClick)
+            CampsiteListHeader(
+                onNotificationsClick = onNotificationsClick,
+                onBackClick = onBackClick
+            )
 
             SearchRow(
                 keyword = keyword,
@@ -254,13 +389,26 @@ fun CampsiteListContent(
 /**
  * Top row has title  and the notifications bell
  * @param onNotificationsClick: called when user taps bell.
+ * @param onBackClick: called when user taps back button.
  */
 @Composable
-fun CampsiteListHeader(onNotificationsClick: () -> Unit) {
+fun CampsiteListHeader(
+    onNotificationsClick: () -> Unit,
+    onBackClick: () -> Unit = {}
+    ){
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        IconButton(onClick = onBackClick) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back",
+                tint = Color.Black,
+                modifier = Modifier.size(28.dp)
+            )
+        }
+
         Text(
             text = CampsiteListText.TITLE,
             fontFamily = FontFamily.Serif,
@@ -268,7 +416,8 @@ fun CampsiteListHeader(onNotificationsClick: () -> Unit) {
             style = MaterialTheme.typography.headlineSmall,
             color = Color(0xFF1C3348),
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+                .weight(1f)
                 .padding(12.dp)
         )
         IconButton(
@@ -443,7 +592,10 @@ fun FilterFields(
         )
         Button(
             onClick = onSearchClick,
-            colors = ButtonDefaults.buttonColors(containerColor = greyBlue, contentColor = Color.Black),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = greyBlue,
+                contentColor = Color.Black
+            ),
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag(CampsiteListTags.SEARCH_BUTTON)
@@ -503,3 +655,4 @@ object CampsiteListTags {
         return "campsiteCard_$campsiteId"
     }
 }
+

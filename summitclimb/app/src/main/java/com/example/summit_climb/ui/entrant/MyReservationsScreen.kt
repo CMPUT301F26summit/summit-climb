@@ -81,7 +81,8 @@ data class MyReservationUiItem(
     val dates: String,
     val nights: Int,
     val total: String,
-    val status: String
+    val status: String,
+    val campsiteId: String = ""
 )
 
 /**
@@ -345,12 +346,14 @@ fun ReservationCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = "${reservation.total} total",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF2C4352)
-                )
+                if (reservation.total != "Unavailable") {
+                    Text(
+                        text = "${reservation.total} total",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF2C4352)
+                    )
+                }
 
                 //Active: Cancel Reservation
                 if (reservation.status == MyReservationsText.ACTIVE) {

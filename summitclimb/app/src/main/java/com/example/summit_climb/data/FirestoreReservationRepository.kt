@@ -58,7 +58,7 @@ class FirestoreReservationRepository(
             }
     }
 
-    /** Retrieves all reservations associated with a campsite. */
+    // Retrieves all reservations associated with a campsite.
     override fun getReservationsByCampsite(
         campsiteId: String,
         onSuccess: (List<Reservation>) -> Unit,
@@ -81,6 +81,33 @@ class FirestoreReservationRepository(
             .addOnFailureListener { exception -> onFailure(exception) }
         }
 
+    // Retrieves all reservations associated with an entrant.
+    override fun getReservationsByEntrant(
+        entrantId: String,
+        onSuccess: (List<Reservation>) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        firestore.collection("reservations")
+            .whereEqualTo("entrantId", entrantId)
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                try {
+                    val reservations = querySnapshot.documents.map { document ->
+                        val reservation = document.toObject(Reservation::class.java)
+                            ?: throw IllegalStateException("Missing reservation data")
+
+                        reservation.copy(id = document.id)
+                    }
+                    onSuccess(reservations)
+                } catch (e: Exception) {
+                    onFailure(e)
+                }
+            }
+            .addOnFailureListener { exception ->
+                onFailure(exception)
+            }
+    }
+
     /** Rejects an active reservation and releases its booked nights. */
     override fun rejectReservation(
         reservationId: String,
@@ -90,6 +117,22 @@ class FirestoreReservationRepository(
         updateReservationStatus(
             reservationId = reservationId,
             newStatus = "REJECTED",
+            onSuccess = onSuccess,
+            onFailure = onFailure
+        )
+    }
+
+    /**
+     * Completes an active reservation after its end date has passed.
+     */
+    override fun completeReservation(
+        reservationId: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        updateReservationStatus(
+            reservationId = reservationId,
+            newStatus = "COMPLETED",
             onSuccess = onSuccess,
             onFailure = onFailure
         )
@@ -112,6 +155,8 @@ class FirestoreReservationRepository(
         startDate: String,
         endDate: String,
         guests: Int,
+        totalPrice: Double?,
+        rulesAccepted: Boolean?,
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
     ) {
@@ -153,7 +198,9 @@ class FirestoreReservationRepository(
                 startDate = startDate,
                 endDate = endDate,
                 guests = guests,
-                status = "ACTIVE"
+                totalPrice = totalPrice,
+                rulesAccepted = rulesAccepted,
+                status = "ACTIVE",
             )
 
             val nightRefs = dates.map { date ->
@@ -220,7 +267,11 @@ class FirestoreReservationRepository(
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
     ) {
-        require(newStatus == "REJECTED" || newStatus == "CANCELLED") {
+        require(
+            newStatus == "REJECTED" ||
+                    newStatus == "CANCELLED" ||
+                    newStatus == "COMPLETED"
+        ) {
             "Unsupported reservation status: $newStatus"
         }
 

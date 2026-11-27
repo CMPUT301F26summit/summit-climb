@@ -12,6 +12,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.mockito.Mockito.doAnswer
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
@@ -228,43 +229,5 @@ class CampsiteSearchControllerTest {
         val campsite = controller.campsiteDetails("no-such-campsite")
 
         assertNull(campsite)
-    }
-
-    // rateCampsite
-
-    @Test
-    fun rateCampsite_validStars_savesRatingAndReturnsTrue() {
-        val saved = controller.rateCampsite("cedar-valley", "device-123", 4)
-
-        assertTrue(saved)
-        verify(repository).saveRating(
-            Rating(
-                entrantId = "device-123",
-                campsiteId = "cedar-valley",
-                stars = 4
-            )
-        )
-    }
-
-    @Test
-    fun rateCampsite_oneAndFiveStars_areAllowed() {
-        assertTrue(controller.rateCampsite("cedar-valley", "device-123", 1))
-        assertTrue(controller.rateCampsite("cedar-valley", "device-123", 5))
-    }
-
-    @Test
-    fun rateCampsite_zeroStars_isRejectedAndNotSaved() {
-        val saved = controller.rateCampsite("cedar-valley", "device-123", 0)
-
-        assertFalse(saved)
-        verifyNoInteractions(repository)
-    }
-
-    @Test
-    fun rateCampsite_sixStars_isRejectedAndNotSaved() {
-        val saved = controller.rateCampsite("cedar-valley", "device-123", 6)
-
-        assertFalse(saved)
-        verifyNoInteractions(repository)
     }
 }

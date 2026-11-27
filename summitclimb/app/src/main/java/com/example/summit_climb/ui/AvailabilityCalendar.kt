@@ -46,12 +46,15 @@ fun AvailabilityCalendar(
     bookedDates: Set<LocalDate>,
     selectedDate: LocalDate?,
     rangeDates: Set<LocalDate> = emptySet(),
-    onDateSelected: (LocalDate?) -> Unit = {}
+    onDateSelected: (LocalDate?) -> Unit = {},
+    ownerDates: Set<LocalDate> = emptySet(),
+    onDayClicked: ((LocalDate) -> Unit)? = null
     ){
 
     var month by remember { mutableStateOf(YearMonth.now()) }
     val daysInMonth = month.lengthOfMonth()
     val space = month.atDay(1).dayOfWeek.value % 7
+    val datesClicked = onDayClicked!= null
 
     Column(
         modifier = Modifier
@@ -63,30 +66,13 @@ fun AvailabilityCalendar(
     ){
 
         Row(
-            modifier = Modifier
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically)
-        {
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
                 text = "Availability",
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp)
-
-            Spacer(Modifier.width(8.dp))
-
-            Box(
-                Modifier
-                    .size(8.dp)
-                    .background(
-                        lightGreen,
-                        RoundedCornerShape(50))
-            )
-
-            Spacer(Modifier.width(4.dp))
-
-            Text(
-                text = "Booked",
-                fontSize = 11.sp
+                fontSize = 16.sp
             )
 
             Spacer(Modifier.weight(1f))
@@ -96,7 +82,8 @@ fun AvailabilityCalendar(
                 fontSize = 25.sp,
                 modifier = Modifier
                     .clickable { month = month.minusMonths(1) }
-                    .padding(horizontal = 8.dp))
+                    .padding(horizontal = 8.dp)
+            )
 
             Text(
                 text = month.format(DateTimeFormatter.ofPattern("MMM yyyy")),
@@ -112,6 +99,41 @@ fun AvailabilityCalendar(
                     .padding(horizontal = 8.dp)
             )
         }
+
+        Spacer(Modifier.height(6.dp))
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                Modifier
+                    .size(8.dp)
+                    .background(lightGreen, RoundedCornerShape(50))
+            )
+
+            Spacer(Modifier.width(4.dp))
+
+            Text("Booked", fontSize = 11.sp)
+
+            if (ownerDates.isNotEmpty()) {
+                Spacer(Modifier.width(12.dp))
+
+                Box(
+                    Modifier
+                        .size(8.dp)
+                        .background(
+                            Color(0xFF245C86),
+                            RoundedCornerShape(50)
+                        )
+                )
+
+                Spacer(Modifier.width(4.dp))
+
+                Text("Available", fontSize = 11.sp)
+            }
+        }
+
+        Spacer(Modifier.height(10.dp))
 
         Row(
             modifier = Modifier
@@ -145,7 +167,8 @@ fun AvailabilityCalendar(
                         val date = month.atDay(day)
                         val booked = date in bookedDates
                         val inRange = date in rangeDates
-                        val selected = date == selectedDate
+                        val picked = date in ownerDates
+                        val selected = !datesClicked && date == selectedDate
 
                         Box(
                             Modifier
@@ -155,7 +178,7 @@ fun AvailabilityCalendar(
                                 .background(
                                     if (booked)
                                         Color(0xFF96B38E)
-                                    else if (selected)
+                                    else if (picked || selected)
                                         Color(0xFF245C86)
                                     else if (inRange)
                                         Color(0xFF8FB9DE)
@@ -164,12 +187,16 @@ fun AvailabilityCalendar(
                                     RoundedCornerShape(8.dp)
                                 )
                                 .clickable(enabled = !booked) {
-                                    onDateSelected(
-                                        if (selected)
-                                            null
-                                        else
-                                            date
-                                    )
+                                    if (onDayClicked != null) {
+                                        onDayClicked(date)
+                                    } else {
+                                        onDateSelected(
+                                            if (selected)
+                                                null
+                                            else
+                                                date
+                                        )
+                                    }
                                 },
 
                             contentAlignment = Alignment.Center
@@ -178,12 +205,8 @@ fun AvailabilityCalendar(
                             Text(
                                 text = "$day",
 
-                                color = if (selected)
+                                color = if (picked || selected || booked || inRange)
                                     Color.White
-
-                                else if (booked || inRange)
-                                    Color.White
-
                                 else
                                     charcoal
                             )

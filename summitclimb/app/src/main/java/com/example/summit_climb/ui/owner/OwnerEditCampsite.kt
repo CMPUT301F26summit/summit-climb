@@ -51,6 +51,8 @@ import coil3.compose.AsyncImage
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.material3.OutlinedButton
 import com.example.summit_climb.service.ImageService
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -76,6 +78,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.PickVisualMediaRequest
 import com.example.summit_climb.model.Campsite
 import android.util.Log
+import androidx.compose.runtime.LaunchedEffect
+import com.example.summit_climb.controller.ReservationController
+import java.time.LocalDate
+import com.example.summit_climb.ui.AvailabilityCalendar
 
 
 /** Holds the amenities for editing */
@@ -158,6 +164,7 @@ private fun AmenityBorder(
  * @param imageService imaging service that handles images to url
  * @param saveCampsite saving campsite details after editing
  * @param deleteCampsite deleting campsite instead of editing listing
+ * @param reservationController reservation controller for reserved functionalities
  */
 @Composable
 fun OwnerEditCampsite(
@@ -166,7 +173,8 @@ fun OwnerEditCampsite(
     campsite: Campsite,
     imageService: ImageService = ImageService(),
     saveCampsite: (Campsite) -> Unit = {},
-    deleteCampsite: (Campsite) -> Unit = {}
+    deleteCampsite: (Campsite) -> Unit = {},
+    reservationController: ReservationController? = null
 ){
     val backButton = { navController.popBackStack(); Unit }
 
@@ -187,6 +195,32 @@ fun OwnerEditCampsite(
     val newImage = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> image = uri }
 
     var deleteCampsite by remember { mutableStateOf(false) }
+    var pickedDates by remember(campsite.id) {
+        mutableStateOf(
+            campsite.availableDates.map { LocalDate.parse(it) }.toSet()
+        )
+    }
+
+    var bookedDates by remember { mutableStateOf(setOf<LocalDate>()) }
+
+    LaunchedEffect(campsite.id) {
+        reservationController?.getBookedDates(
+            campsite.id,
+            { ranges ->
+                val days = mutableSetOf<LocalDate>()
+                for ((checkIn, checkOut) in ranges) {
+                    var day = LocalDate.parse(checkIn)
+                    val last = LocalDate.parse(checkOut)
+                    while (day < last) {
+                        days.add(day)
+                        day = day.plusDays(1)
+                    }
+                }
+                bookedDates = days
+            },
+            { }
+        )
+    }
 
     Box(
         modifier = modifier
@@ -352,7 +386,13 @@ fun OwnerEditCampsite(
 
                     OutlinedTextField(
                         value = price,
-                        onValueChange = { price = it },
+                        onValueChange = { input: String ->
+                            if (input.isEmpty() ||
+                                (input.all { it.isDigit() || it == '.' } &&
+                                        input.toDoubleOrNull() != null &&
+                                        input.substringAfter('.', "").length <= 2))
+                                price = input
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("pricePerNight"),
@@ -647,6 +687,35 @@ fun OwnerEditCampsite(
 
             Spacer(Modifier.height(16.dp))
 
+            Text(
+                text = "Available dates · ${pickedDates.size} selected",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(top = 16.dp, bottom = 6.dp)
+            )
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(22.dp))
+                    .background(greyBlue)
+                    .padding(horizontal = 16.dp, vertical = 14.dp)
+            ) {
+                AvailabilityCalendar(
+                    bookedDates = bookedDates,
+                    selectedDate = null,
+                    ownerDates = pickedDates,
+                    onDayClicked = { day ->
+                        pickedDates =
+                            if (day in pickedDates)
+                                pickedDates - day
+                            else
+                                pickedDates + day
+                    }
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
             Button(
                 onClick = {
                     val updated = campsite.copy(
@@ -657,7 +726,8 @@ fun OwnerEditCampsite(
                         description = description,
                         amenities = amenities.toList(),
                         tags = tags,
-                        rules = rules
+                        rules = rules,
+                        availableDates = pickedDates.map { "$it" }
                     )
 
                     val pickedImage = image
@@ -715,60 +785,56 @@ fun OwnerEditCampsite(
                     fontWeight = FontWeight.SemiBold
                 )
             }
-
             if (deleteCampsite) {
-                Column(
-                    Modifier
-                        .padding(top = 12.dp)
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(22.dp))
-                        .background(greyBlue)
-                        .padding(horizontal = 16.dp, vertical = 14.dp)
-                ) {
-                    Text(
-                        text = "Delete this campsite?",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = charcoal
-                    )
-                    Text(
-                        text = "This will permanently delete ${campsite.name}. Are you sure?",
-                        fontSize = 13.sp,
-                        color = charcoal,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(top = 12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ){
-                        Button(
+                AlertDialog(
+                    onDismissRequest = {
+                        deleteCampsite = false
+                    },
+                    containerColor = Color.White,
+                    shape = RoundedCornerShape(22.dp),
+                    title = {
+                        Text(
+                            text = "Delete this campsite?",
+                            fontWeight = FontWeight.Bold,
+                            color = charcoal
+                        )
+                    },
+                    text = {
+                        Text(
+                            text = "This will permanently delete ${campsite.name}. Are you sure?",
+                            color = charcoal
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(
+                            modifier = Modifier.testTag("doDeleteButton"),
                             onClick = {
                                 deleteCampsite = false
                                 deleteCampsite(campsite)
-                                navController.popBackStack("ownerCampsites", inclusive = false)
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("doDeleteButton"),
-                            shape = CircleShape,
-                            colors = ButtonDefaults.buttonColors(containerColor = lightRed, contentColor = Color.White)
-                        ){
-                            Text("Delete", fontWeight = FontWeight.SemiBold)
-                        }
-                        Button(
-                            onClick = { deleteCampsite = false },
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("undoDeleteButton"),
-                            shape = CircleShape,
-                            colors = ButtonDefaults.buttonColors(containerColor = charcoal, contentColor = Color.White)
+                                navController.popBackStack(
+                                    "ownerCampsites",
+                                    inclusive = false
+                                )
+                            }
                         ) {
-                            Text("Cancel", fontWeight = FontWeight.SemiBold)
+                            Text(
+                                "Delete",
+                                color = lightRed,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            modifier = Modifier.testTag("undoDeleteButton"),
+                            onClick = {
+                                deleteCampsite = false
+                            }
+                        ) {
+                            Text("Cancel", color = charcoal)
                         }
                     }
-                }
+                )
             }
         }
     }

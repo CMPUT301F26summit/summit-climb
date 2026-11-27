@@ -18,6 +18,7 @@ import com.example.summit_climb.ui.owner.OwnerReservationsFromFirestore
 import com.example.summit_climb.model.Notification
 import com.example.summit_climb.data.NotificationRepository
 import com.example.summit_climb.data.ReservationRepository
+import com.example.summit_climb.ui.campsiteIdArgs
 
 class OwnerReservationsScreenTest {
 
@@ -32,6 +33,9 @@ class OwnerReservationsScreenTest {
         }
 
         override fun markRead(notificationId: String) {
+        }
+
+        override fun delete(notificationId: String) {
         }
 
         override fun forUser(userId: String): List<Notification> {
@@ -213,6 +217,14 @@ class OwnerReservationsScreenTest {
 
         val fakeRepository = object : ReservationRepository {
 
+            override fun getReservationsByEntrant(
+                entrantId: String,
+                onSuccess: (List<Reservation>) -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess(emptyList())
+            }
+
             override fun getBookedDates(
                 campsiteId: String,
                 onSuccess: (List<Pair<String, String>>) -> Unit,
@@ -249,6 +261,14 @@ class OwnerReservationsScreenTest {
                 onSuccess()
             }
 
+            override fun completeReservation(
+                reservationId: String,
+                onSuccess: () -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess()
+            }
+
             override fun createReservation(
                 campsiteId: String,
                 entrantId: String,
@@ -256,9 +276,11 @@ class OwnerReservationsScreenTest {
                 startDate: String,
                 endDate: String,
                 guests: Int,
+                totalPrice: Double?,
+                rulesAccepted: Boolean?,
                 onSuccess: () -> Unit,
-                onFailure: (Exception) -> Unit)
-            {
+                onFailure: (Exception) -> Unit
+            ) {
                 onSuccess()
             }
 
@@ -276,8 +298,10 @@ class OwnerReservationsScreenTest {
         composeTestRule.setContent {
             OwnerReservationsFromFirestore(
                 campsiteId = "test-campsite",
+                campsiteName = "summit-camp-test",
                 controller = controller,
-                onReservationClick = {}
+                onReservationClick = {},
+                onBackClick = {}
             )
         }
 
