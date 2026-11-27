@@ -50,11 +50,11 @@ class MessageRepository(
 
         document.set(message)
             .addOnSuccessListener {
-                Log.d("ConversationDebug", "Saved message: ${document.id}")
-                onSuccess() }
-            .addOnFailureListener {
-                Log.e("ConversationDebug", "Failed to save message", it)
-                onFailure(it) }
+                onSuccess()
+            }
+            .addOnFailureListener { error ->
+                onFailure(error)
+            }
     }
 
     /**
@@ -72,16 +72,11 @@ class MessageRepository(
         var outgoing = emptyList<Notification>()
 
         fun publishMessages() {
-            Log.d(
-                "ConversationDebug",
-                "Incoming: ${incoming.size}, Outgoing: ${outgoing.size}"
-            )
+            val allMessages = incoming + outgoing
+            val uniqueMessages = allMessages.distinctBy { it.id }
+            val sortedMessages = uniqueMessages.sortedByDescending { it.timestamp }
 
-            onMessages(
-                (incoming + outgoing)
-                    .distinctBy { it.id }
-                    .sortedBy { it.timestamp }
-            )
+            onMessages(sortedMessages)
         }
 
         val incomingListener = messagesRef
@@ -95,12 +90,18 @@ class MessageRepository(
                     return@addSnapshotListener
                 }
 
-                incoming = snapshot?.documents
-                    ?.mapNotNull {
-                        it.toObject(Notification::class.java)
-                            ?.copy(id = it.id)
-                    }.orEmpty()
+                val messages = mutableListOf<Notification>()
 
+                if (snapshot != null) {
+                    for (document in snapshot.documents) {
+                        val message = document.toObject(Notification::class.java)
+
+                        if (message != null) {
+                            messages.add(message.copy(id = document.id))
+                        }
+                    }
+                }
+                incoming = messages
                 publishMessages()
             }
 
@@ -114,15 +115,97 @@ class MessageRepository(
                     return@addSnapshotListener
                 }
 
-                outgoing = snapshot?.documents
-                    ?.mapNotNull {
-                        it.toObject(Notification::class.java)
-                            ?.copy(id = it.id)
-                    }.orEmpty()
+                val messages = mutableListOf<Notification>()
 
+                if (snapshot != null) {
+                    for (document in snapshot.documents) {
+                        val message = document.toObject(Notification::class.java)
+
+                        if (message != null) {
+                            messages.add(message.copy(id = document.id))
+                        }
+                    }
+                }
+                incoming = messages
                 publishMessages()
             }
 
+        return {
+            incomingListener.remove()
+            outgoingListener.remove()
+        }
+    }
+
+    // Gets all messages sent or received by the current user
+    fun getUserMessages(
+        currentUserId: String,
+        onMessages: (List<Notification>) -> Unit,
+        onFailure: (Exception) -> Unit
+    ): () -> Unit {
+
+    var incoming = emptyList<Notification>()
+    var outgoing = emptyList<Notification>()
+
+    // Combine messages and remove duplicates
+    fun publishMessages() {
+        val allMessages = incoming + outgoing
+        val uniqueMessages = allMessages.distinctBy { it.id }
+        val sortedMessages = uniqueMessages.sortedByDescending { it.timestamp }
+
+        onMessages(sortedMessages)
+    }
+
+    // Get received messages
+    val incomingListener = messagesRef
+        .whereEqualTo("recipientId", currentUserId)
+        .addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                onFailure(error)
+                return@addSnapshotListener
+            }
+
+            val messages = mutableListOf<Notification>()
+
+            if (snapshot != null) {
+                for (document in snapshot.documents) {
+                    val message = document.toObject(Notification::class.java)
+
+                    if (message != null) {
+                        messages.add(message.copy(id = document.id))
+                    }
+                }
+            }
+
+            incoming = messages
+            publishMessages()
+        }
+
+    // Get sent messages
+    val outgoingListener = messagesRef
+        .whereEqualTo("senderId", currentUserId)
+        .addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                onFailure(error)
+                return@addSnapshotListener
+            }
+
+            val messages = mutableListOf<Notification>()
+
+            if (snapshot != null) {
+                for (document in snapshot.documents) {
+                    val message = document.toObject(Notification::class.java)
+
+                    if (message != null) {
+                        messages.add(message.copy(id = document.id))
+                    }
+                }
+            }
+
+            outgoing = messages
+            publishMessages()
+        }
+
+        // Stop listening when leaving the screen
         return {
             incomingListener.remove()
             outgoingListener.remove()

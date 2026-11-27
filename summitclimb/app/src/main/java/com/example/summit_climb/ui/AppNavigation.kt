@@ -42,6 +42,7 @@ import com.example.summit_climb.ui.owner.SentNotificationsScreen
 import com.example.summit_climb.controller.ReservationController
 import com.example.summit_climb.ui.owner.CreateLotteryContent
 import com.example.summit_climb.ui.owner.LotteryCampsiteOption
+import com.example.summit_climb.data.UserRepository
 
 
 //testing (ignore, just to show ui)
@@ -117,6 +118,7 @@ fun AppNavigation(
     ownerLotteryController: OwnerLotteryController,
     entrantReservationController: ReservationController,
     ownerNotificationController: OwnerNotificationController,
+    userRepository: UserRepository,
     onOpenAdmin: () -> Unit = {}
 ){
     val navController = rememberNavController()
@@ -336,6 +338,65 @@ fun AppNavigation(
                 ManageQRCodeScreen(
                     navController = navController,
                     campsiteID = entry.campsiteId()
+                )
+            }
+
+            composable(Routes.MESSAGES) {
+
+                var messages by remember(currentUserId) {
+                    mutableStateOf<List<Notification>>(emptyList())
+                }
+                var error by remember { mutableStateOf("") }
+                val conversations = conversationController.groupConversations(
+                    messages,
+                    currentUserId
+                )
+
+                DisposableEffect(currentUserId) {
+                    val stopListening = conversationController.getUserMessages(
+                        currentUserId = currentUserId,
+                        onMessages = { messages = it },
+                        onFailure = {
+                            error = it.message ?: "Unable to load messages"
+                        }
+                    )
+                    onDispose {
+                        stopListening()
+                    }
+                }
+
+                MessagesScreen(
+                    currentUserId = currentUserId,
+                    conversations = conversations,
+                    getUserName = { userId ->
+                        val user = userRepository.users.find {
+                            it.userId == userId
+                        }
+
+                        if (user != null && user.name.isNotBlank()) {
+                            user.name
+                        } else {
+                            "Unknown user"
+                        }
+                    },
+                    getCampsiteName = { campsiteId ->
+                        val campsite = searchController.campsiteDetails(campsiteId)
+
+                        if (campsite != null) {
+                            campsite.name
+                        } else {
+                            "Unknown campsite"
+                        }
+                    },
+                    onConversationClick = { campsiteId, recipientId ->
+                        navController.navigate(
+                            Routes.conversation(campsiteId, recipientId)
+                        )
+                    },
+                    onBack = {
+                        navController.popBackStack()
+                    },
+                    error = error
                 )
             }
 

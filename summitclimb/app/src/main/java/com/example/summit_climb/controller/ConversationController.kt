@@ -41,6 +41,43 @@ class ConversationController(
         )
     }
 
+    fun getUserMessages(
+        currentUserId: String,
+        onMessages: (List<Notification>) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) : () -> Unit {
+        return repository.getUserMessages(
+            currentUserId = currentUserId,
+            onMessages = onMessages,
+            onFailure = onFailure
+        )
+    }
 
+    fun groupConversations(
+        messages: List<Notification>,
+        currentUserId: String
+    ): List<Notification> {
 
+        val latestMessages = mutableListOf<Notification>()
+
+        val conversations = messages.groupBy { message ->
+            val otherUserId = if (message.senderId == currentUserId) {
+                message.recipientId
+            } else {
+                message.senderId
+            }
+
+            Pair(otherUserId, message.campsiteId)
+        }
+
+        for (conversation in conversations.values) {
+            val latestMessage = conversation.maxByOrNull { it.timestamp }
+
+            if (latestMessage != null) {
+                latestMessages.add(latestMessage)
+            }
+        }
+
+        return latestMessages.sortedByDescending { it.timestamp }
+    }
 }

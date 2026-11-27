@@ -175,6 +175,7 @@ class MainActivity : ComponentActivity() {
                                 searchController = searchController,
                                 lotteryController = lotteryController,
                                 currentUserId = currentUserId,
+                                userRepository = userRepository,
                                 ownerCampsiteController =
                                     OwnerCampsiteController(campsiteRepository),
                                 notificationController = notificationController,
