@@ -5,49 +5,40 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.rememberNavController
-import com.example.summit_climb.ui.admin.AdminDashboardScreen
-import com.example.summit_climb.ui.admin.AdminLogsScreen
-import com.example.summit_climb.ui.admin.AdminProfileDetailsScreen
-import com.example.summit_climb.ui.admin.AdminBookingView
-import androidx.navigation.navArgument
 import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.compose.foundation.layout.systemBarsPadding
-<<<<<<< HEAD
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.summit_climb.controller.AdminController
 import com.example.summit_climb.data.CampsiteRepository
 import com.example.summit_climb.data.NotificationRepository
 import com.example.summit_climb.data.UserRepository
+import com.example.summit_climb.model.AdminProfileView
 import com.example.summit_climb.model.Notification
 import com.example.summit_climb.service.ImageService
+import com.example.summit_climb.ui.admin.AdminBookingView
+import com.example.summit_climb.ui.admin.AdminDashboardScreen
 import com.example.summit_climb.ui.admin.AdminImageType
+import com.example.summit_climb.ui.admin.AdminLogsScreen
 import com.example.summit_climb.ui.admin.AdminNotificationDetailsScreen
+import com.example.summit_climb.ui.admin.AdminProfileDetailsScreen
+import com.example.summit_climb.ui.admin.AdminProfilesScreen
 
 private const val ADMIN_NOTIFICATION_DETAILS = "adminNotificationDetails"
-=======
-import com.example.summit_climb.model.AdminProfileView
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import com.example.summit_climb.ui.admin.AdminProfilesScreen
-import androidx.compose.runtime.remember
-import com.example.summit_climb.controller.AdminController
-import androidx.compose.runtime.DisposableEffect
-
->>>>>>> 7ef7804 (implemented admin browse profiles)
-
 
 /**
  * Main navigation for the admin section, starting at the admin dashboard.
@@ -67,14 +58,14 @@ fun AdminNavigation(
     notificationRepository: NotificationRepository
 ) {
     val navController = rememberNavController()
-<<<<<<< HEAD
     val imageService = remember { ImageService() }
+    val controller = remember { AdminController() }
 
     // Holds the notification selected from Admin Logs.
     var selectedNotification by remember {
         mutableStateOf<Notification?>(null)
-=======
-    val controller = remember { AdminController() }
+    }
+
     var profiles by remember { mutableStateOf<List<AdminProfileView>>(emptyList()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -99,7 +90,6 @@ fun AdminNavigation(
         onDispose {
             stopUpdating()
         }
->>>>>>> 7ef7804 (implemented admin browse profiles)
     }
 
     NavHost(
@@ -109,7 +99,7 @@ fun AdminNavigation(
             .fillMaxSize()
             .background(Color(0xFFCFE7F5))
             .systemBarsPadding()
-    ){
+    ) {
         composable(Routes.ADMIN_DASHBOARD) {
             AdminDashboardScreen(navController, onExit = onExitAdmin)
         }
@@ -162,7 +152,8 @@ fun AdminNavigation(
                     phone =
                         if (profile.phoneNumber == "")
                             "(xxx) xxx - xxxx"
-                        else profile.phoneNumber,
+                        else
+                            profile.phoneNumber,
                     reservations = reservations,
                     onStatusChange = { active ->
                         controller.setActive(profile, active) { errorMessage = it.message ?: "Update failed" }
@@ -180,6 +171,7 @@ fun AdminNavigation(
                 }
             }
         }
+
         composable(Routes.ADMIN_LOGS) {
             AdminLogsScreen(
                 campsites = campsiteRepository.campsite,
@@ -283,4 +275,3 @@ private fun AdminPlaceholder(
         }
     }
 }
-
