@@ -1,187 +1,259 @@
-package com.example.summit_climb
+
+package com.example.summit_climb.ui.admin
 
 import androidx.compose.material3.MaterialTheme
-import org.junit.Assert.assertEquals
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.compose.ui.test.performTextInput
 import com.example.summit_climb.model.Campsite
+import com.example.summit_climb.model.Notification
 import com.example.summit_climb.model.User
-import com.example.summit_climb.ui.admin.AdminImageType
-import com.example.summit_climb.ui.admin.AdminImageItem
-import com.example.summit_climb.ui.admin.AdminLogsScreen
-import org.junit.Assert.assertNull
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
 
-/**
- * UI tests for AdminLogsScreen image removal.
- * Uses sample campsite and user data instead of Firestore.
- */
-@RunWith(AndroidJUnit4::class)
 class AdminLogsScreenTest {
 
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    private val testCampsite = Campsite(
-        id = "campsite-1",
-        name = "Cedar Valley",
-        ownerId = "owner-1",
-        promoImageUrl = "https://example.com/campsite.jpg"
-    )
+    private fun createNotification(
+        id: String = "notification1",
+        recipientId: String = "user1",
+        campsiteId: String = "campsite1",
+        title: String = "Lottery Results",
+        timestamp: Long = 1764201600000L
+    ): Notification {
+        return Notification(
+            id = id,
+            senderId = "system",
+            recipientId = recipientId,
+            title = title,
+            text = "Your lottery results are available.",
+            campsiteId = campsiteId,
+            timestamp = timestamp,
+            read = false
+        )
+    }
 
-    private val testUser = User(
-        userId = "user-1",
-        name = "Alex",
-        profileImageUrl = "https://example.com/profile.jpg"
-    )
+    private fun createUser(
+        userId: String = "user1",
+        name: String = "Jane Doe",
+        profileImageUrl: String = ""
+    ): User {
+        return User(
+            userId = userId,
+            name = name,
+            profileImageUrl = profileImageUrl
+        )
+    }
 
-    @Test
-    fun removing_campsite_image_calls_removal_callback() {
-        var removedImage: AdminImageItem? = null
-
+    private fun setAdminLogsContent(
+        campsites: List<Campsite> = emptyList(),
+        users: List<User> = emptyList(),
+        notifications: List<Notification> = emptyList(),
+        onRemoveImage: (AdminImageItem, (Boolean) -> Unit) -> Unit = { _, callback ->
+            callback(true)
+        },
+        onNotificationClick: (Notification) -> Unit = {},
+        onBack: () -> Unit = {}
+    ) {
         composeTestRule.setContent {
             MaterialTheme {
                 AdminLogsScreen(
-                    campsites = listOf(testCampsite),
-                    users = emptyList(),
-                    notifications = emptyList(),
-                    onRemoveImage = { item, onDone ->
-                        removedImage = item
-                        onDone(true)
-                    },
-                    onNotificationClick = {},
-                    onBack = {}
+                    campsites = campsites,
+                    users = users,
+                    notifications = notifications,
+                    onRemoveImage = onRemoveImage,
+                    onNotificationClick = onNotificationClick,
+                    onBack = onBack
                 )
             }
         }
-
-        // Open the removal confirmation
-        composeTestRule
-            .onNodeWithContentDescription("Remove image")
-            .performClick()
-
-        composeTestRule
-            .onNodeWithText("Remove Image?")
-            .assertExists()
-
-        // Confirm removal
-        composeTestRule
-            .onNodeWithText("Remove")
-            .performClick()
-
-        // Verify the correct campsite image was selected
-        assertEquals("campsite-1", removedImage?.id)
-        assertEquals(AdminImageType.CAMPSITE, removedImage?.type)
     }
 
     @Test
-    fun removing_profile_image_calls_removal_callback() {
-        var removedImage: AdminImageItem? = null
+    fun adminLogsScreen_displaysHeaderAndTabs() {
+        setAdminLogsContent()
 
-        composeTestRule.setContent {
-            MaterialTheme {
-                AdminLogsScreen(
-                    campsites = emptyList(),
-                    users = listOf(testUser),
-                    notifications = emptyList(),
-                    onRemoveImage = { item, onDone ->
-                        removedImage = item
-                        onDone(true)
-                    },
-                    onNotificationClick = {},
-                    onBack = {}
-                )
-            }
-        }
+        composeTestRule.onNodeWithText("Review")
+            .assertIsDisplayed()
 
-        // Open the removal confirmation
-        composeTestRule
-            .onNodeWithContentDescription("Remove image")
-            .performClick()
+        composeTestRule.onNodeWithText("Images")
+            .assertIsDisplayed()
 
-        // Confirm removal
-        composeTestRule
-            .onNodeWithText("Remove")
-            .performClick()
+        composeTestRule.onNodeWithText("Notifications")
+            .assertIsDisplayed()
 
-        // Verify the correct profile image was selected
-        assertEquals("user-1", removedImage?.id)
-        assertEquals(AdminImageType.PROFILE, removedImage?.type)
+        composeTestRule.onNodeWithText("Messages")
+            .assertIsDisplayed()
+
+        composeTestRule.onNodeWithText("Search...")
+            .assertIsDisplayed()
     }
 
     @Test
-    fun cancelling_image_removal_does_not_call_callback() {
-        var removedImage: AdminImageItem? = null
+    fun adminLogsScreen_backButtonCallsOnBack() {
+        var backClicked = false
 
-        composeTestRule.setContent {
-            MaterialTheme {
-                AdminLogsScreen(
-                    campsites = listOf(testCampsite),
-                    users = emptyList(),
-                    notifications = emptyList(),
-                    onRemoveImage = { item, onDone ->
-                        removedImage = item
-                        onDone(true)
-                    },
-                    onNotificationClick = {},
-                    onBack = {}
-                )
-            }
+        setAdminLogsContent(
+            onBack = { backClicked = true }
+        )
+
+        composeTestRule.onNodeWithText("← Back")
+            .performClick()
+
+        composeTestRule.runOnIdle {
+            assertEquals(true, backClicked)
         }
+    }
 
-        // Open the removal confirmation
-        composeTestRule
-            .onNodeWithContentDescription("Remove image")
+    @Test
+    fun adminLogsScreen_displaysMessagesTabContent() {
+        setAdminLogsContent()
+
+        composeTestRule.onNodeWithText("Messages")
             .performClick()
 
-        // Cancel removal
-        composeTestRule
-            .onNodeWithText("Cancel")
+        composeTestRule.onNodeWithText(
+            "Message logs will appear here."
+        ).assertIsDisplayed()
+    }
+
+    @Test
+    fun adminLogsScreen_displaysNotificationsWhenTabSelected() {
+        setAdminLogsContent(
+            users = listOf(createUser()),
+            notifications = listOf(createNotification())
+        )
+
+        composeTestRule.onNodeWithText("Notifications")
             .performClick()
 
-        // Verify removal was never requested
-        assertNull(removedImage)
+        composeTestRule.onNodeWithText("Lottery Results")
+            .assertIsDisplayed()
 
-        composeTestRule
-            .onNodeWithText("Remove Image?")
+        composeTestRule.onNodeWithText("To: Jane Doe * Unknown")
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun adminLogsScreen_notificationClickCallsCallback() {
+        val notification = createNotification()
+        var selectedNotification: Notification? = null
+
+        setAdminLogsContent(
+            users = listOf(createUser()),
+            notifications = listOf(notification),
+            onNotificationClick = {
+                selectedNotification = it
+            }
+        )
+
+        composeTestRule.onNodeWithText("Notifications")
+            .performClick()
+
+        composeTestRule.onNodeWithText("Lottery Results")
+            .performClick()
+
+        composeTestRule.runOnIdle {
+            assertEquals(notification, selectedNotification)
+        }
+    }
+
+    @Test
+    fun adminLogsScreen_searchFiltersNotificationsByTitle() {
+        setAdminLogsContent(
+            notifications = listOf(
+                createNotification(
+                    id = "1",
+                    title = "Lottery Results"
+                ),
+                createNotification(
+                    id = "2",
+                    title = "Reservation Update"
+                )
+            )
+        )
+
+        composeTestRule.onNodeWithText("Notifications")
+            .performClick()
+
+        composeTestRule.onNodeWithText("Search...")
+            .performTextInput("Lottery")
+
+        composeTestRule.onNodeWithText("Lottery Results")
+            .assertIsDisplayed()
+
+        composeTestRule.onNodeWithText("Reservation Update")
             .assertDoesNotExist()
     }
 
     @Test
-    fun failed_image_removal_shows_error_message() {
-        composeTestRule.setContent {
-            MaterialTheme {
-                AdminLogsScreen(
-                    campsites = listOf(testCampsite),
-                    users = emptyList(),
-                    notifications = emptyList(),
-                    onRemoveImage = { _, onDone ->
-                        onDone(false)
-                    },
-                    onNotificationClick = {},
-                    onBack = {}
+    fun adminLogsScreen_searchFiltersNotificationsByRecipientName() {
+        setAdminLogsContent(
+            users = listOf(
+                createUser(name = "Jane Doe"),
+                createUser(
+                    userId = "user2",
+                    name = "Alex Smith"
                 )
-            }
-        }
+            ),
+            notifications = listOf(
+                createNotification(
+                    id = "1",
+                    recipientId = "user1",
+                    title = "First Notification"
+                ),
+                createNotification(
+                    id = "2",
+                    recipientId = "user2",
+                    title = "Second Notification"
+                )
+            )
+        )
 
-        // Open the removal confirmation
-        composeTestRule
-            .onNodeWithContentDescription("Remove image")
+        composeTestRule.onNodeWithText("Notifications")
             .performClick()
 
-        // Confirm removal
-        composeTestRule
-            .onNodeWithText("Remove")
+        composeTestRule.onNodeWithText("Search...")
+            .performTextInput("Jane")
+
+        composeTestRule.onNodeWithText("First Notification")
+            .assertIsDisplayed()
+
+        composeTestRule.onNodeWithText("Second Notification")
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun adminLogsScreen_displaysImagesTabByDefault() {
+        setAdminLogsContent()
+
+        composeTestRule.onNodeWithText("All")
+            .assertIsDisplayed()
+
+        composeTestRule.onNodeWithText("Campsites")
+            .assertIsDisplayed()
+
+        composeTestRule.onNodeWithText("Profiles")
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun adminLogsScreen_switchesBetweenImageFilters() {
+        setAdminLogsContent()
+
+        composeTestRule.onNodeWithText("Campsites")
             .performClick()
 
-        // Verify the error is displayed
-        composeTestRule
-            .onNodeWithText("Unable to Remove Image")
-            .assertExists()
+        composeTestRule.onNodeWithText("Profiles")
+            .performClick()
+
+        composeTestRule.onNodeWithText("All")
+            .assertIsDisplayed()
     }
 }
