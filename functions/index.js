@@ -44,21 +44,30 @@ exports.sendPushNotification = onDocumentCreated(
             return;
         }
 
-        // send the push notification to the recipient's phone
-        await getMessaging().send({
-            token: user.fcmToken,
-            notification: {
-                title: notification.title || "Summit Climb",
-                body: notification.text || "You have a new update."
-            },
-            data: {
-                notificationId: event.params.notificationId,
-                type: String(notification.type || ""),
-                campsiteId: String(notification.campsiteId || ""),
-                relatedId: String(notification.relatedId || "")
-            }
-        });
+        // avoid sending real push notifications during local emulator tests
+        if (process.env.FUNCTIONS_EMULATOR === "true") {
+            logger.info("Emulator detected. Skipping actual FCM delivery.");
+            return;
+        }
 
-        logger.info("Push notification sent successfully.");
+        // send the push notification to the recipient's phone
+        try {
+            await getMessaging().send({
+                token: user.fcmToken,
+                notification: {
+                    title: notification.title || "Summit Climb",
+                    body: notification.text || "You have a new update."
+                },
+                data: {
+                    notificationId: event.params.notificationId,
+                    type: String(notification.type || ""),
+                    campsiteId: String(notification.campsiteId || ""),
+                    relatedId: String(notification.relatedId || "")
+                }
+            });
+            logger.info("Push notification sent successfully.");
+        } catch (error) {
+            logger.error("Failed to send push notification.", error);
+        }
     }
 );
