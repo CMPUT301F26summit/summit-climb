@@ -35,15 +35,10 @@ import com.example.summit_climb.ui.admin.AdminDashboardScreen
 import com.example.summit_climb.ui.admin.AdminImageType
 import com.example.summit_climb.ui.admin.AdminLogsScreen
 import com.example.summit_climb.ui.admin.AdminNotificationDetailsScreen
-<<<<<<< HEAD
 import com.example.summit_climb.ui.admin.AdminProfileDetailsScreen
 import com.example.summit_climb.ui.admin.AdminProfilesScreen
-=======
-import androidx.compose.runtime.DisposableEffect
 import com.example.summit_climb.controller.ConversationController
 import com.example.summit_climb.ui.admin.AdminConversationDetailsScreen
->>>>>>> 08493c978b42c47f5f48e19798fffa1ba053acbc
-
 private const val ADMIN_NOTIFICATION_DETAILS = "adminNotificationDetails"
 private const val ADMIN_CONVERSATION_DETAILS = "adminConversationDetails"
 
@@ -67,14 +62,11 @@ fun AdminNavigation(
 ) {
     val navController = rememberNavController()
     val imageService = remember { ImageService() }
-<<<<<<< HEAD
     val controller = remember { AdminController() }
-=======
     val conversationController = remember {ConversationController()}
     var messages by remember { mutableStateOf<List<Notification>>(emptyList())}
     var selectedConversation by remember {mutableStateOf<List<Notification>>(emptyList())}
     var messageError by remember {mutableStateOf("")}
->>>>>>> 08493c978b42c47f5f48e19798fffa1ba053acbc
 
     // Holds the notification selected from Admin Logs.
     var selectedNotification by remember {
