@@ -5,37 +5,42 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.rememberNavController
-import com.example.summit_climb.ui.admin.AdminDashboardScreen
-import com.example.summit_climb.ui.admin.AdminLogsScreen
-import androidx.navigation.compose.composable
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.summit_climb.controller.AdminController
 import com.example.summit_climb.data.CampsiteRepository
 import com.example.summit_climb.data.NotificationRepository
 import com.example.summit_climb.data.UserRepository
+import com.example.summit_climb.model.AdminProfileView
 import com.example.summit_climb.model.Notification
 import com.example.summit_climb.service.ImageService
+import com.example.summit_climb.ui.admin.AdminBookingView
+import com.example.summit_climb.ui.admin.AdminDashboardScreen
 import com.example.summit_climb.ui.admin.AdminImageType
+import com.example.summit_climb.ui.admin.AdminLogsScreen
 import com.example.summit_climb.ui.admin.AdminNotificationDetailsScreen
-import androidx.compose.runtime.DisposableEffect
+import com.example.summit_climb.ui.admin.AdminProfileDetailsScreen
+import com.example.summit_climb.ui.admin.AdminProfilesScreen
 import com.example.summit_climb.controller.ConversationController
 import com.example.summit_climb.ui.admin.AdminConversationDetailsScreen
-
 private const val ADMIN_NOTIFICATION_DETAILS = "adminNotificationDetails"
 private const val ADMIN_CONVERSATION_DETAILS = "adminConversationDetails"
-
 
 
 /**
@@ -57,6 +62,7 @@ fun AdminNavigation(
 ) {
     val navController = rememberNavController()
     val imageService = remember { ImageService() }
+    val controller = remember { AdminController() }
     val conversationController = remember {ConversationController()}
     var messages by remember { mutableStateOf<List<Notification>>(emptyList())}
     var selectedConversation by remember {mutableStateOf<List<Notification>>(emptyList())}
@@ -65,6 +71,32 @@ fun AdminNavigation(
     // Holds the notification selected from Admin Logs.
     var selectedNotification by remember {
         mutableStateOf<Notification?>(null)
+    }
+
+    var profiles by remember { mutableStateOf<List<AdminProfileView>>(emptyList()) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    DisposableEffect(Unit) {
+        var stopUpdating: () -> Unit = {}
+
+        controller.checkAdmin { isAdmin ->
+            if (isAdmin) {
+                stopUpdating = controller.updateProfiles(
+                    onProfiles = {
+                        profiles = it
+                        errorMessage = null
+                    },
+                    onError = {
+                        errorMessage = it.message ?: "Could not load profiles"
+                    }
+                )
+            } else {
+                errorMessage = "You do not have permission."
+            }
+        }
+        onDispose {
+            stopUpdating()
+        }
     }
 
     NavHost(
@@ -87,10 +119,64 @@ fun AdminNavigation(
         }
 
         composable(Routes.ADMIN_PROFILES) {
-            AdminPlaceholder(
-                title = "Manage Profiles",
-                onBack = { navController.popBackStack() }
+            AdminProfilesScreen(
+                navController = navController,
+                profiles = profiles,
+                errorMessage = errorMessage,
+                profileClicked = { profile ->
+                    navController.navigate(Routes.adminProfileDetails(profile.id))
+                },
+                onStatusChange = { profile, active ->
+                    controller.setActive(profile, active) { errorMessage = it.message ?: "Update failed" }
+                },
+                onFlagChange = { profile, flagged ->
+                    controller.setFlagged(profile, flagged) { errorMessage = it.message ?: "Update failed" }
+                }
             )
+        }
+
+        composable(
+            route = Routes.ADMIN_PROFILE_DETAILS,
+            arguments = listOf(navArgument("profileId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val profileId = backStackEntry.arguments?.getString("profileId").orEmpty()
+            val profile = profiles.find { it.id == profileId }
+            var reservations by remember { mutableStateOf<List<AdminBookingView>>(emptyList()) }
+
+            DisposableEffect(profileId) {
+                val stop = controller.getBookingsForUser(
+                    profileId,
+                    onBookings = { reservations = it },
+                    onError = { errorMessage = it.message ?: "Could not load bookings" }
+                )
+                onDispose { stop() }
+            }
+
+            if (profile != null) {
+                AdminProfileDetailsScreen(
+                    navController = navController,
+                    profile = profile,
+                    phone =
+                        if (profile.phoneNumber == "")
+                            "(xxx) xxx - xxxx"
+                        else
+                            profile.phoneNumber,
+                    reservations = reservations,
+                    onStatusChange = { active ->
+                        controller.setActive(profile, active) { errorMessage = it.message ?: "Update failed" }
+                    },
+                    onRemoveOwner = {
+                        controller.setActive(profile, false) { errorMessage = it.message ?: "Update failed" }
+                    },
+                    onSuspend = {
+                        controller.setActive(profile, false) { errorMessage = it.message ?: "Update failed" }
+                    }
+                )
+            } else {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Profile not found")
+                }
+            }
         }
 
         composable(Routes.ADMIN_LOGS) {
@@ -283,4 +369,3 @@ private fun AdminPlaceholder(
         }
     }
 }
-

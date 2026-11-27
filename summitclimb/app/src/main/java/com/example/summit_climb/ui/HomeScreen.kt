@@ -31,9 +31,9 @@ import com.example.summit_climb.FcmTokenManager
 import com.example.summit_climb.R
 import com.example.summit_climb.data.UserRepository
 import com.example.summit_climb.model.UserRole
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.messaging.FirebaseMessaging
-
 /**
  * Background image shown behind the app's screens.
  */
@@ -85,6 +85,7 @@ fun HomeScreen(
      * Checks the user's roles before allowing admin access.
      */
     fun openAdminIfAccess(uid: String) {
+        Log.d("AdminAccess", "My user id: $uid")
         UserRepository().getUser(uid) { user ->
             if (UserRole.ADMIN in user.roles) {
                 errorMessage = ""
