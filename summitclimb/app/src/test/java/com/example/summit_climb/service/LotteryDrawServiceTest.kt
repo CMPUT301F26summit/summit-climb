@@ -217,6 +217,9 @@ class LotteryDrawServiceTest {
         override val notifications: List<Notification> = emptyList()
         override fun send(notification: Notification) { sent.add(notification) }
         override fun markRead(notificationId: String) {}
+        override fun delete(notificationId: String) {
+            sent.removeAll { it.id == notificationId }
+        }
         override fun forUser(userId: String): List<Notification> = emptyList()
         override fun sentBy(senderId: String): List<Notification> = emptyList()
         override fun listenToUser(

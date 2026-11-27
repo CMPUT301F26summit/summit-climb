@@ -91,18 +91,70 @@ class CampsiteRepository {
     }
 
     /**
-     * Saves a rating and updates the campsite's average rating.
-     * The rating is stored inside the campsite document, so rating and new
-     * average are saved together. If entrant already rated this campsite,
-     * new rating replaces the old one (see [Campsite.setRating]).
+     * Saves a rating and review for a specific reservation.
      *
-     * @param rating: rating to save.
+     * Uses a Firestore transaction to prevent duplicate ratings and
+     * keep the campsite's ratings, reviews, and average in sync.
+     *
+     * @param rating: rating and review to save.
+     * @param onSuccess called when the rating is successfully saved
+     * @param onFailure called when validation or saving fails
      */
-    fun saveRating(rating: Rating) {
-        val campsite = getCampsite(rating.campsiteId) ?: return
-        val updatedCampsite = campsite.copy()
-        updatedCampsite.setRating(rating.entrantId, rating.stars)
-        campRef.document(updatedCampsite.id).set(updatedCampsite)
+    fun saveRating(
+        rating: Rating,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        if (!rating.isValid()) {
+            onFailure(IllegalArgumentException("Invalid rating information."))
+            return
+        }
+
+        val campsiteRef = campRef.document(rating.campsiteId)
+
+        db.runTransaction { transaction ->
+            val snapshot = transaction.get(campsiteRef)
+
+            if (!snapshot.exists()) {
+                throw IllegalStateException("Campsite not found.")
+            }
+
+            // Read existing ratings and reviews from Firestore.
+            val existingRatings = snapshot.get("ratings") as? Map<*, *> ?: emptyMap<Any, Any>()
+            val existingReviews = snapshot.get("reviews") as? Map<*, *> ?: emptyMap<Any, Any>()
+
+            // Prevent the same reservation from being rated twice.
+            if (existingRatings.containsKey(rating.reservationId)) {
+                throw IllegalStateException("This reservation has already been rated.")
+            }
+
+            val updatedRatings = existingRatings.entries.associate {
+                it.key.toString() to (it.value as Number).toInt()
+            }.toMutableMap()
+
+            val updatedReviews = existingReviews.entries.associate {
+                it.key.toString() to it.value.toString()
+            }.toMutableMap()
+
+            updatedRatings[rating.reservationId] = rating.stars
+            updatedReviews[rating.reservationId] = rating.review.trim()
+
+            val averageRating = updatedRatings.values.average()
+
+            // Update all rating information together.
+            transaction.update(
+                campsiteRef,
+                mapOf(
+                    "ratings" to updatedRatings,
+                    "reviews" to updatedReviews,
+                    "avgRating" to averageRating
+                )
+            )
+        }.addOnSuccessListener {
+            onSuccess()
+        }.addOnFailureListener { error ->
+            onFailure(error)
+        }
     }
 
     /**
@@ -137,6 +189,32 @@ class CampsiteRepository {
                 ref.get().addOnSuccessListener { doc ->
                     campStatusCheck(doc.getString("ownerId") ?: "")
                 }
+            }
+    }
+
+    /**
+     * Clears the promo image URL for a campsite
+     *
+     * @param campsiteId: campsite whose image should be removed
+     * @param onDone: called with true if the Firestore update succeeds
+     */
+    fun removeCampsiteImage(
+        campsiteId: String,
+        onDone: (Boolean) -> Unit
+    ) {
+        if (campsiteId.isBlank()) {
+            onDone(false)
+            return
+        }
+
+        campRef.document(campsiteId)
+            .update("promoImageUrl", "")
+            .addOnSuccessListener {
+                onDone(true)
+            }
+            .addOnFailureListener { error ->
+                Log.e("CampsiteRepository", "Failed to remove campsite", error)
+                onDone(false)
             }
     }
 

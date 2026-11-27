@@ -18,6 +18,19 @@ import com.example.summit_climb.ui.admin.AdminDashboardScreen
 import com.example.summit_climb.ui.admin.AdminLogsScreen
 import androidx.navigation.compose.composable
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.example.summit_climb.data.CampsiteRepository
+import com.example.summit_climb.data.NotificationRepository
+import com.example.summit_climb.data.UserRepository
+import com.example.summit_climb.model.Notification
+import com.example.summit_climb.service.ImageService
+import com.example.summit_climb.ui.admin.AdminImageType
+import com.example.summit_climb.ui.admin.AdminNotificationDetailsScreen
+
+private const val ADMIN_NOTIFICATION_DETAILS = "adminNotificationDetails"
 
 
 /**
@@ -25,11 +38,25 @@ import androidx.compose.foundation.layout.systemBarsPadding
  * An admin can open the campsite management, profile management
  * and logs screens.
  *
- * @param onExitAdmin: called when the admin leaves the dashboard to return to the landing screen.
+ * @param onExitAdmin Called when the admin leaves the dashboard.
+ * @param campsiteRepository Repository used to access campsite data.
+ * @param userRepository Repository used to access user data.
+ * @param notificationRepository Repository used to access notifications.
  */
 @Composable
-fun AdminNavigation(onExitAdmin: () -> Unit = {}) {
+fun AdminNavigation(
+    onExitAdmin: () -> Unit = {},
+    campsiteRepository: CampsiteRepository,
+    userRepository: UserRepository,
+    notificationRepository: NotificationRepository
+) {
     val navController = rememberNavController()
+    val imageService = remember { ImageService() }
+
+    // Holds the notification selected from Admin Logs.
+    var selectedNotification by remember {
+        mutableStateOf<Notification?>(null)
+    }
 
     NavHost(
         navController = navController,
@@ -58,14 +85,77 @@ fun AdminNavigation(onExitAdmin: () -> Unit = {}) {
         }
 
         composable(Routes.ADMIN_LOGS) {
-            Column {
-                TextButton(
-                    onClick = { navController.popBackStack() }
-                ) {
-                    Text("← Back")
+            AdminLogsScreen(
+                campsites = campsiteRepository.campsite,
+                users = userRepository.users,
+                notifications = notificationRepository.notifications,
+                onRemoveImage = { item, onDone ->
+                    when (item.type) {
+                        AdminImageType.CAMPSITE -> {
+                            campsiteRepository.removeCampsiteImage(item.id) { firestoreSuccess ->
+                                if (!firestoreSuccess) {
+                                    onDone(false)
+                                } else {
+                                    imageService.delete(item.imageUrl) { storageSuccess ->
+                                        onDone(storageSuccess)
+                                    }
+                                }
+                            }
+                        }
+
+                        AdminImageType.PROFILE -> {
+                            userRepository.removeProfileImage(item.id) { firestoreSuccess ->
+                                if (!firestoreSuccess) {
+                                    onDone(false)
+                                } else {
+                                    imageService.delete(item.imageUrl) { storageSuccess ->
+                                        onDone(storageSuccess)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                onNotificationClick = { notification ->
+                    selectedNotification = notification
+                    navController.navigate(ADMIN_NOTIFICATION_DETAILS)
+                },
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(ADMIN_NOTIFICATION_DETAILS) {
+            val notification = selectedNotification
+
+            if (notification != null) {
+                val recipient = userRepository.users.find {
+                    it.userId == notification.recipientId
                 }
 
-                AdminLogsScreen()
+                val campsite = campsiteRepository.campsite.find {
+                    it.id == notification.campsiteId
+                }
+
+                AdminNotificationDetailsScreen(
+                    notification = notification,
+                    recipientName = recipient?.name ?: "Unknown",
+                    campsiteName = campsite?.name ?: "Unknown",
+                    onBack = {
+                        navController.popBackStack()
+                    },
+                    onViewUser = { userId ->
+                    }, // TO BE DONE: add route once screen is built
+
+                    onViewCampsite = { campsiteId ->
+                    } // TO BE DONE: add route once screen is built
+                )
+            } else {
+                AdminPlaceholder(
+                    title = "Notification unavailable",
+                    onBack = { navController.popBackStack() }
+                )
             }
         }
     }

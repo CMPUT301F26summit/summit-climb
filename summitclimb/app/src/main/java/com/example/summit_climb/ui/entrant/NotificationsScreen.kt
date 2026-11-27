@@ -55,9 +55,18 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
-import com.example.summit_climb.controller.ProfileController
 import com.example.summit_climb.ui.Routes
-
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material3.OutlinedTextField
+import com.example.summit_climb.controller.CampsiteSearchController
+import com.example.summit_climb.controller.ReservationController
+import com.example.summit_climb.ui.campsiteIdArgs
 
 
 /**
@@ -68,6 +77,7 @@ import com.example.summit_climb.ui.Routes
  * related screens
  *
  * Known Issues:
+ *  - Some notifications types do not have navigation destination yet.
  *  - Notifications are not displayed in the phone's notification bar.
  */
 
@@ -76,8 +86,32 @@ fun NotificationsScreen(
     controller: NotificationController,
     navController: NavController,
     notificationsEnabled: Boolean,
-    onEnableNotifications: () -> Unit
+    onEnableNotifications: () -> Unit,
+    searchController: CampsiteSearchController,
+    entrantReservationController: ReservationController,
+    currentUserId: String
 ) {
+    // Tracks the rating notification currently open
+    var selectedRatingNotification by remember {
+        mutableStateOf<Notification?>(null)
+    }
+
+    // tracks the selected number of stars
+    var selectedStars by remember {
+        mutableStateOf(0)
+    }
+
+    var reviewText by remember { mutableStateOf("") }
+    var ratingError by remember { mutableStateOf("") }
+    var reservationMissing by remember {
+        mutableStateOf(false)
+    }
+
+    // tracks submitted ratings for this session
+    val submittedRatingIds = remember {
+        androidx.compose.runtime.mutableStateListOf<String>()
+    }
+
     if (!notificationsEnabled && controller.notifications.isEmpty()) {
         Box(
             modifier = Modifier
@@ -174,7 +208,9 @@ fun NotificationsScreen(
                     )
 
                     Button(
-                        onClick = onEnableNotifications,
+                        onClick = {
+                            onEnableNotifications()
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
@@ -318,7 +354,9 @@ fun NotificationsScreen(
                                 )
 
                                 Button(
-                                    onClick = onEnableNotifications,
+                                    onClick = {
+                                        onEnableNotifications()
+                                    },
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(8.dp),
@@ -362,19 +400,114 @@ fun NotificationsScreen(
                         NotificationCard(
                             notification = notification,
                             onClick = {
-                                if (!notification.read) controller.markRead(notification.id)
-                                controller.destinationFor(notification)?.let { route ->
-                                    // only go if that screen exists yet; otherwise the app would crash
-                                    if (navController.graph.findNode(route) != null) {
-                                        navController.navigate(route)
+                                if (notification.type == NotificationType.RATING_REQUEST) {
+                                    selectedRatingNotification = notification
+                                    selectedStars = 0
+                                    reviewText = ""
+                                    ratingError = ""
+                                    reservationMissing = false
+                                } else {
+                                    if (!notification.read) {
+                                        controller.markRead(notification.id)
+                                    }
+
+                                    controller.destinationFor(notification)?.let { route ->
+                                        if (navController.graph.findNode(route) != null) {
+                                            navController.navigate(route)
+                                        }
                                     }
                                 }
-                            }
+                            },
+                            onRateClick = {
+                                selectedRatingNotification = notification
+                                selectedStars = 0
+                                reviewText = ""
+                                ratingError = ""
+                                reservationMissing = false
+                            },
+                            ratingSubmitted = submittedRatingIds.contains(notification.relatedId) ||
+                                    searchController.campsiteDetails(notification.campsiteId)
+                                        ?.ratings?.containsKey(notification.relatedId) == true
                         )
                     }
                 }
             }
         }
+    }
+
+    selectedRatingNotification?.let { notification ->
+        RatingPopUp(
+            campsiteName = searchController
+                .campsiteDetails(notification.campsiteId)
+                ?.name ?: "Your campsite",
+            selectedStars = selectedStars,
+            reviewText = reviewText,
+            ratingError = ratingError,
+            onReviewChange = { reviewText = it },
+            onStarSelected = { selectedStars = it },
+            onSubmit = {
+                ratingError = ""
+                reservationMissing = false
+
+                entrantReservationController.getReservationsByEntrant(
+                    entrantId = currentUserId,
+                    onSuccess = { reservations ->
+
+                        val reservationExists = reservations.any { reservation ->
+                            reservation.id == notification.relatedId &&
+                                    reservation.campsiteId == notification.campsiteId
+                        }
+
+                        if (!reservationExists) {
+                            reservationMissing = true
+                            ratingError = "Reservation does not exist."
+                        } else {
+                            searchController.rateCampsite(
+                                reservationId = notification.relatedId,
+                                entrantId = currentUserId,
+                                campsiteId = notification.campsiteId,
+                                stars = selectedStars,
+                                review = reviewText,
+                                onSuccess = {
+                                    val reservationKey = notification.relatedId
+
+                                    if (reservationKey !in submittedRatingIds) {
+                                        submittedRatingIds.add(reservationKey)
+                                    }
+
+                                    if (!notification.read) {
+                                        controller.markRead(notification.id)
+                                    }
+
+                                    selectedRatingNotification = null
+                                    selectedStars = 0
+                                    reviewText = ""
+                                    ratingError = ""
+                                },
+                                onFailure = { error ->
+                                    ratingError = error.message
+                                        ?: "Failed to submit rating. Please try again."
+                                }
+                            )
+                        }
+                    },
+                    onFailure = {
+                        ratingError = "Could not verify reservation. Please try again."
+                    }
+                )
+            },
+            onCancel = {
+                if (reservationMissing) {
+                    controller.delete(notification.id)
+                }
+
+                selectedRatingNotification = null
+                selectedStars = 0
+                reviewText = ""
+                ratingError = ""
+                reservationMissing = false
+            }
+        )
     }
 }
 
@@ -382,14 +515,16 @@ fun NotificationsScreen(
 @Composable
 private fun NotificationCard(
     notification: Notification,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onRateClick: () -> Unit = {},
+    ratingSubmitted: Boolean = false
 ) {
     val header = when (notification.type) {
         NotificationType.LOTTERY_WIN -> "You won the lottery!"
         NotificationType.LOTTERY_LOSS -> "Lottery Not Selected"
         NotificationType.RESERVATION_UPDATE -> "Reservation Notice"
-        NotificationType.MESSAGE -> "New Message"
-        NotificationType.RATING_REQUEST -> "Rate Your Stay"
+        NotificationType.MESSAGE -> notification.title
+        NotificationType.RATING_REQUEST -> "Rate Your Experience?"
 
     }
     Card(
@@ -399,7 +534,7 @@ private fun NotificationCard(
         shape = RoundedCornerShape(20.dp),
         border = BorderStroke(1.dp, Color(0xFFCFE7F5)),
         colors = CardDefaults.cardColors(
-            containerColor = if (notification.read) {
+            containerColor = if (notification.read || ratingSubmitted) {
                 Color.White
             } else {
                 Color(0xFFCFE7F5)
@@ -454,49 +589,197 @@ private fun NotificationCard(
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(top = 12.dp)
             )
+
+            if (notification.type == NotificationType.RATING_REQUEST) {
+                if (ratingSubmitted) {
+                    Text(
+                        text = "✓ Rating submitted successfully!",
+                        color = Color(0xFF4C956C),
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(top = 14.dp)
+                    )
+                } else {
+                    Button(
+                        onClick = onRateClick,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 14.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = lightBlue
+                        )
+                    ) {
+                        Text(
+                            text = "Rate campsite",
+                            color = Color.White,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
         }
     }
 }
 
+@Composable
+private fun RatingPopUp(
+    campsiteName: String,
+    selectedStars: Int,
+    reviewText: String,
+    ratingError: String,
+    onReviewChange: (String) -> Unit,
+    onStarSelected: (Int) -> Unit,
+    onSubmit: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onCancel,
+        containerColor = Color(0xFFCFE7F5),
+        shape = RoundedCornerShape(24.dp),
+        title = {
+            Text(
+                text = "Rate campsite",
+                color = Color(0xFF233B4D),
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = campsiteName,
+                    color = Color(0xFF233B4D),
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 18.sp
+                )
 
+                Text(
+                    text = "How was your experience?",
+                    color = charcoal,
+                    fontSize = 15.sp
+                )
+
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    (1..5).forEach { star ->
+                        IconButton(
+                            onClick = { onStarSelected(star) }
+                        ) {
+                            Icon(
+                                imageVector = if (star <= selectedStars) {
+                                    Icons.Filled.Star
+                                } else {
+                                    Icons.Filled.StarBorder
+                                },
+                                contentDescription = "$star stars",
+                                tint = if (star <= selectedStars) {
+                                    Color(0xFFE6A23C)
+                                } else {
+                                    Color(0xFF9AAAB5)
+                                },
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                    }
+                }
+
+                if (selectedStars > 0) {
+                    Text(
+                        text = "$selectedStars out of 5 stars",
+                        color = charcoal,
+                        fontSize = 14.sp
+                    )
+                }
+
+                OutlinedTextField(
+                    value = reviewText,
+                    onValueChange = onReviewChange,
+                    label = { Text("Write a review (optional)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3,
+                    maxLines = 5
+                )
+
+                if (ratingError.isNotBlank()) {
+                    Text(
+                        text = ratingError,
+                        color = Color.Red,
+                        fontSize = 13.sp
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onSubmit,
+                enabled = selectedStars > 0,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = lightBlue,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text("Submit rating", fontWeight = FontWeight.SemiBold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancel) {
+                Text(
+                    text = "Cancel",
+                    color = Color(0xFF245C86)
+                )
+            }
+        }
+    )
+}
+
+/**
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun NotificationsScreenPreview() {
 
     // Sample notifications for the preview
     val sampleNotifications = listOf(
-        Notification(
-            id = "1",
-            senderId = "system",
-            recipientId = "preview-user",
-            type = NotificationType.LOTTERY_WIN,
-            title = "Lottery Result",
-            text = "Congratulations! You have been selected for your campsite reservation at Pine Ridge Campground.",
-            timestamp = System.currentTimeMillis() - 5 * 60 * 1000,
-            read = false
+        /** Notification(
+        id = "1",
+        senderId = "system",
+        recipientId = "preview-user",
+        type = NotificationType.LOTTERY_WIN,
+        title = "Lottery Result",
+        text = "Congratulations! You have been selected for your campsite reservation at Pine Ridge Campground.",
+        timestamp = System.currentTimeMillis() - 5 * 60 * 1000,
+        read = false
         ),
 
         Notification(
-            id = "2",
-            senderId = "system",
-            recipientId = "preview-user",
-            type = NotificationType.RESERVATION_UPDATE,
-            title = "Reservation Update",
-            text = "Your reservation has been confirmed. Check your reservations for more details.",
-            timestamp = System.currentTimeMillis() - 60 * 60 * 1000,
-            read = false
+        id = "2",
+        senderId = "system",
+        recipientId = "preview-user",
+        type = NotificationType.RESERVATION_UPDATE,
+        title = "Reservation Update",
+        text = "Your reservation has been confirmed. Check your reservations for more details.",
+        timestamp = System.currentTimeMillis() - 60 * 60 * 1000,
+        read = false
         ),
 
         Notification(
-            id = "3",
-            senderId = "system",
-            recipientId = "preview-user",
-            type = NotificationType.LOTTERY_LOSS,
-            title = "Lottery Result",
-            text = "Unfortunately, you were not selected for this campsite lottery. Better luck next time!",
-            timestamp = System.currentTimeMillis() - 24 * 60 * 60 * 1000,
-            read = true
+        id = "3",
+        senderId = "system",
+        recipientId = "preview-user",
+        type = NotificationType.LOTTERY_LOSS,
+        title = "Lottery Result",
+        text = "Unfortunately, you were not selected for this campsite lottery. Better luck next time!",
+        timestamp = System.currentTimeMillis() - 24 * 60 * 60 * 1000,
+        read = true
         ),
+         */
 
         Notification(
             id = "4",
@@ -507,6 +790,19 @@ private fun NotificationsScreenPreview() {
             text = "Hello! Please remember to review the campsite guidelines before your upcoming visit.",
             timestamp = System.currentTimeMillis() - 2 * 24 * 60 * 60 * 1000,
             read = true
+        ),
+
+        Notification(
+            id = "5",
+            senderId = "system",
+            recipientId = "preview-user",
+            type = NotificationType.RATING_REQUEST,
+            title = "Rate your experience?",
+            text = "Your stay at Cedar Valley Campground has ended. How was your experience?",
+            campsiteId = "preview-campsite",
+            relatedId = "preview-reservation-1",
+            timestamp = System.currentTimeMillis() - 10 * 60 * 1000,
+            read = false
         )
     )
 
@@ -549,7 +845,7 @@ private fun NotificationsScreenPreview() {
         controller = previewController,
         navController = rememberNavController(),
         notificationsEnabled = false,
-        onEnableNotifications = {}
+
     )
 }
-
+ */

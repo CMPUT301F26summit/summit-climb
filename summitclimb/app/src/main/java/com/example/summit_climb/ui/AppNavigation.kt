@@ -166,6 +166,38 @@ fun AppNavigation(
                     entrantReservationController.getReservationsByEntrant(
                         entrantId = currentUserId,
                         onSuccess = { results ->
+                            results.forEach { reservation ->
+                                val today = LocalDate.now()
+
+                                val isExpired = runCatching {
+                                    LocalDate.parse(reservation.endDate).isBefore(today)
+                                }.getOrDefault(false)
+
+                                if (reservation.status == "ACTIVE" && isExpired) {
+                                    val campsiteName = searchController.campsiteDetails(
+                                        reservation.campsiteId
+                                    )?.name ?: "Unknown campsite"
+
+                                    reservationController.completeReservation(
+                                        reservation = reservation,
+                                        campsiteName = campsiteName,
+                                        onSuccess = {
+                                            android.util.Log.d(
+                                                "RatingRequest",
+                                                "Completed reservation: " + reservation.id
+                                            )
+                                        },
+                                        onFailure = { error ->
+                                            android.util.Log.e(
+                                                "RatingRequest",
+                                                "Could not complete reservation: " + reservation.id,
+                                                error
+                                            )
+                                        }
+                                    )
+                                }
+                            }
+
                             reservations = results.map { reservation ->
                                 val campsite = searchController.campsiteDetails(
                                     reservation.campsiteId
@@ -308,7 +340,10 @@ fun AppNavigation(
                     notificationsEnabled = profileController.notificationsStatus,
                     onEnableNotifications = {
                         profileController.setNotifications(true)
-                    }
+                    },
+                    searchController = searchController,
+                    entrantReservationController = entrantReservationController,
+                    currentUserId = currentUserId
                 )
             }
 
@@ -811,13 +846,20 @@ fun AppNavigation(
                 val campsite =
                     searchController.campsiteDetails(campsiteId)
 
+                Log.d(
+                    "ConversationDebug",
+                    "Current: $currentUserId, " +
+                            "Recipient: $recipientId, " +
+                            "Owner: ${campsite?.ownerId}, " +
+                            "Campsite: $campsiteId"
+                )
                 if (
                     campsite == null ||
                     recipientId.isBlank() ||
-                    recipientId == currentUserId ||
                     (
                             currentUserId != campsite.ownerId &&
-                            recipientId != campsite.ownerId
+                            recipientId != campsite.ownerId &&
+                            recipientId != currentUserId
                             )
                 ) {
                     Text("Conversation unavailable")
@@ -855,7 +897,7 @@ fun AppNavigation(
                             "Entrant"
                         },
                         campsiteName = campsite.name,
-                        messages = emptyList(),
+                        messages = messages,
                         isSending = isSending,
                         error = error,
                         onBack = {navController.popBackStack()},

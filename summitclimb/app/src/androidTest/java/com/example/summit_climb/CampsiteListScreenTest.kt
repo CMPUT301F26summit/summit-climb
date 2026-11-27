@@ -420,7 +420,7 @@ private fun ListAndDetailsForTest() {
                 onBackClick = { navController.popBackStack() },
                 onJoinClick = {},
                 onLeaveClick = {},
-                onRateClick = {}
+                onMessageOwnerClick = null
             )
         }
     }

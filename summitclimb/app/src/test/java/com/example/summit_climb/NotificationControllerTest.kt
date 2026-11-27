@@ -40,6 +40,10 @@ class NotificationControllerTest {
             }
         }
 
+        override fun delete(notificationId: String) {
+            notifications.removeAll { it.id == notificationId }
+        }
+
         override fun forUser(userId: String): List<Notification> {
             return notifications.filter { it.recipientId == userId }
         }

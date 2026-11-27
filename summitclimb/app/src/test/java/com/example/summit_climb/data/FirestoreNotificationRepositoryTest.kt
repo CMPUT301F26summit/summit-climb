@@ -23,7 +23,8 @@ class FirestoreNotificationRepositoryTest {
         val repository: FirestoreNotificationRepository,
         val userDocument: DocumentSnapshot,
         val userTask: Task<DocumentSnapshot>,
-        val notificationDocument: DocumentReference
+        val notificationDocument: DocumentReference,
+        val saveTask: Task<Void>
     )
 
     /** Creates  a mocked Firestore setup for repo tests
@@ -41,6 +42,8 @@ class FirestoreNotificationRepositoryTest {
 
         val userDocument = mock<DocumentSnapshot>()
         val userTask = mock<Task<DocumentSnapshot>>()
+        val saveTask = mock<Task<Void>>()
+
 
         whenever(db.collection("notifications"))
             .thenReturn(notificationsCollection)
@@ -57,14 +60,24 @@ class FirestoreNotificationRepositoryTest {
         whenever(notificationsCollection.document())
             .thenReturn(notificationDocument)
 
+        whenever(notificationDocument.set(any<Notification>()))
+            .thenReturn(saveTask)
+
         whenever(notificationDocument.id)
             .thenReturn("generated-notification-id")
+
+        whenever(saveTask.addOnSuccessListener(any<OnSuccessListener<Void>>()))
+            .thenReturn(saveTask)
+
+        whenever(saveTask.addOnFailureListener(any<OnFailureListener>()))
+            .thenReturn(saveTask)
 
         return TestSetup(
             repository = FirestoreNotificationRepository(db),
             userDocument = userDocument,
             userTask = userTask,
-            notificationDocument = notificationDocument
+            notificationDocument = notificationDocument,
+            saveTask = saveTask
         )
     }
 
