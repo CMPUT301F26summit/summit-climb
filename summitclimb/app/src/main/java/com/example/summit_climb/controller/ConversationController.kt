@@ -80,4 +80,38 @@ class ConversationController(
 
         return latestMessages.sortedByDescending { it.timestamp }
     }
+
+    fun getAllMessages(
+        onMessages: (List<Notification>) -> Unit,
+        onFailure: (Exception) -> Unit
+    ): () -> Unit {
+        return repository.getAllMessages(onMessages, onFailure)
+    }
+
+    /**
+     * Groups messages by campsite and participants for admin review.
+     */
+    fun groupAdminConversations(
+        messages: List<Notification>
+    ): List<List<Notification>> {
+        val conversations = messages.groupBy { message ->
+            val participants = listOf(
+                message.senderId,
+                message.recipientId
+            ).sorted()
+
+            Pair(message.campsiteId, participants)
+        }
+
+        val groupedMessages = mutableListOf<List<Notification>>()
+
+        for (conversation in conversations.values) {
+            val sortedMessages = conversation.sortedBy { it.timestamp }
+            groupedMessages.add(sortedMessages)
+        }
+
+        return groupedMessages.sortedByDescending {
+            it.last().timestamp
+        }
+    }
 }

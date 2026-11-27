@@ -211,4 +211,37 @@ class MessageRepository(
             outgoingListener.remove()
         }
     }
+
+    /**
+     * Retrieves all private messages for admin review.
+     */
+    fun getAllMessages(
+        onMessages: (List<Notification>) -> Unit,
+        onFailure: (Exception) -> Unit
+    ): () -> Unit {
+        val listener = messagesRef.addSnapshotListener { snapshot, error ->
+            val messages = mutableListOf<Notification>()
+
+            if (error != null) {
+                onFailure(error)
+                return@addSnapshotListener
+            }
+
+            if (snapshot != null) {
+                for (document in snapshot.documents) {
+                    val message = document.toObject(Notification::class.java)
+
+                    if (message != null) {
+                        messages.add(message.copy(id = document.id))
+                    }
+                }
+            }
+
+            onMessages(messages.sortedByDescending { it.timestamp })
+        }
+
+        return {
+            listener.remove()
+        }
+    }
 }
