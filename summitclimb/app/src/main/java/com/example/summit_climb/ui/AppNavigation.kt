@@ -85,6 +85,7 @@ import com.example.summit_climb.model.Notification
 import com.example.summit_climb.model.NotificationType
 import com.example.summit_climb.ui.owner.OwnerReservationDetailsScreen
 import com.example.summit_climb.controller.ConversationController
+import com.example.summit_climb.ui.entrant.lotteryCardFor
 
 val campsiteIdArgs = listOf(
     navArgument(Routes.CAMPSITE_ID_ARG) { type = NavType.StringType }
@@ -238,45 +239,49 @@ fun AppNavigation(
                 )
             }
 
-            // test
+            // testS
             composable(Routes.MY_LOTTERIES) {
-                var lotteries by remember {
-                    mutableStateOf(
-                        listOf(
-                            LotteryUiItem(
-                                "sample-lottery-cedar-valley",
-                                "Cedar Valley",
-                                "Banff, AB",
-                                MyLotteriesText.PENDING,
-                                "Lottery closes in 14 days"
-                            ),
-                            LotteryUiItem(
-                                "sample-lottery-lakeside-camp",
-                                "Lakeside Camp",
-                                "Jasper, AB",
-                                MyLotteriesText.WON,
-                                "You've been selected!"
-                            ),
-                            LotteryUiItem(
-                                "sample-lottery-summit-camp",
-                                "Summit Camp",
-                                "Hinton, AB",
-                                MyLotteriesText.LOST,
-                                "You weren't selected this time."
-                            )
-                        )
-                    )
+                // the user's waitlist entries, loaded from Firestore
+                var myEntries by remember(currentUserId) {
+                    mutableStateOf<List<WaitlistEntry>>(emptyList())
                 }
                 var message by remember { mutableStateOf("") }
+
+                LaunchedEffect(currentUserId) {
+                    lotteryController.getMyLotteries { entries -> myEntries = entries }
+                }
+
+                // one card per entry that is still Pending, Won or Lost
+                val lotteries = myEntries.mapNotNull { entry ->
+                    val lottery = lotteryController.getLottery(entry.lotteryId) ?: return@mapNotNull null
+                    val campsite = lottery.campsiteIds.firstOrNull()?.let { searchController.campsiteDetails(it) }
+                    lotteryCardFor(
+                        entry = entry,
+                        lottery = lottery,
+                        campsiteName = campsite?.name ?: "Unknown campsite",
+                        location = campsite?.location ?: ""
+                    )
+                }
 
                 MyLotteriesContent(
                     lotteries = lotteries,
                     message = message,
                     onMessageShown = { message = "" },
                     onLeave = { id ->
+                        val lottery = lotteryController.getLottery(id)
+                        val entry = myEntries.find { it.lotteryId == id }
                         val name = lotteries.find { it.lotteryId == id }?.campsiteName ?: ""
-                        lotteries = lotteries.filter { it.lotteryId != id }
-                        message = MyLotteriesText.left(name)
+
+                        if (lottery != null && entry != null) {
+                            lotteryController.leaveLottery(lottery, entry) { problem ->
+                                if (problem == null) {
+                                    myEntries = myEntries.filter { it.lotteryId != id }
+                                    message = MyLotteriesText.left(name)
+                                } else {
+                                    message = problem
+                                }
+                            }
+                        }
                     },
                     onConfirmReservation = { navController.navigate(Routes.RESERVATION) }
                 )
