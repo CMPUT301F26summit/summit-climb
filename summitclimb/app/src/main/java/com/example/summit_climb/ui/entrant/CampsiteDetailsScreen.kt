@@ -137,8 +137,7 @@ fun CampsiteDetailsScreen(
             }
         },
         onMessageOwnerClick = if (
-            campsite.ownerId.isNotBlank() &&
-            campsite.ownerId != currentUserId
+            campsite.ownerId.isNotBlank()
         ) {
             {
                 navController.navigate(

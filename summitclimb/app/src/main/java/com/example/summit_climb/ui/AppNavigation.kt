@@ -846,13 +846,20 @@ fun AppNavigation(
                 val campsite =
                     searchController.campsiteDetails(campsiteId)
 
+                Log.d(
+                    "ConversationDebug",
+                    "Current: $currentUserId, " +
+                            "Recipient: $recipientId, " +
+                            "Owner: ${campsite?.ownerId}, " +
+                            "Campsite: $campsiteId"
+                )
                 if (
                     campsite == null ||
                     recipientId.isBlank() ||
-                    recipientId == currentUserId ||
                     (
                             currentUserId != campsite.ownerId &&
-                            recipientId != campsite.ownerId
+                            recipientId != campsite.ownerId &&
+                            recipientId != currentUserId
                             )
                 ) {
                     Text("Conversation unavailable")
@@ -890,7 +897,7 @@ fun AppNavigation(
                             "Entrant"
                         },
                         campsiteName = campsite.name,
-                        messages = emptyList(),
+                        messages = messages,
                         isSending = isSending,
                         error = error,
                         onBack = {navController.popBackStack()},

@@ -2,6 +2,7 @@ package com.example.summit_climb.controller
 
 import com.example.summit_climb.data.MessageRepository
 import com.example.summit_climb.model.Notification
+import android.util.Log
 
 class ConversationController(
     private val repository: MessageRepository = MessageRepository()
@@ -39,5 +40,7 @@ class ConversationController(
             onFailure = onFailure
         )
     }
+
+
 
 }
