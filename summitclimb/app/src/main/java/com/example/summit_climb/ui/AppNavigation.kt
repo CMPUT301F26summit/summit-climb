@@ -40,6 +40,8 @@ import com.example.summit_climb.ui.entrant.ReservationContent
 import com.example.summit_climb.ui.entrant.ReservationUiInfo
 import com.example.summit_climb.ui.owner.SentNotificationsScreen
 import com.example.summit_climb.controller.ReservationController
+import com.example.summit_climb.ui.owner.CreateLotteryContent
+import com.example.summit_climb.ui.owner.LotteryCampsiteOption
 
 
 //testing (ignore, just to show ui)
@@ -547,10 +549,69 @@ fun AppNavigation(
             }
 
 
+            // List in Lottery: create or edit a lottery for the owner's campsites (F7)
             composable(
                 route = Routes.OWNER_LIST_LOTTERY,
                 arguments = campsiteIdArgs
-            ) { ComingSoonScreen("List in Lottery") }
+            ) { backStackEntry ->
+                val campsiteId = backStackEntry.campsiteId()
+                var myCampsites by remember { mutableStateOf<List<Campsite>>(emptyList()) }
+                var message by remember { mutableStateOf("") }
+                var saving by remember { mutableStateOf(false) }
+
+                LaunchedEffect(currentUserId) {
+                    ownerCampsiteController.listCampsites(
+                        currentUserId,
+                        onSuccess = { myCampsites = it },
+                        onFailure = { error -> message = error.message ?: "Couldn't load your campsites" }
+                    )
+                }
+
+                // the campsite we came from is always an option, even before listCampsites loads
+                val cameFrom = searchController.campsiteDetails(campsiteId)
+                val options = ArrayList<LotteryCampsiteOption>()
+                if (cameFrom != null) {
+                    options.add(LotteryCampsiteOption(cameFrom.id, cameFrom.name))
+                }
+                for (campsite in myCampsites) {
+                    if (campsite.id != campsiteId) {
+                        options.add(LotteryCampsiteOption(campsite.id, campsite.name))
+                    }
+                }
+
+                // an open lottery for this campsite means we're editing it
+                val existing = ownerLotteryController
+                    .lotteryForCampsite(currentUserId, campsiteId)
+                    ?.takeIf { it.status == LotteryStatus.OPEN }
+
+                CreateLotteryContent(
+                    campsites = options,
+                    existing = existing,
+                    preselectedCampsiteId = campsiteId,
+                    message = message,
+                    saving = saving,
+                    onBack = { navController.popBackStack() },
+                    onSave = { lottery ->
+                        saving = true
+                        message = ""
+                        val withOwner = lottery.copy(ownerId = currentUserId)
+                        val done = {
+                            saving = false
+                            navController.popBackStack()
+                            Unit
+                        }
+                        val failed = { error: Exception ->
+                            saving = false
+                            message = error.message ?: "Couldn't save the lottery"
+                        }
+                        if (existing == null) {
+                            ownerLotteryController.createLottery(withOwner, onSuccess = done, onFailure = failed)
+                        } else {
+                            ownerLotteryController.editLottery(withOwner, onSuccess = done, onFailure = failed)
+                        }
+                    }
+                )
+            }
 
             // Owner screens, uncomment when ready to use. Each route constant already exists in Routes.
             composable(
