@@ -40,6 +40,9 @@ import com.example.summit_climb.ui.entrant.ReservationContent
 import com.example.summit_climb.ui.entrant.ReservationUiInfo
 import com.example.summit_climb.ui.owner.SentNotificationsScreen
 import com.example.summit_climb.controller.ReservationController
+import com.example.summit_climb.ui.owner.CreateLotteryContent
+import com.example.summit_climb.ui.owner.LotteryCampsiteOption
+import com.example.summit_climb.data.UserRepository
 
 
 //testing (ignore, just to show ui)
@@ -85,6 +88,7 @@ import com.example.summit_climb.model.Notification
 import com.example.summit_climb.model.NotificationType
 import com.example.summit_climb.ui.owner.OwnerReservationDetailsScreen
 import com.example.summit_climb.controller.ConversationController
+import com.example.summit_climb.ui.entrant.lotteryCardFor
 
 val campsiteIdArgs = listOf(
     navArgument(Routes.CAMPSITE_ID_ARG) { type = NavType.StringType }
@@ -114,6 +118,7 @@ fun AppNavigation(
     ownerLotteryController: OwnerLotteryController,
     entrantReservationController: ReservationController,
     ownerNotificationController: OwnerNotificationController,
+    userRepository: UserRepository,
     onOpenAdmin: () -> Unit = {}
 ){
     val navController = rememberNavController()
@@ -270,45 +275,49 @@ fun AppNavigation(
                 )
             }
 
-            // test
+            // testS
             composable(Routes.MY_LOTTERIES) {
-                var lotteries by remember {
-                    mutableStateOf(
-                        listOf(
-                            LotteryUiItem(
-                                "sample-lottery-cedar-valley",
-                                "Cedar Valley",
-                                "Banff, AB",
-                                MyLotteriesText.PENDING,
-                                "Lottery closes in 14 days"
-                            ),
-                            LotteryUiItem(
-                                "sample-lottery-lakeside-camp",
-                                "Lakeside Camp",
-                                "Jasper, AB",
-                                MyLotteriesText.WON,
-                                "You've been selected!"
-                            ),
-                            LotteryUiItem(
-                                "sample-lottery-summit-camp",
-                                "Summit Camp",
-                                "Hinton, AB",
-                                MyLotteriesText.LOST,
-                                "You weren't selected this time."
-                            )
-                        )
-                    )
+                // the user's waitlist entries, loaded from Firestore
+                var myEntries by remember(currentUserId) {
+                    mutableStateOf<List<WaitlistEntry>>(emptyList())
                 }
                 var message by remember { mutableStateOf("") }
+
+                LaunchedEffect(currentUserId) {
+                    lotteryController.getMyLotteries { entries -> myEntries = entries }
+                }
+
+                // one card per entry that is still Pending, Won or Lost
+                val lotteries = myEntries.mapNotNull { entry ->
+                    val lottery = lotteryController.getLottery(entry.lotteryId) ?: return@mapNotNull null
+                    val campsite = lottery.campsiteIds.firstOrNull()?.let { searchController.campsiteDetails(it) }
+                    lotteryCardFor(
+                        entry = entry,
+                        lottery = lottery,
+                        campsiteName = campsite?.name ?: "Unknown campsite",
+                        location = campsite?.location ?: ""
+                    )
+                }
 
                 MyLotteriesContent(
                     lotteries = lotteries,
                     message = message,
                     onMessageShown = { message = "" },
                     onLeave = { id ->
+                        val lottery = lotteryController.getLottery(id)
+                        val entry = myEntries.find { it.lotteryId == id }
                         val name = lotteries.find { it.lotteryId == id }?.campsiteName ?: ""
-                        lotteries = lotteries.filter { it.lotteryId != id }
-                        message = MyLotteriesText.left(name)
+
+                        if (lottery != null && entry != null) {
+                            lotteryController.leaveLottery(lottery, entry) { problem ->
+                                if (problem == null) {
+                                    myEntries = myEntries.filter { it.lotteryId != id }
+                                    message = MyLotteriesText.left(name)
+                                } else {
+                                    message = problem
+                                }
+                            }
+                        }
                     },
                     onConfirmReservation = { navController.navigate(Routes.RESERVATION) }
                 )
@@ -329,6 +338,65 @@ fun AppNavigation(
                 ManageQRCodeScreen(
                     navController = navController,
                     campsiteID = entry.campsiteId()
+                )
+            }
+
+            composable(Routes.MESSAGES) {
+
+                var messages by remember(currentUserId) {
+                    mutableStateOf<List<Notification>>(emptyList())
+                }
+                var error by remember { mutableStateOf("") }
+                val conversations = conversationController.groupConversations(
+                    messages,
+                    currentUserId
+                )
+
+                DisposableEffect(currentUserId) {
+                    val stopListening = conversationController.getUserMessages(
+                        currentUserId = currentUserId,
+                        onMessages = { messages = it },
+                        onFailure = {
+                            error = it.message ?: "Unable to load messages"
+                        }
+                    )
+                    onDispose {
+                        stopListening()
+                    }
+                }
+
+                MessagesScreen(
+                    currentUserId = currentUserId,
+                    conversations = conversations,
+                    getUserName = { userId ->
+                        val user = userRepository.users.find {
+                            it.userId == userId
+                        }
+
+                        if (user != null && user.name.isNotBlank()) {
+                            user.name
+                        } else {
+                            "Unknown user"
+                        }
+                    },
+                    getCampsiteName = { campsiteId ->
+                        val campsite = searchController.campsiteDetails(campsiteId)
+
+                        if (campsite != null) {
+                            campsite.name
+                        } else {
+                            "Unknown campsite"
+                        }
+                    },
+                    onConversationClick = { campsiteId, recipientId ->
+                        navController.navigate(
+                            Routes.conversation(campsiteId, recipientId)
+                        )
+                    },
+                    onBack = {
+                        navController.popBackStack()
+                    },
+                    error = error
                 )
             }
 
@@ -577,10 +645,69 @@ fun AppNavigation(
             }
 
 
+            // List in Lottery: create or edit a lottery for the owner's campsites (F7)
             composable(
                 route = Routes.OWNER_LIST_LOTTERY,
                 arguments = campsiteIdArgs
-            ) { ComingSoonScreen("List in Lottery") }
+            ) { backStackEntry ->
+                val campsiteId = backStackEntry.campsiteId()
+                var myCampsites by remember { mutableStateOf<List<Campsite>>(emptyList()) }
+                var message by remember { mutableStateOf("") }
+                var saving by remember { mutableStateOf(false) }
+
+                LaunchedEffect(currentUserId) {
+                    ownerCampsiteController.listCampsites(
+                        currentUserId,
+                        onSuccess = { myCampsites = it },
+                        onFailure = { error -> message = error.message ?: "Couldn't load your campsites" }
+                    )
+                }
+
+                // the campsite we came from is always an option, even before listCampsites loads
+                val cameFrom = searchController.campsiteDetails(campsiteId)
+                val options = ArrayList<LotteryCampsiteOption>()
+                if (cameFrom != null) {
+                    options.add(LotteryCampsiteOption(cameFrom.id, cameFrom.name))
+                }
+                for (campsite in myCampsites) {
+                    if (campsite.id != campsiteId) {
+                        options.add(LotteryCampsiteOption(campsite.id, campsite.name))
+                    }
+                }
+
+                // an open lottery for this campsite means we're editing it
+                val existing = ownerLotteryController
+                    .lotteryForCampsite(currentUserId, campsiteId)
+                    ?.takeIf { it.status == LotteryStatus.OPEN }
+
+                CreateLotteryContent(
+                    campsites = options,
+                    existing = existing,
+                    preselectedCampsiteId = campsiteId,
+                    message = message,
+                    saving = saving,
+                    onBack = { navController.popBackStack() },
+                    onSave = { lottery ->
+                        saving = true
+                        message = ""
+                        val withOwner = lottery.copy(ownerId = currentUserId)
+                        val done = {
+                            saving = false
+                            navController.popBackStack()
+                            Unit
+                        }
+                        val failed = { error: Exception ->
+                            saving = false
+                            message = error.message ?: "Couldn't save the lottery"
+                        }
+                        if (existing == null) {
+                            ownerLotteryController.createLottery(withOwner, onSuccess = done, onFailure = failed)
+                        } else {
+                            ownerLotteryController.editLottery(withOwner, onSuccess = done, onFailure = failed)
+                        }
+                    }
+                )
+            }
 
             // Owner screens, uncomment when ready to use. Each route constant already exists in Routes.
             composable(

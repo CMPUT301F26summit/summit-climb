@@ -40,6 +40,9 @@ object Routes {
     /** The user's notifications (opened from the bell on the campsite list).*/
     const val NOTIFICATIONS = "entrantNotifs"
 
+    /** The user's private conversations. */
+    const val MESSAGES = "messages"
+
     /** QR code scanner (opened from the scan button on the campsite list).*/
     const val QR_SCANNER = "QRScanner"
 

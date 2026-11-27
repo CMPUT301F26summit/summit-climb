@@ -1,2 +1,6 @@
 node_modules/
 *.local
+
+# Android / Gradle generated files
+.gradle/
+**/build/

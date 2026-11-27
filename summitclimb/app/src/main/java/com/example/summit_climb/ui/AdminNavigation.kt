@@ -35,10 +35,18 @@ import com.example.summit_climb.ui.admin.AdminDashboardScreen
 import com.example.summit_climb.ui.admin.AdminImageType
 import com.example.summit_climb.ui.admin.AdminLogsScreen
 import com.example.summit_climb.ui.admin.AdminNotificationDetailsScreen
+<<<<<<< HEAD
 import com.example.summit_climb.ui.admin.AdminProfileDetailsScreen
 import com.example.summit_climb.ui.admin.AdminProfilesScreen
+=======
+import androidx.compose.runtime.DisposableEffect
+import com.example.summit_climb.controller.ConversationController
+import com.example.summit_climb.ui.admin.AdminConversationDetailsScreen
+>>>>>>> 08493c978b42c47f5f48e19798fffa1ba053acbc
 
 private const val ADMIN_NOTIFICATION_DETAILS = "adminNotificationDetails"
+private const val ADMIN_CONVERSATION_DETAILS = "adminConversationDetails"
+
 
 /**
  * Main navigation for the admin section, starting at the admin dashboard.
@@ -59,7 +67,14 @@ fun AdminNavigation(
 ) {
     val navController = rememberNavController()
     val imageService = remember { ImageService() }
+<<<<<<< HEAD
     val controller = remember { AdminController() }
+=======
+    val conversationController = remember {ConversationController()}
+    var messages by remember { mutableStateOf<List<Notification>>(emptyList())}
+    var selectedConversation by remember {mutableStateOf<List<Notification>>(emptyList())}
+    var messageError by remember {mutableStateOf("")}
+>>>>>>> 08493c978b42c47f5f48e19798fffa1ba053acbc
 
     // Holds the notification selected from Admin Logs.
     var selectedNotification by remember {
@@ -173,10 +188,27 @@ fun AdminNavigation(
         }
 
         composable(Routes.ADMIN_LOGS) {
+            DisposableEffect(Unit) {
+                val stopListening = conversationController.getAllMessages(
+                    onMessages = {
+                        messages = it
+                        messageError = ""
+                    },
+                    onFailure = {messageError = it.message ?: "Unable to load messages"}
+                )
+                onDispose {stopListening()}
+            }
+            val conversations = conversationController.groupAdminConversations(messages)
+
             AdminLogsScreen(
                 campsites = campsiteRepository.campsite,
                 users = userRepository.users,
                 notifications = notificationRepository.notifications,
+                conversations = conversations,
+                onConversationClick = { conversation ->
+                    selectedConversation = conversation
+                    navController.navigate(ADMIN_CONVERSATION_DETAILS)
+                },
                 onRemoveImage = { item, onDone ->
                     when (item.type) {
                         AdminImageType.CAMPSITE -> {
@@ -212,6 +244,76 @@ fun AdminNavigation(
                     navController.popBackStack()
                 }
             )
+            if (messageError.isNotBlank()) {
+                androidx.compose.material3.AlertDialog(
+                    onDismissRequest = { messageError = "" },
+                    title = {Text("Unable to load messages")},
+                    text = {Text(messageError)},
+                    confirmButton = {
+                        TextButton(onClick = {messageError = "" }) {
+                            Text("OK")
+                        }
+                    }
+                )
+            }
+        }
+
+        composable(ADMIN_CONVERSATION_DETAILS) {
+            val conversation = selectedConversation
+            val message = conversation.firstOrNull()
+
+            if (message != null) {
+                val campsite = campsiteRepository.campsite.find {
+                    it.id == message.campsiteId
+                }
+
+                val ownerId = campsite?.ownerId ?: ""
+
+                val camperId = if (message.senderId == ownerId) {
+                    message.recipientId
+                } else if (message.recipientId == ownerId) {
+                    message.senderId
+                } else {
+                    ""
+                }
+
+                val owner = userRepository.users.find {
+                    it.userId == ownerId
+                }
+
+                val camper = userRepository.users.find {
+                    it.userId == camperId
+                }
+
+                AdminConversationDetailsScreen(
+                    messages = conversation,
+                    ownerName = owner?.name?.ifBlank { "Unknown owner" } ?: "Unknown owner",
+                    camperName = camper?.name?.ifBlank { "Unknown camper" } ?: "Unknown camper",
+                    campsiteName = campsite?.name ?: "Unknown campsite",
+                    getUserName = { userId ->
+                        val user = userRepository.users.find {
+                            it.userId == userId
+                        }
+                        user?.name?.ifBlank { "Unknown user" } ?: "Unknown user"
+                    },
+                    onBack = {
+                        navController.popBackStack()
+                    },
+                    onViewOwner = {
+                        // TODO: Connect admin owner profile
+                    },
+                    onViewCamper = {
+                        // TODO: Connect admin camper profile
+                    }
+                )
+            } else {
+                AdminPlaceholder(
+                    title = "Conversation unavailable",
+                    onBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
         }
 
         composable(ADMIN_NOTIFICATION_DETAILS) {

@@ -69,6 +69,7 @@ import com.example.summit_climb.ui.theme.screenBackground
 import java.util.Locale
 import android.widget.Toast
 import android.util.Log
+import androidx.compose.material.icons.filled.Email
 
 
 /**
@@ -181,6 +182,8 @@ fun CampsiteListScreen(
         onNotificationsClick = {
             navController.navigate(Routes.NOTIFICATIONS) { launchSingleTop = true }
         },
+        onMessagesClick = {navController.navigate(Routes.MESSAGES) { launchSingleTop = true }},
+
         onBackClick = {
             Log.d("BackTest", "back tapped")
             navController.navigate(Routes.HOME_SCREEN) {
@@ -259,6 +262,7 @@ fun CampsiteListScreen(
  * @param onScanClick: called when user taps the QR scan button.
  * @param onNotificationsClick: called when the user taps bell.
  * @param onBackClick: called when user taps back button.
+ * @param onMessagesClick: called when user taps messages button.
  */
 @Composable
 fun CampsiteListContent(
@@ -273,7 +277,8 @@ fun CampsiteListContent(
     onCampsiteClick: (Campsite) -> Unit,
     onScanClick: () -> Unit,
     onNotificationsClick: () -> Unit,
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    onMessagesClick: () -> Unit = {}
 ) {
     val focusManager = LocalFocusManager.current
     // Runs a search.
@@ -311,7 +316,8 @@ fun CampsiteListContent(
 
             CampsiteListHeader(
                 onNotificationsClick = onNotificationsClick,
-                onBackClick = onBackClick
+                onBackClick = onBackClick,
+                onMessagesClick = onMessagesClick
             )
 
             SearchRow(
@@ -394,7 +400,8 @@ fun CampsiteListContent(
 @Composable
 fun CampsiteListHeader(
     onNotificationsClick: () -> Unit,
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    onMessagesClick: () -> Unit = {}
     ){
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -405,14 +412,14 @@ fun CampsiteListHeader(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Back",
                 tint = Color.Black,
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(22.dp)
             )
         }
 
         Text(
             text = CampsiteListText.TITLE,
-            fontFamily = FontFamily.Serif,
-            fontSize = 30.sp,
+            fontFamily = FontFamily.SansSerif,
+            fontSize = 26.sp,
             style = MaterialTheme.typography.headlineSmall,
             color = Color(0xFF1C3348),
             fontWeight = FontWeight.Bold,
@@ -421,6 +428,17 @@ fun CampsiteListHeader(
                 .padding(12.dp)
         )
         IconButton(
+            onClick = onMessagesClick,
+            modifier = Modifier.testTag("messagesButton")
+        ) {
+            Icon(
+                imageVector = Icons.Default.Email,
+                contentDescription = "Messages",
+                tint = Color.Black,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        IconButton(
             onClick = onNotificationsClick,
             modifier = Modifier.testTag(CampsiteListTags.NOTIFICATIONS_BUTTON)
         ) {
@@ -428,7 +446,7 @@ fun CampsiteListHeader(
                 imageVector = Icons.Default.Notifications,
                 contentDescription = CampsiteListText.NOTIFICATIONS,
                 tint = Color.Black,
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(24.dp)
             )
         }
     }
