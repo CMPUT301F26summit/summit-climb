@@ -104,6 +104,32 @@ class UserRepository(private val db: FirebaseFirestore = FirebaseFirestore.getIn
     }
 
     /**
+     * Clears the profile image URL for a user.
+     *
+     * @param userId: user whose profile image should be removed.
+     * @param onDone: called with true if the Firestore update succeeds.
+     */
+    fun removeProfileImage(
+        userId: String,
+        onDone: (Boolean) -> Unit
+    ) {
+        if (userId.isBlank()) {
+            onDone(false)
+            return
+        }
+
+        userRef.document(userId)
+            .update("profileImageUrl", "")
+            .addOnSuccessListener {
+                onDone(true)
+            }
+            .addOnFailureListener { error ->
+                Log.e("UserRepository", "Failed to remove profile image", error)
+                onDone(false)
+            }
+    }
+
+    /**
      * Saves the user's notification opt out setting.
      * @param userId: user to update.
      * @param optOut: `true` to stop notifications, `false` to receive them.

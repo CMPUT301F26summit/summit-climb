@@ -4,6 +4,7 @@ import com.example.summit_climb.model.Notification
 import com.example.summit_climb.model.NotificationType
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import android.util.Log
 
 /**
  * Stores private messages and retrieves conversation
@@ -27,7 +28,6 @@ class MessageRepository(
             FirebaseAuth.getInstance().currentUser?.uid != senderId ||
             recipientId.isBlank() ||
             campsiteId.isBlank() ||
-            senderId == recipientId ||
             text.isBlank()
         ) {
             onFailure(Exception("Invalid message"))
@@ -49,8 +49,12 @@ class MessageRepository(
         )
 
         document.set(message)
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { onFailure(it) }
+            .addOnSuccessListener {
+                Log.d("ConversationDebug", "Saved message: ${document.id}")
+                onSuccess() }
+            .addOnFailureListener {
+                Log.e("ConversationDebug", "Failed to save message", it)
+                onFailure(it) }
     }
 
     /**
@@ -68,6 +72,11 @@ class MessageRepository(
         var outgoing = emptyList<Notification>()
 
         fun publishMessages() {
+            Log.d(
+                "ConversationDebug",
+                "Incoming: ${incoming.size}, Outgoing: ${outgoing.size}"
+            )
+
             onMessages(
                 (incoming + outgoing)
                     .distinctBy { it.id }
@@ -81,6 +90,7 @@ class MessageRepository(
             .whereEqualTo("campsiteId", campsiteId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
+                    Log.e("ConversationDebug", "Message retrieval failed", error)
                     onFailure(error)
                     return@addSnapshotListener
                 }

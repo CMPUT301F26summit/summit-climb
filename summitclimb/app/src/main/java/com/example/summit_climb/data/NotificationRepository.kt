@@ -14,6 +14,13 @@ interface NotificationRepository {
     /** Marks a notification as read */
     fun markRead(notificationId: String)
 
+    /**
+     * Deletes a notification from Firestore
+     *
+     * @param notificationId ID of the notification to delete
+     */
+    fun delete(notificationId: String)
+
     /** Returns a user's notifications, newest first. */
     fun forUser(userId: String): List<Notification>
 

@@ -8,40 +8,80 @@ plugins {
 android {
     namespace = "com.example.summit_climb"
     compileSdk {
-        version = release(37)
+        version = release(37) {
+            minorApiLevel = 1
+        }
     }
 
-    defaultConfig {
-        applicationId = "com.example.summit_climb"
-        minSdk = 26
-        targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        defaultConfig {
+            applicationId = "com.example.summit_climb"
+            minSdk = 26
+            targetSdk = 37
+            versionCode = 1
+            versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
+            testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        }
 
-    buildTypes {
-        release {
-            optimization {
-                enable = false
+        buildTypes {
+            release {
+                optimization {
+                    enable = false
+                }
+            }
+        }
+        compileOptions {
+            sourceCompatibility = JavaVersion.VERSION_11
+            targetCompatibility = JavaVersion.VERSION_11
+        }
+        buildFeatures {
+            compose = true
+        }
+        testOptions {
+            unitTests.isReturnDefaultValues = true
+            unitTests.all {
+                it.jvmArgs("-Dnet.bytebuddy.experimental=true")
             }
         }
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+
+    dependencies {
+        implementation(platform(libs.androidx.compose.bom))
+        implementation(libs.androidx.activity.compose)
+        implementation(libs.androidx.compose.foundation)
+        implementation(libs.androidx.compose.foundation.layout)
+        implementation(libs.androidx.compose.material3)
+        implementation(libs.androidx.compose.ui)
+        implementation(libs.androidx.compose.ui.graphics)
+        implementation(libs.androidx.compose.ui.tooling.preview)
+        implementation(libs.androidx.core.ktx)
+        implementation(libs.androidx.lifecycle.runtime.ktx)
+        implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
+        implementation("com.google.firebase:firebase-firestore")
+        implementation("com.google.firebase:firebase-auth")
+        implementation(libs.androidx.compose.ui)
+        implementation(libs.firebase.messaging)
+        implementation("androidx.navigation:navigation-compose:2.10.2")
+        testImplementation(libs.junit)
+        testImplementation("org.mockito:mockito-core:5.14.2")
+        testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
+        androidTestImplementation(platform(libs.androidx.compose.bom))
+        androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+        androidTestImplementation(libs.androidx.espresso.core)
+        androidTestImplementation(libs.androidx.junit)
+        debugImplementation(libs.androidx.compose.ui.test.manifest)
+        debugImplementation(libs.androidx.compose.ui.tooling)
+        implementation("androidx.compose.material:material-icons-extended")
+        implementation(libs.zxing.core)
+        implementation(libs.play.services.code.scanner)
+        implementation("com.google.firebase:firebase-storage")
+        androidTestImplementation("androidx.navigation:navigation-testing:2.8.5")
+        implementation("io.coil-kt.coil3:coil-compose:3.6.0")
+        implementation("io.coil-kt.coil3:coil-network-okhttp:3.6.0")
+        implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
+        implementation("androidx.concurrent:concurrent-futures:1.2.0")
+        implementation("com.google.errorprone:error_prone_annotations:2.30.0")
     }
-    buildFeatures {
-        compose = true
-    }
-    testOptions {
-        unitTests.isReturnDefaultValues = true
-        unitTests.all {
-            it.jvmArgs("-Dnet.bytebuddy.experimental=true")
-        }
-    }
-}
 
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
@@ -77,3 +117,4 @@ dependencies {
     implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
 
 }
+

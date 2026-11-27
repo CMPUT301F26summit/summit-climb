@@ -200,26 +200,6 @@ class CampsiteDetailsScreenTest {
     }
 
     @Test
-    fun rate_campsite_four_stars() {
-        var ratedStars = 0
-        composeTestRule.setContent {
-            CampsiteDetailsForTest(onRate = { stars -> ratedStars = stars })
-        }
-
-        // tap 4th star
-        composeTestRule
-            .onNodeWithTag(CampsiteDetailsTags.star(4))
-            .performScrollTo()
-            .performClick()
-
-        // verify thank you message and the rating sent
-        composeTestRule
-            .onNodeWithText(CampsiteDetailsText.RATED)
-            .assertExists()
-        assertEquals(4, ratedStars)
-    }
-
-    @Test
     fun back_button_goes_back() {
         var backClicked = false
         composeTestRule.setContent {
@@ -241,14 +221,12 @@ class CampsiteDetailsScreenTest {
  *
  * @param campsite: campsite to show.
  * @param lottery: the campsite's active lottery, or `null` for none.
- * @param onRate: called with the star value the user tapped.
  * @param onBack: called when the user taps Back.
  */
 @Composable
 private fun CampsiteDetailsForTest(
     campsite: Campsite = TestCampsites.cedarValley,
     lottery: Lottery? = TestCampsites.openLottery(),
-    onRate: (Int) -> Unit = {},
     onBack: () -> Unit = {}
 ) {
     var hasJoined by remember { mutableStateOf(false) }
@@ -275,9 +253,6 @@ private fun CampsiteDetailsForTest(
             hasJoined = false
             message = CampsiteDetailsText.LEFT
         },
-        onRateClick = { stars ->
-            onRate(stars)
-            message = CampsiteDetailsText.RATED
-        }
+        onMessageOwnerClick = null
     )
 }

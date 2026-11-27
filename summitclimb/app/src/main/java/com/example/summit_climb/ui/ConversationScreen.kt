@@ -19,6 +19,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import androidx.compose.ui.platform.LocalConfiguration
+import android.util.Log
 
 /**
  * Displays messages exchanged between an entrant
@@ -41,6 +42,7 @@ fun ConversationScreen(
     var messageText by remember { mutableStateOf("") }
 
     val sortedMessages = messages.sortedBy { it.timestamp }
+    Log.d("ConversationDebug", "UI received ${messages.size} messages")
     val listState = rememberLazyListState()
 
     LaunchedEffect(sortedMessages.size) {

@@ -19,7 +19,7 @@ data class Reservation(
     val startDate: String = "",
     val endDate: String = "",
     val guests: Int = 0,
-    val status: String = "ACTIVE",
+    val status: String = "",
     val totalPrice: Double? = null,
     val rulesAccepted: Boolean? = null
 )

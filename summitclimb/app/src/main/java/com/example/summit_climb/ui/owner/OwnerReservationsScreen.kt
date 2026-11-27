@@ -1,5 +1,6 @@
 package com.example.summit_climb.ui.owner
 
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -55,34 +56,29 @@ fun OwnerReservationsFromFirestore(
 
         controller.getReservationsByCampsite(
             campsiteId = campsiteId,
-            onSuccess = {result ->
+            onSuccess = { result ->
                 reservations = result.map { reservation ->
                     ReservationUiItem(
                         id = reservation.id,
                         entrantName = reservation.entrantName,
                         dates = "${reservation.startDate} - ${reservation.endDate}",
                         guests = reservation.guests,
+                        status = reservation.status,
                         entrantId = reservation.entrantId,
                         campsiteId = reservation.campsiteId,
-                        campsiteName = campsiteName,
-
-                        status = if (
-                            reservation.status == "ACTIVE" &&
-                            reservation.endDate < java.text.SimpleDateFormat(
-                                "yyyy-MM-dd",
-                                java.util.Locale.US
-                            ).format(java.util.Date())
-                        ){
-                            "COMPLETED"
-                        } else {
-                            reservation.status
-                        }
+                        campsiteName = campsiteName
                     )
                 }
+
                 loading = false
+
+                val today = java.text.SimpleDateFormat(
+                    "yyyy-MM-dd",
+                    java.util.Locale.US
+                ).format(java.util.Date())
             },
             onFailure = { exception ->
-                error = exception.message
+                error = exception.message ?: "Could not load reservations."
                 loading = false
             }
         )

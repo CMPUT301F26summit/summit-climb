@@ -143,7 +143,10 @@ class MainActivity : ComponentActivity() {
 
                         adminMode -> {
                             AdminNavigation(
-                                onExitAdmin = { adminMode = false }
+                                onExitAdmin = { adminMode = false },
+                                campsiteRepository = campsiteRepository,
+                                userRepository = userRepository,
+                                notificationRepository = notificationRepository
                             )
                         }
 
