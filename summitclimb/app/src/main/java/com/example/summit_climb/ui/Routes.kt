@@ -87,6 +87,12 @@ object Routes {
     const val ADMIN_PROFILES = "adminProfiles"
     const val ADMIN_LOGS = "adminLogs"
 
+    const val ADMIN_PROFILE_DETAILS = "adminProfileDetails/{profileId}"
+
+    fun adminProfileDetails(profileId: String): String {
+        return "adminProfileDetails/$profileId"
+    }
+
     const val CONVERSATION = "conversation/{campsiteId}/{recipientId}"
 
 
@@ -179,4 +185,5 @@ object Routes {
     ): String {
         return "conversation/${android.net.Uri.encode(campsiteId)}/${android.net.Uri.encode(recipientId)}"
     }
+
 }

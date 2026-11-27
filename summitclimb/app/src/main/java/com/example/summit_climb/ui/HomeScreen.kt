@@ -31,6 +31,7 @@ import com.example.summit_climb.data.UserRepository
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import com.example.summit_climb.model.UserRole
+import android.util.Log
 
 /**
  * Background image shown behind the app's screens.
@@ -62,6 +63,7 @@ fun HomeScreen(
     val auth = FirebaseAuth.getInstance()
 
     fun openAdminIfAccess(uid: String) {
+        Log.d("AdminAccess", "My user id: $uid")
         UserRepository().getUser(uid) { user ->
             if (UserRole.ADMIN in user.roles) {
                 errorMessage = ""
