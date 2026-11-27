@@ -2,7 +2,6 @@ package com.example.summit_climb
 
 import androidx.compose.material3.MaterialTheme
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -13,7 +12,6 @@ import com.example.summit_climb.model.User
 import com.example.summit_climb.ui.admin.AdminImageType
 import com.example.summit_climb.ui.admin.AdminImageItem
 import com.example.summit_climb.ui.admin.AdminLogsScreen
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
@@ -55,7 +53,9 @@ class AdminLogsScreenTest {
                     onRemoveImage = { item, onDone ->
                         removedImage = item
                         onDone(true)
-                    }
+                    },
+                    onNotificationClick = {},
+                    onBack = {}
                 )
             }
         }
@@ -92,7 +92,9 @@ class AdminLogsScreenTest {
                     onRemoveImage = { item, onDone ->
                         removedImage = item
                         onDone(true)
-                    }
+                    },
+                    onNotificationClick = {},
+                    onBack = {}
                 )
             }
         }
@@ -125,7 +127,9 @@ class AdminLogsScreenTest {
                     onRemoveImage = { item, onDone ->
                         removedImage = item
                         onDone(true)
-                    }
+                    },
+                    onNotificationClick = {},
+                    onBack = {}
                 )
             }
         }
@@ -158,7 +162,9 @@ class AdminLogsScreenTest {
                     notifications = emptyList(),
                     onRemoveImage = { _, onDone ->
                         onDone(false)
-                    }
+                    },
+                    onNotificationClick = {},
+                    onBack = {}
                 )
             }
         }

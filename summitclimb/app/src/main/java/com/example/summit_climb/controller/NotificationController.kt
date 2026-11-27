@@ -50,7 +50,7 @@ class NotificationController(
      *
      * Removes any previous listener before starting  a new one
      * Clears the current notification list before loading updates
-    */
+     */
     fun startListening() {
         val id = currentUserId() ?: return
         removeListener?.invoke()                 // never run two listeners at once
@@ -72,7 +72,7 @@ class NotificationController(
      * Stops the notification listener and clears the current notification list.
      *
      * Should be called when the user logs out.
-    */
+     */
     fun stopListening() {
         removeListener?.invoke()
         removeListener = null
@@ -90,18 +90,9 @@ class NotificationController(
      * Marks a notification as read.
      *
      * @param notificationId ID of the notification to mark as read.
-    */
+     */
     fun markRead(notificationId: String) {
         repository.markRead(notificationId)
-    }
-
-    /**
-     * Deletes a notification
-     *
-     * @param notificationId ID of the notification being deleted
-     */
-    fun delete(notificationId: String) {
-        repository.delete(notificationId)
     }
 
     fun sendToEntrants(
@@ -129,6 +120,15 @@ class NotificationController(
     }
 
     /**
+     * Deletes a notification
+     *
+     * @param notificationId ID of the notification being deleted
+     */
+    fun delete(notificationId: String) {
+        repository.delete(notificationId)
+    }
+
+    /**
      * Determines which screen should open when a notification is selected
      *
      * @param notification The selected notification
@@ -142,6 +142,5 @@ class NotificationController(
             NotificationType.RESERVATION_UPDATE -> Routes.MY_RESERVATIONS
             NotificationType.RATING_REQUEST -> null
             NotificationType.MESSAGE -> null   // TO BE DONE
-            NotificationType.RATING_REQUEST -> null // T
         }
 }
