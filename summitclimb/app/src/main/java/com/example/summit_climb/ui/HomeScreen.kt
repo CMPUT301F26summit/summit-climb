@@ -31,13 +31,9 @@ import com.example.summit_climb.FcmTokenManager
 import com.example.summit_climb.R
 import com.example.summit_climb.data.UserRepository
 import com.example.summit_climb.model.UserRole
-<<<<<<< HEAD
 import android.util.Log
-=======
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.messaging.FirebaseMessaging
->>>>>>> 08493c978b42c47f5f48e19798fffa1ba053acbc
-
 /**
  * Background image shown behind the app's screens.
  */
