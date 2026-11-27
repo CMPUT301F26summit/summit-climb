@@ -1,19 +1,22 @@
-
 package com.example.summit_climb
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.junit4.v2.createComposeRule
-// import androidx.compose.ui.test.assertDoesNotExist
-// import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.navigation.compose.rememberNavController
+import com.example.summit_climb.controller.CampsiteSearchController
 import com.example.summit_climb.controller.NotificationController
+import com.example.summit_climb.controller.ReservationController
+import com.example.summit_climb.data.CampsiteRepository
 import com.example.summit_climb.data.NotificationRepository
+import com.example.summit_climb.data.ReservationRepository
 import com.example.summit_climb.model.Notification
 import com.example.summit_climb.model.NotificationType
+import com.example.summit_climb.model.Reservation
 import com.example.summit_climb.ui.entrant.NotificationsScreen
-import junit.framework.TestCase
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -38,6 +41,12 @@ class NotificationsScreenTest {
             markedReadIds.add(notificationId)
         }
 
+        override fun delete(notificationId: String) {
+            sentNotifications.removeAll {
+                it.id == notificationId
+            }
+        }
+
         override fun forUser(userId: String): List<Notification> {
             return sentNotifications.filter {
                 it.recipientId == userId
@@ -60,6 +69,72 @@ class NotificationsScreenTest {
         }
     }
 
+    private class FakeReservationRepository : ReservationRepository {
+
+        override fun getBookedDates(
+            campsiteId: String,
+            onSuccess: (List<Pair<String, String>>) -> Unit,
+            onFailure: (Exception) -> Unit
+        ) {
+            onSuccess(emptyList())
+        }
+
+        override fun getReservationsByCampsite(
+            campsiteId: String,
+            onSuccess: (List<Reservation>) -> Unit,
+            onFailure: (Exception) -> Unit
+        ) {
+            onSuccess(emptyList())
+        }
+
+        override fun getReservationsByEntrant(
+            entrantId: String,
+            onSuccess: (List<Reservation>) -> Unit,
+            onFailure: (Exception) -> Unit
+        ) {
+            onSuccess(emptyList())
+        }
+
+        override fun rejectReservation(
+            reservationId: String,
+            onSuccess: () -> Unit,
+            onFailure: (Exception) -> Unit
+        ) {
+            onSuccess()
+        }
+
+        override fun completeReservation(
+            reservationId: String,
+            onSuccess: () -> Unit,
+            onFailure: (Exception) -> Unit
+        ) {
+            onSuccess()
+        }
+
+        override fun createReservation(
+            campsiteId: String,
+            entrantId: String,
+            entrantName: String,
+            startDate: String,
+            endDate: String,
+            guests: Int,
+            totalPrice: Double?,
+            rulesAccepted: Boolean?,
+            onSuccess: () -> Unit,
+            onFailure: (Exception) -> Unit
+        ) {
+            onSuccess()
+        }
+
+        override fun cancelReservation(
+            reservationId: String,
+            onSuccess: () -> Unit,
+            onFailure: (Exception) -> Unit
+        ) {
+            onSuccess()
+        }
+    }
+
     private fun createNotification(
         id: String,
         type: NotificationType = NotificationType.MESSAGE,
@@ -69,7 +144,7 @@ class NotificationsScreenTest {
         senderId = "system",
         recipientId = "test-user",
         type = type,
-        title = "Test Notification",
+        title = "New Message",
         text = "This is a test notification.",
         timestamp = System.currentTimeMillis(),
         read = read
@@ -91,24 +166,37 @@ class NotificationsScreenTest {
         notificationsEnabled: Boolean = true,
         onEnableNotifications: () -> Unit = {}
     ) {
+        val notificationRepository = FakeNotificationRepository()
+
+        val searchController = CampsiteSearchController(
+            CampsiteRepository()
+        )
+
+        val reservationController = ReservationController(
+            repository = FakeReservationRepository(),
+            notificationRepository = notificationRepository
+        )
+
         composeTestRule.setContent {
             MaterialTheme {
                 NotificationsScreen(
                     controller = controller,
                     navController = rememberNavController(),
                     notificationsEnabled = notificationsEnabled,
-                    onEnableNotifications = onEnableNotifications
+                    onEnableNotifications = onEnableNotifications,
+                    searchController = searchController,
+                    entrantReservationController = reservationController,
+                    currentUserId = "test-user"
                 )
             }
         }
     }
 
-    // Tests
+    // UI Tests
 
     @Test
     fun disableNotification_showsDisabledScreen() {
-        val repository = FakeNotificationRepository()
-        val controller = createController(repository)
+        val controller = createController(FakeNotificationRepository())
 
         setUpScreen(
             controller = controller,
@@ -132,8 +220,7 @@ class NotificationsScreenTest {
 
     @Test
     fun disableNotifications_enableButtonCallsCallBack() {
-        val repository = FakeNotificationRepository()
-        val controller = createController(repository)
+        val controller = createController(FakeNotificationRepository())
 
         var callbackCalled = false
 
@@ -149,18 +236,14 @@ class NotificationsScreenTest {
             .onNodeWithText("Turn notifications back on")
             .performClick()
 
-        TestCase.assertEquals(true, callbackCalled)
+        assertTrue(callbackCalled)
     }
 
     @Test
     fun enabledNotifications_emptyListShowsEmptyMessage() {
-        val repository = FakeNotificationRepository()
-        val controller = createController(repository)
+        val controller = createController(FakeNotificationRepository())
 
-        setUpScreen(
-            controller = controller,
-            notificationsEnabled = true
-        )
+        setUpScreen(controller)
 
         composeTestRule
             .onNodeWithText("Notifications")
@@ -179,11 +262,9 @@ class NotificationsScreenTest {
     fun notificationsExist_displayNotificationMessage() {
         val repository = FakeNotificationRepository()
 
-        val notification = createNotification("1")
-
         val controller = createController(
             repository,
-            listOf(notification)
+            listOf(createNotification("1"))
         )
 
         setUpScreen(controller)
@@ -199,16 +280,9 @@ class NotificationsScreenTest {
 
     @Test
     fun unreadNotification_displaysNew() {
-        val repository = FakeNotificationRepository()
-
-        val notification = createNotification(
-            "1",
-            read = false
-        )
-
         val controller = createController(
-            repository,
-            listOf(notification)
+            FakeNotificationRepository(),
+            listOf(createNotification("1", read = false))
         )
 
         setUpScreen(controller)
@@ -224,19 +298,12 @@ class NotificationsScreenTest {
 
     @Test
     fun readNotification_doesNotDisplayNewLabel() {
-        val repository = FakeNotificationRepository()
-
-        val notification = createNotification(
-            "1",
-            read = true
-        )
-
         val controller = createController(
-            repository,
-            listOf(notification)
+            FakeNotificationRepository(),
+            listOf(createNotification("1", read = true))
         )
 
-        setUpScreen(controller = controller)
+        setUpScreen(controller)
 
         composeTestRule
             .onNodeWithText("NEW")
@@ -249,8 +316,6 @@ class NotificationsScreenTest {
 
     @Test
     fun multipleNotifications_displayCorrectUnreadCount() {
-        val repository = FakeNotificationRepository()
-
         val notifications = listOf(
             createNotification("1", read = false),
             createNotification("2", read = false),
@@ -258,7 +323,7 @@ class NotificationsScreenTest {
         )
 
         val controller = createController(
-            repository,
+            FakeNotificationRepository(),
             notifications
         )
 
@@ -273,20 +338,18 @@ class NotificationsScreenTest {
     fun clickingUnreadNotification_marksItAsRead() {
         val repository = FakeNotificationRepository()
 
-        val notification = createNotification("n-1", read = false)
-
         val controller = createController(
             repository,
-            listOf(notification)
+            listOf(createNotification("n-1", read = false))
         )
 
-        setUpScreen(controller = controller)
+        setUpScreen(controller)
 
         composeTestRule
             .onNodeWithText("This is a test notification.")
             .performClick()
 
-        TestCase.assertEquals(
+        assertEquals(
             listOf("n-1"),
             repository.markedReadIds
         )
@@ -302,10 +365,7 @@ class NotificationsScreenTest {
             createNotification("3", read = true)
         )
 
-        val controller = createController(
-            repository,
-            notifications
-        )
+        val controller = createController(repository, notifications)
 
         setUpScreen(controller)
 
@@ -313,7 +373,7 @@ class NotificationsScreenTest {
             .onNodeWithText("Mark all as read")
             .performClick()
 
-        TestCase.assertEquals(
+        assertEquals(
             listOf("1", "2"),
             repository.markedReadIds
         )
@@ -321,13 +381,9 @@ class NotificationsScreenTest {
 
     @Test
     fun disabledNotificationsWithExistingNotifications_showsNotificationList() {
-        val repository = FakeNotificationRepository()
-
-        val notification = createNotification("1")
-
         val controller = createController(
-            repository,
-            listOf(notification)
+            FakeNotificationRepository(),
+            listOf(createNotification("1"))
         )
 
         setUpScreen(
@@ -350,8 +406,6 @@ class NotificationsScreenTest {
 
     @Test
     fun notificationTypes_displayCorrectHeaders() {
-        val repository = FakeNotificationRepository()
-
         val notifications = listOf(
             createNotification("1", NotificationType.LOTTERY_WIN),
             createNotification("2", NotificationType.LOTTERY_LOSS),
@@ -360,7 +414,7 @@ class NotificationsScreenTest {
         )
 
         val controller = createController(
-            repository,
+            FakeNotificationRepository(),
             notifications
         )
 
@@ -383,3 +437,4 @@ class NotificationsScreenTest {
             .assertExists()
     }
 }
+
