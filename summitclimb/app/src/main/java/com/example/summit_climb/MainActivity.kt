@@ -44,6 +44,7 @@ import com.example.summit_climb.model.UserRole
 import com.example.summit_climb.model.AccountStatus
 import com.example.summit_climb.ui.AdminNavigation
 import com.example.summit_climb.service.LotteryDrawService
+import com.google.firebase.messaging.FirebaseMessaging
 
 
 class MainActivity : ComponentActivity() {
@@ -72,6 +73,15 @@ class MainActivity : ComponentActivity() {
 
         fun startScreen(currentUserId: String) {
             Log.d("Auth-login", "current user id: $currentUserId")
+
+            // Retrieve and save the current FCM token after authentication
+            FirebaseMessaging.getInstance().token
+                .addOnSuccessListener { token ->
+                    FcmTokenManager().saveToken(currentUserId, token)
+                }
+                .addOnFailureListener { exception ->
+                    Log.e("FCM", "Failed to retrieve FCM token", exception)
+                }
             val userRepository = UserRepository(db ?: runCatching { FirebaseFirestore.getInstance() }.getOrNull() ?: return)
 
             val campsiteRepository = CampsiteRepository()
