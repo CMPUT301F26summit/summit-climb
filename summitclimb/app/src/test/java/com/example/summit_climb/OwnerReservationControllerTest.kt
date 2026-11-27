@@ -25,6 +25,10 @@ class OwnerReservationControllerTest {
         override fun markRead(notificationId: String) {
         }
 
+        override fun delete(notificationId: String) {
+            sentNotifications.removeAll { it.id == notificationId }
+        }
+
         override fun forUser(userId: String): List<Notification> {
             return sentNotifications.filter { it.recipientId == userId}
         }
@@ -50,6 +54,14 @@ class OwnerReservationControllerTest {
         var receivedId = ""
 
         val fakeRepository = object : ReservationRepository {
+
+            override fun completeReservation(
+                reservationId: String,
+                onSuccess: () -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess()
+            }
 
             override fun getBookedDates(
                 campsiteId: String,
@@ -83,6 +95,8 @@ class OwnerReservationControllerTest {
                 startDate: String,
                 endDate: String,
                 guests: Int,
+                totalPrice: Double?,
+                rulesAccepted: Boolean?,
                 onSuccess: () -> Unit,
                 onFailure: (Exception) -> Unit
             ) {
@@ -95,6 +109,14 @@ class OwnerReservationControllerTest {
                 onFailure: (Exception) -> Unit
             ) {
                 onSuccess()
+            }
+
+            override fun getReservationsByEntrant(
+                entrantId: String,
+                onSuccess: (List<Reservation>) -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess(emptyList())
             }
         }
 
@@ -114,6 +136,13 @@ class OwnerReservationControllerTest {
         var failureCalled = false
 
         val fakeRepository = object : ReservationRepository {
+            override fun completeReservation(
+                reservationId: String,
+                onSuccess: () -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess()
+            }
 
             override fun getBookedDates(
                 campsiteId: String,
@@ -125,6 +154,14 @@ class OwnerReservationControllerTest {
 
             override fun getReservationsByCampsite(
                 campsiteId: String,
+                onSuccess: (List<Reservation>) -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess(emptyList())
+            }
+
+            override fun getReservationsByEntrant(
+                entrantId: String,
                 onSuccess: (List<Reservation>) -> Unit,
                 onFailure: (Exception) -> Unit
             ) {
@@ -146,6 +183,8 @@ class OwnerReservationControllerTest {
                 startDate: String,
                 endDate: String,
                 guests: Int,
+                totalPrice: Double?,
+                rulesAccepted: Boolean?,
                 onSuccess: () -> Unit,
                 onFailure: (Exception) -> Unit
             ) {
@@ -177,6 +216,13 @@ class OwnerReservationControllerTest {
         val fakeNotificationRepository = FakeNotificationRepository()
 
         val fakeRepository = object : ReservationRepository {
+            override fun completeReservation(
+                reservationId: String,
+                onSuccess: () -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess()
+            }
 
             override fun getBookedDates(
                 campsiteId: String,
@@ -188,6 +234,14 @@ class OwnerReservationControllerTest {
 
             override fun getReservationsByCampsite(
                 campsiteId: String,
+                onSuccess: (List<Reservation>) -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess(emptyList())
+            }
+
+            override fun getReservationsByEntrant(
+                entrantId: String,
                 onSuccess: (List<Reservation>) -> Unit,
                 onFailure: (Exception) -> Unit
             ) {
@@ -209,6 +263,8 @@ class OwnerReservationControllerTest {
                 startDate: String,
                 endDate: String,
                 guests: Int,
+                totalPrice: Double?,
+                rulesAccepted: Boolean?,
                 onSuccess: () -> Unit,
                 onFailure: (Exception) -> Unit
             ) {
@@ -252,6 +308,14 @@ class OwnerReservationControllerTest {
 
         val fakeRepository = object : ReservationRepository {
 
+            override fun completeReservation(
+                reservationId: String,
+                onSuccess: () -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess()
+            }
+
             override fun getBookedDates(
                 campsiteId: String,
                 onSuccess: (List<Pair<String, String>>) -> Unit,
@@ -262,6 +326,14 @@ class OwnerReservationControllerTest {
 
             override fun getReservationsByCampsite(
                 campsiteId: String,
+                onSuccess: (List<Reservation>) -> Unit,
+                onFailure: (Exception) -> Unit
+            ) {
+                onSuccess(emptyList())
+            }
+
+            override fun getReservationsByEntrant(
+                entrantId: String,
                 onSuccess: (List<Reservation>) -> Unit,
                 onFailure: (Exception) -> Unit
             ) {
@@ -283,6 +355,8 @@ class OwnerReservationControllerTest {
                 startDate: String,
                 endDate: String,
                 guests: Int,
+                totalPrice: Double?,
+                rulesAccepted: Boolean?,
                 onSuccess: () -> Unit,
                 onFailure: (Exception) -> Unit
             ) {

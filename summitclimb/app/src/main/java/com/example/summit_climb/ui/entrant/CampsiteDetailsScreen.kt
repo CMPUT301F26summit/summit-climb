@@ -72,11 +72,13 @@ import com.example.summit_climb.ui.lightOrange
 import com.example.summit_climb.ui.greyBlue
 import com.example.summit_climb.ui.lightBlue
 import com.example.summit_climb.ui.noLotteryGrey
+
+import com.example.summit_climb.ui.Routes
 /**
  * The entrant's campsite details screen (US 01.01.05, 01.01.06, 01.02.01, 01.02.02, 01.13.01).
  * Styled like the owner's details screen ([com.example.summit_climb.ui.owner.OwnerCampsiteDetails]) but with entrant actions:
- * full details, amenities, availability, rules and policy, the active lottery with a
- * Join or Leave button, and 1–5 star rating.
+ * full details, amenities, availability, rules and policy, and the active lottery with a
+ * Join or Leave button.
  * Icons are vector drawables in res/drawable (ic_arrow_back, ic_location, ic_star_*,
  * ic_amenity_*), so this screen doesn't need the Material icon library.
  *
@@ -134,9 +136,19 @@ fun CampsiteDetailsScreen(
                 }
             }
         },
-        onRateClick = { stars ->
-            searchController.rateCampsite(campsite.id, currentUserId, stars)
-            message = CampsiteDetailsText.RATED
+        onMessageOwnerClick = if (
+            campsite.ownerId.isNotBlank()
+        ) {
+            {
+                navController.navigate(
+                    Routes.conversation(
+                        campsite.id,
+                        campsite.ownerId
+                    )
+                )
+            }
+        } else {
+            null
         }
     )
 }
@@ -170,7 +182,6 @@ val amenityDrawables = listOf(
  * @param onBackClick: called when the user taps Back.
  * @param onJoinClick: called when the user taps "Join Lottery".
  * @param onLeaveClick: called when the user taps "Leave Lottery".
- * @param onRateClick: called with the star value (1 to 5) when the user taps a star.
  */
 @Composable
 fun CampsiteDetailsContent(
@@ -181,7 +192,7 @@ fun CampsiteDetailsContent(
     onBackClick: () -> Unit,
     onJoinClick: () -> Unit,
     onLeaveClick: () -> Unit,
-    onRateClick: (Int) -> Unit
+    onMessageOwnerClick: (() -> Unit)?
 ) {
     Column(
         modifier = Modifier
@@ -206,6 +217,27 @@ fun CampsiteDetailsContent(
 
         Spacer(Modifier.height(14.dp))
         CampsiteHeader(campsite = campsite, lottery = lottery)
+
+        if (onMessageOwnerClick != null) {
+            Spacer(Modifier.height(12.dp))
+
+            Button(
+                onClick = onMessageOwnerClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp),
+                shape = RoundedCornerShape(24.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = greyBlue,
+                    contentColor = charcoal
+                )
+            ) {
+                Text(
+                    text = "Message Owner",
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
 
         if (message.isNotEmpty()) {
             Spacer(Modifier.height(10.dp))
@@ -241,12 +273,54 @@ fun CampsiteDetailsContent(
             Text(campsite.cancellationPolicy, fontSize = 13.sp, lineHeight = 19.sp, color = charcoal)
         }
 
-        DetailsCard(title = "Map location") {
-            Text("${campsite.latitude}, ${campsite.longitude}", fontSize = 13.sp, color = charcoal)
+        DetailsCard(title = "Reviews") {
+            if (campsite.reviews.isEmpty()) {
+                Text(
+                    text = "No reviews yet.",
+                    fontSize = 13.sp,
+                    color = charcoal
+                )
+            } else {
+                campsite.reviews.forEach { (reservationId, review) ->
+                    Column {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val stars = campsite.ratings[reservationId] ?: 0
+
+                            repeat(stars) {
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = null,
+                                    tint = Color(0xFFFFB547),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+
+                            Text(
+                                text = "$stars/5",
+                                fontSize = 12.sp,
+                                color = charcoal,
+                                modifier = Modifier.padding(start = 6.dp)
+                            )
+                        }
+
+                        if (review.isNotBlank()) {
+                            Text(
+                                text = review,
+                                fontSize = 13.sp,
+                                color = charcoal
+                            )
+                        }
+
+                        Spacer(Modifier.height(10.dp))
+                    }
+                }
+            }
         }
 
-        DetailsCard(title = "Rate this campsite") {
-            StarRatingRow(onRateClick = onRateClick)
+        DetailsCard(title = "Map location") {
+            Text("${campsite.latitude}, ${campsite.longitude}", fontSize = 13.sp, color = charcoal)
         }
     }
 }
@@ -520,7 +594,6 @@ fun LotterySection(
 /**
  * Five tappable stars. Tapping the 4th star fills stars 1–4 and reports 4.
  * @param onRateClick: called with the star value (1 to 5).
- */
 @Composable
 fun StarRatingRow(onRateClick: (Int) -> Unit) {
     var chosenStars by remember { mutableIntStateOf(0) }
@@ -545,6 +618,7 @@ fun StarRatingRow(onRateClick: (Int) -> Unit) {
         }
     }
 }
+*/
 
 /**
  * Describes how full the waitlist is.

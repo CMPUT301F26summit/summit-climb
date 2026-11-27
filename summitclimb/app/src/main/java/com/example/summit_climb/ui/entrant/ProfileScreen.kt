@@ -45,7 +45,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import coil3.compose.AsyncImage
 import androidx.compose.foundation.border
-import com.example.summit_climb.ui.ScreensBackground
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.SwitchDefaults
 import com.example.summit_climb.ui.Routes
 import androidx.compose.material3.AlertDialog
@@ -90,6 +91,7 @@ fun ProfileScreen(
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             if (uri != null) {
                 imageUri = uri
+                controller.updateProfilePhoto(uri, onFailure = { error = it.message })
             }
         }
 
@@ -109,6 +111,25 @@ fun ProfileScreen(
         }
     }
 
+    // after the account is deleted, go back to the home screen
+    LaunchedEffect(controller.deleteStatus) {
+        if (controller.deleteStatus) {
+            controller.deleteStatus = false
+
+            val success = navController.popBackStack(Routes.HOME_SCREEN, inclusive = false)
+
+            if (!success) {
+                navController.navigate(Routes.HOME_SCREEN) {
+                    popUpTo(0) { inclusive = true }
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        controller.loadProfile()
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -117,11 +138,12 @@ fun ProfileScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())   // add this line
                 .padding(
                     horizontal = 20.dp,
                     vertical = 16.dp
                 )
-        ) {
+        ){
 
             Spacer(Modifier.height(4.dp))
 
@@ -156,9 +178,10 @@ fun ProfileScreen(
                         ),
                     contentAlignment = Alignment.Center
                 ) { // displays Modifiable Profile Image
-                    if (imageUri != null) {
+                    val imageUploaded = imageUri ?: controller.photoUrl
+                    if (imageUploaded != "") {
                         AsyncImage(
-                            model = imageUri,
+                            model = imageUploaded,
                             contentDescription = "Profile Photo",
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxSize()
@@ -191,9 +214,25 @@ fun ProfileScreen(
                         }
                         .padding(vertical = 4.dp)
                 )
+
+                // removes the user's profile photo
+                if (imageUri != null || controller.photoUrl.isNotBlank()) {
+                    Text(
+                        text = "Remove photo",
+                        fontSize = 13.sp,
+                        color = lightRed,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .clickable(enabled = !controller.uploadPhoto) {
+                                imageUri = null
+                                controller.removeProfilePhoto(onFailure = { error = it.message })
+                            }
+                            .padding(vertical = 4.dp)
+                    )
+                }
             }
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(10.dp))
 
             // displays User's Personal Information (name, email, phone number)
             Card(
@@ -369,7 +408,7 @@ fun ProfileScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // displays a pop-up to confirm that the user wants to delete account
+            // displays a pop-up for account deletion
             if (showDeletePopup) {
                 AlertDialog(
                     onDismissRequest = { showDeletePopup = false },
@@ -379,9 +418,8 @@ fun ProfileScreen(
                         TextButton(onClick = {
                             showDeletePopup = false
                             error = null
-                            controller.clearProfileFields()
+                            controller.deleteProfile(onFailure = { error = it.message })
                             imageUri = null
-                            // controller.deleteProfile(onFailure = { error = it.message })
                         }) {
                             Text("Delete", color = lightRed)
                         }
@@ -394,6 +432,8 @@ fun ProfileScreen(
                     containerColor = Color.White
                 )
             }
+
+            Spacer(Modifier.height(40.dp))
         }
 
         // The implementation of the snackbar used code from Android Developers at

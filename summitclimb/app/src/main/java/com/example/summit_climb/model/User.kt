@@ -90,5 +90,5 @@ enum class UserRole{
  * Whether a User's account can be used.
  */
 enum class AccountStatus{
-    ACTIVE, DEACTIVATED
+    ACTIVE, DEACTIVATED, PENDING
 }

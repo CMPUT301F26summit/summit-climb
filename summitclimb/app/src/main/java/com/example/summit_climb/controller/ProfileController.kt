@@ -113,7 +113,6 @@ class ProfileController(
         onSuccess()
     }
 
-    /*
     /**
      * Deletes the signed-in user's profile and account.
      * Does nothing if the profile has not loaded or nobody is signed in.
@@ -135,7 +134,6 @@ class ProfileController(
         photoUrl = ""
         deleteStatus = true
     }
-     */
 
     /**
      * Toggles notifications on and off for the user.
@@ -193,6 +191,32 @@ class ProfileController(
                     imageService.delete(oldUrl)
                 }
             }
+        }
+    }
+
+    /**
+     * Removes the user's profile photo.
+     * Removes the saved photo URL from the profile, then deletes the old photo file from storage.
+     * Reports an error if the profile has not loaded.
+     *
+     * @param onFailure: provides an error if the profile has not loaded
+     */
+
+    fun removeProfilePhoto(onFailure: (Exception) -> Unit = {}) {
+        val user = currentUser
+
+        if (user == null) {
+            onFailure(Exception("There was an error"))
+            return
+        }
+
+        val oldUrl = user.profileImageUrl
+
+        user.profileImageUrl = ""
+        photoUrl = ""
+        repository.saveProfile(user)
+        if (oldUrl != "") {
+            imageService.delete(oldUrl)
         }
     }
 }

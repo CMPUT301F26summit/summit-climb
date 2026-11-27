@@ -31,7 +31,6 @@ class ManageQRCodeScreenTest {
         composeTestRule.setContent {
             ManageQRCodeScreen(
                 navController = rememberNavController(),
-                campsiteName = name,
                 campsiteID = id
             )
         }
@@ -117,7 +116,6 @@ class ManageQRCodeScreenTest {
                 composable("manageQRCode") {
                     ManageQRCodeScreen(
                         navController = navController,
-                        campsiteName = "Lakeside Campsite",
                         campsiteID = lakeCampID
                     )
                 }

@@ -189,7 +189,7 @@ fun CampsiteRow(
                     verticalAlignment = Alignment.CenterVertically
                 ){
                     Text(
-                        text = "$${campsite.price.toInt()} / night",
+                        text = "$%.2f / night".format(campsite.price),
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
                     )

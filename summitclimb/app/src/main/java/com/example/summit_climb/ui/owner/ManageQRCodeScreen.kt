@@ -43,6 +43,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import com.example.summit_climb.R
 import com.example.summit_climb.service.saveQRCodeToGallery
+import com.example.summit_climb.service.shareQRCode
 
 import com.example.summit_climb.ui.charcoal
 import com.example.summit_climb.ui.entrant.BackRow
@@ -181,8 +182,15 @@ fun ManageQRCodeScreen(
                     if (qrCode == null) {
                         message = "QR Code is not available"
                     } else {
-                        saveQRCodeToGallery(context, qrCode, "QR_$campsiteID")
-                        message = "QR Code saved to gallery"
+                        val saved = runCatching {
+                            saveQRCodeToGallery(context, qrCode, "QR_$campsiteID")
+                        }.getOrDefault(false)
+
+                        message = if (saved) {
+                            "QR Code saved to gallery"
+                        } else {
+                            "Failed to save QR Code"
+                        }
                     }
                 },
                 modifier = Modifier
@@ -196,6 +204,37 @@ fun ManageQRCodeScreen(
             ) {
                 Text(
                     text = "Save",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 24.sp,
+                    color = charcoal
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            Button(
+                onClick = {
+                    if (qrCode == null) {
+                        message = "QR Code is not available"
+                    } else {
+                        if (!shareQRCode(context, qrCode, "QR_$campsiteID")) {
+                            message = "Failed to share QR Code"
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth(0.6f)
+                    .height(48.dp),
+                shape = RoundedCornerShape(28.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = greyBlue
+                ),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 4.dp
+                )
+            ) {
+                Text(
+                    text = "Share",
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 24.sp,
                     color = charcoal

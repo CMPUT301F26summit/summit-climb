@@ -1,5 +1,6 @@
 package com.example.summit_climb.ui.owner
 
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -33,12 +34,14 @@ data class ReservationUiItem(
     val guests: Int,
     val status: String,
     val entrantId: String = "",
-    val campsiteId: String = ""
+    val campsiteId: String = "",
+    val campsiteName: String = ""
 )
 
 @Composable
 fun OwnerReservationsFromFirestore(
     campsiteId: String,
+    campsiteName: String,
     controller: OwnerReservationController,
     onReservationClick: (String) -> Unit,
     onBackClick: () -> Unit
@@ -53,33 +56,29 @@ fun OwnerReservationsFromFirestore(
 
         controller.getReservationsByCampsite(
             campsiteId = campsiteId,
-            onSuccess = {result ->
+            onSuccess = { result ->
                 reservations = result.map { reservation ->
                     ReservationUiItem(
                         id = reservation.id,
                         entrantName = reservation.entrantName,
                         dates = "${reservation.startDate} - ${reservation.endDate}",
                         guests = reservation.guests,
+                        status = reservation.status,
                         entrantId = reservation.entrantId,
                         campsiteId = reservation.campsiteId,
-
-                        status = if (
-                            reservation.status == "ACTIVE" &&
-                            reservation.endDate < java.text.SimpleDateFormat(
-                                "yyyy-MM-dd",
-                                java.util.Locale.US
-                            ).format(java.util.Date())
-                        ){
-                            "COMPLETED"
-                        } else {
-                            reservation.status
-                        }
+                        campsiteName = campsiteName
                     )
                 }
+
                 loading = false
+
+                val today = java.text.SimpleDateFormat(
+                    "yyyy-MM-dd",
+                    java.util.Locale.US
+                ).format(java.util.Date())
             },
             onFailure = { exception ->
-                error = exception.message
+                error = exception.message ?: "Could not load reservations."
                 loading = false
             }
         )
@@ -104,6 +103,7 @@ fun OwnerReservationsFromFirestore(
                         reservationId = reservation.id,
                         entrantId = reservation.entrantId,
                         campsiteId = reservation.campsiteId,
+                        campsiteName = reservation.campsiteName,
 
                         onSuccess = { loadReservations() },
                         onFailure = { exception ->
@@ -143,8 +143,8 @@ fun OwnerReservationsScreen(
         }
     }
 
-    val backgroundColor = Color(0xFFE6E6E6)
-    val tabBackground = Color(0xFFD6D5D2)
+    val backgroundColor = Color(0xFFDEE7E7)
+    val tabBackground = Color(0xFFFFFFFF)
     val textColor = Color(0xFF1E1E1E)
 
     Column(
@@ -458,7 +458,7 @@ private fun ReservationCard(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = "${reservation.dates} · ${reservation.guests} guests",
+                        text = "${reservation.dates} · ${reservation.guests} ${if (reservation.guests == 1) "guest" else "guests"}",
                         fontSize = 18.sp,
                         color = Color(0xFF777777),
                         maxLines = 2
@@ -507,33 +507,34 @@ private fun ReservationCard(
                     }
                 }
             }
-
             if (isActive) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    OutlinedButton(
-                        onClick = onReject,
-                        shape = RoundedCornerShape(50.dp),
-                        border = BorderStroke(
-                            1.dp,
-                            Color(0xFFBD3C32)
-                        ),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = Color(0xFFBD3C32)
-                        ),
-                        contentPadding = PaddingValues(
-                            horizontal = 16.dp,
-                        ),
-                        modifier = Modifier.height(32.dp)
-                    ) {
+                    TextButton(onClick = onClick) {
                         Text(
-                            text = "Reject",
-                            fontSize = 17.sp,
+                            text = "View Details",
+                            color = Color(0xFF245C86)
                         )
+                    }
+
+                    if (isActive) {
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        OutlinedButton(
+                            onClick = onReject,
+                            shape = RoundedCornerShape(50.dp),
+                            border = BorderStroke(1.dp, Color(0xFFBD3C32)),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = Color(0xFFBD3C32)
+                            )
+                        ) {
+                            Text("Reject")
+                        }
                     }
                 }
             }
