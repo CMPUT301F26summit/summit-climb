@@ -48,6 +48,12 @@ import com.example.summit_climb.ui.greyBlue
 import com.example.summit_climb.ui.lightBlue
 import com.example.summit_climb.ui.theme.screenBackground
 import com.google.firebase.annotations.concurrent.Background
+import com.example.summit_climb.model.Lottery
+import com.example.summit_climb.model.WaitlistEntry
+import com.example.summit_climb.model.WaitlistResult
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * Purpose: the entrant's "My Lotteries" tab.
@@ -137,7 +143,7 @@ fun MyLotteriesContent(
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
-            //short message (e.g. after leaving)
+            //short message (after leaving)
             if (message.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -163,7 +169,7 @@ fun MyLotteriesContent(
                 items(lotteries) { lottery ->
                     LotteryCard(
                         lottery = lottery,
-                        onLeave = { toLeave = lottery },      // opens the popup first
+                        onLeave = { toLeave = lottery },     // opens the popup first
                         onConfirmReservation = onConfirmReservation
                     )
                 }
@@ -271,6 +277,35 @@ fun LotteryCard(
     }
 }
 
+private val cardDateFormat = SimpleDateFormat("MMMM d, yyyy", Locale.CANADA)
+
+/**
+ * Builds one card from the entrant's entry and its lottery.
+ * WAITING -> Pending, WON -> Won, LOST -> Lost.
+ * DECLINED and RESERVED aren't shown, so this returns null for them since reserved ones show in My Reservations.
+ *
+ * @param entry: the entrant's entry in the lottery.
+ * @param lottery: the lottery the entry belongs to.
+ * @param campsiteName: name to show at the top of the card.
+ * @param location: city/area under the name.
+ * @return the card, or null if it shouldn't be shown.
+ */
+fun lotteryCardFor(entry: WaitlistEntry, lottery: Lottery, campsiteName: String, location: String): LotteryUiItem? {
+    if (entry.result == WaitlistResult.WAITING) {
+        val closes = cardDateFormat.format(Date(lottery.registrationEnd))
+        return LotteryUiItem(lottery.id, campsiteName, location, MyLotteriesText.PENDING, MyLotteriesText.closes(closes))
+    }
+    if (entry.result == WaitlistResult.WON) {
+        val start = cardDateFormat.format(Date(lottery.bookingStart))
+        val end = cardDateFormat.format(Date(lottery.bookingEnd))
+        return LotteryUiItem(lottery.id, campsiteName, location, MyLotteriesText.WON, MyLotteriesText.reserveBetween(start, end))
+    }
+    if (entry.result == WaitlistResult.LOST) {
+        return LotteryUiItem(lottery.id, campsiteName, location, MyLotteriesText.LOST, MyLotteriesText.NOT_SELECTED)
+    }
+    return null
+}
+
 // the colour behind the status word
 fun statusColor(status: String): Color {
     if (status == MyLotteriesText.PENDING) return lightOrange
@@ -291,9 +326,21 @@ object MyLotteriesText {
     const val CONFIRM_LEAVE = "Yes, leave lottery"
     const val CANCEL = "Cancel"
 
-    // message shown after leaving, e.g. "You left the lottery for Summit Camp."
+    // message shown after leaving, shown as  "You left the lottery for Summit Camp."
     fun left(campsiteName: String): String {
         return "You left the lottery for $campsiteName."
+    }
+
+    const val NOT_SELECTED = "You weren't selected this time."
+
+    // info line on a Pending card, shown as "Lottery closes December 1, 2026"
+    fun closes(date: String): String {
+        return "Lottery closes $date"
+    }
+
+    // info line on a Won card
+    fun reserveBetween(start: String, end: String): String {
+        return "You've been selected! Reserve between $start and $end."
     }
 }
 
@@ -302,12 +349,10 @@ object MyLotteriesTags {
     const val MESSAGE = "lotteriesMessage"
     const val CONFIRM_LEAVE = "confirmLeaveButton"
 
-    // e.g. "leave_123"
     fun leave(lotteryId: String): String {
         return "leave_$lotteryId"
     }
 
-    // e.g. "confirm_123"
     fun confirm(lotteryId: String): String {
         return "confirm_$lotteryId"
     }
