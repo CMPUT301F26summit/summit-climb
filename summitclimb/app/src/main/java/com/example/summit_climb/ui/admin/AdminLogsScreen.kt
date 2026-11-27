@@ -21,8 +21,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -33,15 +31,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toolingGraphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
 import com.example.summit_climb.model.Campsite
 import com.example.summit_climb.model.User
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
@@ -64,14 +59,16 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import com.example.summit_climb.model.Notification
-import com.example.summit_climb.ui.ConfirmDialog
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import com.example.summit_climb.R
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.style.TextOverflow
 
 
 private object AdminReviewColors {
@@ -111,6 +108,8 @@ fun AdminLogsScreen(
     onRemoveImage: (AdminImageItem, (Boolean) -> Unit) -> Unit,
     onNotificationClick: (Notification) -> Unit,
     onBack: () -> Unit,
+    conversations: List<List<Notification>> = emptyList(),
+    onConversationClick: (List<Notification>) -> Unit = {}
     ) {
     var selectedTab by rememberSaveable() { mutableStateOf("Images") }
 
@@ -263,7 +262,13 @@ fun AdminLogsScreen(
                 }
 
                 "Messages" -> {
-                    Text("Message logs will appear here.")
+                    AdminMessagesContent(
+                        conversations = conversations,
+                        users = users,
+                        campsites = campsites,
+                        searchQuery = searchQuery,
+                        onConversationClick = onConversationClick
+                    )
                 }
             }
         }
@@ -649,6 +654,112 @@ private fun AdminNotificationsContent(
                         color = AdminReviewColors.divider,
                         thickness = 1.dp
                     )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Displays private conversations for admin review.
+ */
+@Composable
+private fun AdminMessagesContent(
+    conversations: List<List<Notification>>,
+    users: List<User>,
+    campsites: List<Campsite>,
+    searchQuery: String,
+    onConversationClick: (List<Notification>) -> Unit
+) {
+    val filteredConversations = conversations.filter { conversation ->
+        val message = conversation.last()
+        val sender = users.find { it.userId == message.senderId }
+        val recipient = users.find { it.userId == message.recipientId }
+        val campsite = campsites.find { it.id == message.campsiteId }
+
+        searchQuery.isBlank() ||
+                sender?.name?.contains(searchQuery, ignoreCase = true) == true ||
+                recipient?.name?.contains(searchQuery, ignoreCase = true) == true ||
+                campsite?.name?.contains(searchQuery, ignoreCase = true) == true
+    }
+
+    if (filteredConversations.isEmpty()) {
+        Text(
+            text = "No conversations found.",
+            color = AdminReviewColors.mutedBlue
+        )
+    } else {
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(filteredConversations) { conversation ->
+                val message = conversation.last()
+                val sender = users.find { it.userId == message.senderId }
+                val recipient = users.find { it.userId == message.recipientId }
+                val campsite = campsites.find { it.id == message.campsiteId }
+                val locale = LocalConfiguration.current.locales[0]
+                val date = SimpleDateFormat(
+                    "MMM d",
+                    locale
+                ).format(Date(message.timestamp))
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            onConversationClick(conversation)
+                        },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = AdminReviewColors.lightBlue
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "${sender?.name ?.ifBlank { "Unknown" } ?: "Unknown"} → ${recipient?.name?.ifBlank { "Unknown" } ?: "Unknown"}",
+                                fontWeight = FontWeight.Bold,
+                                color = AdminReviewColors.charcoal,
+                                modifier = Modifier.weight(1f)
+                            )
+
+                            Text(
+                                text = date,
+                                fontSize = 12.sp,
+                                color = AdminReviewColors.mutedBlue
+                            )
+                        }
+
+                        Text(
+                            text = campsite?.name ?: "Unknown campsite",
+                            color = AdminReviewColors.mutedBlue,
+                            fontSize = 13.sp
+                        )
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = message.text,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f),
+                                color = AdminReviewColors.charcoal
+                            )
+
+                            Icon(
+                                imageVector = Icons.Default.ChevronRight,
+                                contentDescription = "View conversation",
+                                tint = AdminReviewColors.mutedBlue
+                            )
+                        }
+                    }
                 }
             }
         }

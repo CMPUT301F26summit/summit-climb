@@ -41,6 +41,77 @@ class ConversationController(
         )
     }
 
+    fun getUserMessages(
+        currentUserId: String,
+        onMessages: (List<Notification>) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) : () -> Unit {
+        return repository.getUserMessages(
+            currentUserId = currentUserId,
+            onMessages = onMessages,
+            onFailure = onFailure
+        )
+    }
 
+    fun groupConversations(
+        messages: List<Notification>,
+        currentUserId: String
+    ): List<Notification> {
 
+        val latestMessages = mutableListOf<Notification>()
+
+        val conversations = messages.groupBy { message ->
+            val otherUserId = if (message.senderId == currentUserId) {
+                message.recipientId
+            } else {
+                message.senderId
+            }
+
+            Pair(otherUserId, message.campsiteId)
+        }
+
+        for (conversation in conversations.values) {
+            val latestMessage = conversation.maxByOrNull { it.timestamp }
+
+            if (latestMessage != null) {
+                latestMessages.add(latestMessage)
+            }
+        }
+
+        return latestMessages.sortedByDescending { it.timestamp }
+    }
+
+    fun getAllMessages(
+        onMessages: (List<Notification>) -> Unit,
+        onFailure: (Exception) -> Unit
+    ): () -> Unit {
+        return repository.getAllMessages(onMessages, onFailure)
+    }
+
+    /**
+     * Groups messages by campsite and participants for admin review.
+     */
+    fun groupAdminConversations(
+        messages: List<Notification>
+    ): List<List<Notification>> {
+        val conversations = messages.groupBy { message ->
+            val participants = listOf(
+                message.senderId,
+                message.recipientId
+            ).sorted()
+
+            Pair(message.campsiteId, participants)
+        }
+
+        val groupedMessages = mutableListOf<List<Notification>>()
+
+        for (conversation in conversations.values) {
+            val sortedMessages = conversation.sortedBy { it.timestamp }
+            groupedMessages.add(sortedMessages)
+        }
+
+        return groupedMessages.sortedByDescending {
+            it.last().timestamp
+        }
+    }
 }
