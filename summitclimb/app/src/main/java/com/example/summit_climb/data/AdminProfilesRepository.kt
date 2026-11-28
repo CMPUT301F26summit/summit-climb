@@ -204,4 +204,29 @@ class AdminProfilesRepository(
             updateCampsites.remove()
         }
     }
+
+    fun UpdateListings(
+        userId: String,
+        onListings: (List<com.example.summit_climb.ui.admin.AdminCampsiteView>) -> Unit,
+        onError: (Exception) -> Unit
+    ): () -> Unit {
+        val registration = db.collection(CAMPSITES)
+            .whereEqualTo(FIELD_CAMPSITE_OWNER, userId)
+            .addSnapshotListener { snap, err ->
+                if (err != null) {
+                    onError(err)
+                    return@addSnapshotListener
+                }
+                val listings = snap?.documents?.map { doc ->
+                    com.example.summit_climb.ui.admin.AdminCampsiteView(
+                        id = doc.id,
+                        name = doc.getString("name") ?: "Campsite",
+                        location = doc.getString("location") ?: "Location",
+                        status = doc.getString("listingStatus") ?: "APPROVED"
+                    )
+                } ?: emptyList()
+                onListings(listings)
+            }
+        return { registration.remove() }
+    }
 }

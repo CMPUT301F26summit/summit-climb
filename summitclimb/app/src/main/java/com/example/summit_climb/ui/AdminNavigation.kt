@@ -28,8 +28,7 @@ import com.example.summit_climb.data.CampsiteRepository
 import com.example.summit_climb.data.NotificationRepository
 import com.example.summit_climb.data.UserRepository
 import com.example.summit_climb.model.AdminProfileView
-import com.example.summit_climb.model.Notification
-import com.example.summit_climb.service.ImageService
+import com.example.summit_climb.ui.admin.AdminCampsiteView
 import com.example.summit_climb.ui.admin.AdminBookingView
 import com.example.summit_climb.ui.admin.AdminDashboardScreen
 import com.example.summit_climb.ui.admin.AdminImageType
@@ -39,6 +38,9 @@ import com.example.summit_climb.ui.admin.AdminProfileDetailsScreen
 import com.example.summit_climb.ui.admin.AdminProfilesScreen
 import com.example.summit_climb.controller.ConversationController
 import com.example.summit_climb.ui.admin.AdminConversationDetailsScreen
+import com.example.summit_climb.service.ImageService
+import com.example.summit_climb.model.Notification
+
 private const val ADMIN_NOTIFICATION_DETAILS = "adminNotificationDetails"
 private const val ADMIN_CONVERSATION_DETAILS = "adminConversationDetails"
 
@@ -142,14 +144,23 @@ fun AdminNavigation(
             val profileId = backStackEntry.arguments?.getString("profileId").orEmpty()
             val profile = profiles.find { it.id == profileId }
             var reservations by remember { mutableStateOf<List<AdminBookingView>>(emptyList()) }
+            var listings by remember { mutableStateOf<List<AdminCampsiteView>>(emptyList()) }
 
             DisposableEffect(profileId) {
-                val stop = controller.getBookingsForUser(
+                val stopBookings = controller.getBookingsForUser(
                     profileId,
                     onBookings = { reservations = it },
-                    onError = { errorMessage = it.message ?: "Could not load bookings" }
+                    onError = { errorMessage = it.message ?: "Could not load reservations" }
                 )
-                onDispose { stop() }
+                val stopListings = controller.getListingsForUser(
+                    profileId,
+                    onListings = { listings = it },
+                    onError = { errorMessage = it.message ?: "Could not load listings" }
+                )
+                onDispose {
+                    stopBookings()
+                    stopListings()
+                }
             }
 
             if (profile != null) {
@@ -162,6 +173,7 @@ fun AdminNavigation(
                         else
                             profile.phoneNumber,
                     reservations = reservations,
+                    listings = listings,
                     onStatusChange = { active ->
                         controller.setActive(profile, active) { errorMessage = it.message ?: "Update failed" }
                     },

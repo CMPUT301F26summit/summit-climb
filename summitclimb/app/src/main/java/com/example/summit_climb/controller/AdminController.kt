@@ -5,6 +5,7 @@ import com.example.summit_climb.data.UserRepository
 import com.example.summit_climb.model.AdminProfileView
 import com.example.summit_climb.model.UserRole
 import com.example.summit_climb.ui.admin.AdminBookingView
+import com.example.summit_climb.ui.admin.AdminCampsiteView
 import com.google.firebase.auth.FirebaseAuth
 
 /**
@@ -86,6 +87,12 @@ class AdminController(
         onBookings: (List<AdminBookingView>) -> Unit,
         onError: (Exception) -> Unit = {}
     ): () -> Unit = repository.updateReservation(userId, onBookings, onError)
+
+    fun getListingsForUser(
+        userId: String,
+        onListings: (List<AdminCampsiteView>) -> Unit,
+        onError: (Exception) -> Unit = {}
+    ): () -> Unit = repository.UpdateListings(userId, onListings, onError)
 
     companion object {
         /**

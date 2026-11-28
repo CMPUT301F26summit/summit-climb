@@ -80,7 +80,19 @@ data class AdminBookingView(
     val active: Boolean
 )
 
-private enum class Menu { NONE, ACCOUNT_STATUS, RESERVATIONS }
+data class AdminCampsiteView(
+    val id: String,
+    val name: String,
+    val location: String,
+    val status: String
+)
+
+private enum class Menu {
+    NONE,
+    ACCOUNT_STATUS,
+    RESERVATIONS,
+    LISTINGS
+}
 
 /**
  * Admin view of a single profile.
@@ -91,6 +103,7 @@ private enum class Menu { NONE, ACCOUNT_STATUS, RESERVATIONS }
  * @param profile: the profile being viewed.
  * @param phone: the user's phone number.
  * @param reservations: the user's Reservations.
+ * @param listings: the user's campsite listings.
  * @param onListingsClick: when the admin taps Listings.
  * @param onStatusChange:  new status state (deactivate / re-activate).
  * @param onRemoveOwner: called when the admin revokes campsite ownership.
@@ -103,12 +116,13 @@ fun AdminProfileDetailsScreen(
     profile: AdminProfileView,
     phone: String = "(xxx) xxx - xxxx",
     reservations: List<AdminBookingView> = emptyList(),
+    listings: List<AdminCampsiteView> = emptyList(),
     onListingsClick: () -> Unit = {},
     onStatusChange: (Boolean) -> Unit = {},
     onRemoveOwner: () -> Unit = {},
     onReservStatusChange: (AdminBookingView, Boolean) -> Unit = { _, _ -> },
     onSuspend: () -> Unit = {}
-) {
+){
     var menu by remember { mutableStateOf(Menu.NONE) }
     var showSuspend by remember { mutableStateOf(false) }
 
@@ -196,7 +210,7 @@ fun AdminProfileDetailsScreen(
 
                     TextBubble("Account Status") { menuClicked(Menu.ACCOUNT_STATUS) }
                     TextBubble("Reservations (${profile.reservations})") { menuClicked(Menu.RESERVATIONS) }
-                    TextBubble("Listings (${profile.listings})", onListingsClick)
+                    TextBubble("Listings (${profile.listings})") { menuClicked(Menu.LISTINGS) }
                 }
             }
 
@@ -213,6 +227,10 @@ fun AdminProfileDetailsScreen(
                     reservations = reservations,
                     onClose = { menu = Menu.NONE },
                     onReservStatusChange = onReservStatusChange
+                )
+                Menu.LISTINGS -> ListingsMenu(
+                    listings = listings,
+                    onClose = { menu = Menu.NONE }
                 )
                 Menu.NONE -> {}
             }
@@ -364,7 +382,7 @@ private fun TextBubble(
         shape = RoundedCornerShape(6.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = lightBlue,
-            contentColor = Color.White
+            contentColor = charcoal
         )
     ){
         Text(
@@ -387,7 +405,7 @@ private fun MenuRow(title: String, onClose: () -> Unit) {
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
-    ) {
+    ){
         Text(title, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = charcoal)
         IconButton(onClick = onClose, modifier = Modifier.size(28.dp)) {
             Icon(Icons.Default.Close, contentDescription = "Close", modifier = Modifier.size(16.dp))
@@ -411,13 +429,13 @@ private fun AccountStatusMenu(
     onClose: () -> Unit,
     onStatusChange: (Boolean) -> Unit,
     onRemoveOwner: () -> Unit
-) {
+){
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
-    ) {
+    ){
         Column(Modifier.padding(14.dp)) {
             MenuRow("Account Status", onClose)
 
@@ -477,7 +495,7 @@ private fun ActionRow(
     container: Color,
     accent: Color,
     onClick: () -> Unit
-) {
+){
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -487,14 +505,14 @@ private fun ActionRow(
             .clickable(onClick = onClick)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
-    ) {
+    ){
         Box(
             modifier = Modifier
                 .size(32.dp)
                 .clip(CircleShape)
                 .background(accent.copy(alpha = 0.15f)),
             contentAlignment = Alignment.Center
-        ) {
+        ){
             Icon(
                 icon,
                 contentDescription = null,
@@ -534,13 +552,13 @@ private fun ReservationsMenu(
     reservations: List<AdminBookingView>,
     onClose: () -> Unit,
     onReservStatusChange: (AdminBookingView, Boolean) -> Unit
-) {
+){
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
-    ) {
+    ){
         Column(Modifier.padding(14.dp)) {
             MenuRow("Reservations", onClose)
 
@@ -586,6 +604,62 @@ private fun ReservationsMenu(
                             )
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Menu for Listings button.
+ * Lists each campsite the user owns with its name, location and status.
+ *
+ * @param listings the campsites the user has listed.
+ * @param onClose called when the close button is clicked.
+ */
+@Composable
+private fun ListingsMenu(
+    listings: List<AdminCampsiteView>,
+    onClose: () -> Unit
+){
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ){
+        Column(Modifier.padding(14.dp)) {
+            MenuRow("Listings", onClose)
+
+            if (listings.isEmpty()) {
+                Text(
+                    text = "No listings",
+                    fontSize = 12.sp,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(top = 12.dp)
+                )
+            }
+
+            for (listing in listings) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ){
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            text = listing.name,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = listing.location,
+                            fontSize = 11.sp,
+                            color = Color.Gray
+                        )
+                    }
+                    Border(listing.status, lightGreen, darkGreen)
                 }
             }
         }
